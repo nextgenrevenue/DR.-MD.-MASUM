@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #8ecae6 0%, #7ab8d4 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      transition: background 0.5s ease;
+      color-scheme: light only !important; /* ✅ Dark mode off */
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 20% 50%, rgba(142, 202, 230, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 20%, rgba(122, 184, 212, 0.1) 0%, transparent 50%);
+      z-index: -1;
+    }
+
+    .login-container {
+      background: white;
+      padding: 50px 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      animation: fadeIn 0.8s ease-out;
+      transition: transform 0.3s ease;
+    }
+
+    .login-container:hover {
+      transform: translateY(-5px);
+    }
+
+    .login-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #8ecae6, #7ab8d4);
+      animation: slideIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+
+    .logo {
+      margin-bottom: 40px;
+      animation: fadeIn 0.8s ease-out 0.2s both;
+    }
+
+    .logo h1 {
+      color: #1f2937;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+      min-height: 36px;
+    }
+
+    .logo p {
+      color: #6b7280;
+      font-size: 16px;
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+
+    .logo-info {
+      font-size: 12px;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      cursor: help;
+      position: relative;
+    }
+
+    .logo-info .tooltip {
+      visibility: hidden;
+      width: 200px;
+      background-color: #1f2937;
+      color: white;
+      text-align: center;
+      border-radius: 6px;
+      padding: 8px;
+      position: absolute;
+      z-index: 100;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 12px;
+      font-weight: normal;
+      text-transform: none;
+      letter-spacing: normal;
+      line-height: 1.4;
+    }
+
+    .logo-info:hover .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .login-form {
+      text-align: left;
+      animation: fadeIn 0.8s ease-out 0.4s both;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 600;
+      color: #374151;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .label-info {
+      font-size: 12px;
+      color: #9ca3af;
+      font-weight: normal;
+      text-transform: none;
+      letter-spacing: normal;
+      cursor: help;
+      position: relative;
+    }
+
+    .label-info .tooltip {
+      visibility: hidden;
+      width: 180px;
+      background-color: #1f2937;
+      color: white;
+      text-align: center;
+      border-radius: 6px;
+      padding: 8px;
+      position: absolute;
+      z-index: 100;
+      bottom: 125%;
+      right: 0;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 12px;
+      font-weight: normal;
+      text-transform: none;
+      letter-spacing: normal;
+      line-height: 1.4;
+    }
+
+    .label-info:hover .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 16px;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.3s ease;
+      background: #fafafa;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #8ecae6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(142, 202, 230, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .form-group input:not(:placeholder-shown) {
+      background: white !important;
+      border-color: #8ecae6 !important;
+    }
+
+    .form-group input::placeholder {
+      color: #9ca3af;
+    }
+
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+      z-index: 10;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .password-toggle:hover {
+      opacity: 1;
+    }
+
+    .caps-warning {
+      display: none;
+      color: #f59e0b;
+      font-size: 12px;
+      margin-top: 8px;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background-color: #fffbeb;
+      border-radius: 6px;
+      border-left: 3px solid #f59e0b;
+    }
+
+    .password-strength {
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .strength-bar {
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s, background 0.3s;
+      border-radius: 2px;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #8ecae6 0%, #8ecae6 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Inter', sans-serif;
+      margin-top: 10px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeIn 0.8s ease-out 0.6s both;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(142, 202, 230, 0.4);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    .login-btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      transition: all 0.5s ease;
+      transform: translate(-50%, -50%);
+    }
+
+    .login-btn:hover::after {
+      width: 300px;
+      height: 300px;
+    }
+
+    .login-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .admin-notice {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 24px;
+      padding: 15px;
+      background: #f0f9ff;
+      border-radius: 10px;
+      color: #8ecae6;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      animation: fadeIn 0.8s ease-out 0.7s both;
+    }
+
+    .admin-notice i {
+      font-size: 18px;
+    }
+
+    .error-message {
+      color: #dc2626;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .error-message::before {
+      content: '⚠️';
+      font-size: 16px;
+    }
+
+    .success-message {
+      color: #059669;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .success-message::before {
+      content: '✅';
+      font-size: 16px;
+    }
+
+    .attempts-counter {
+      font-size: 13px;
+      color: #6b7280;
+      text-align: center;
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      opacity: 0.8;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Dark mode REMOVED - always show light mode */
+    /* @media (prefers-color-scheme: dark) {
+      ... removed ...
+    } */
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 40px 24px;
+        border-radius: 16px;
+      }
+      
+      .logo h1 {
+        font-size: 24px;
+      }
+      
+      .logo p {
+        font-size: 14px;
+      }
+      
+      .admin-notice {
+        font-size: 12px;
+        padding: 12px;
+      }
+
+      .logo-info .tooltip {
+        width: 160px;
+        font-size: 11px;
+      }
+
+      .label-info .tooltip {
+        width: 150px;
+        font-size: 11px;
+      }
+    }
+
+    /* Print styles */
+    @media print {
+      .login-container {
+        box-shadow: none;
+        border: 1px solid #ddd;
+      }
+      
+      .login-btn,
+      .admin-notice,
+      .password-toggle {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo">
+      <h1 id="pageTitle"></h1>
+      <p>Doctor Appointment System</p>
+      <div class="logo-info">
+        <i class="fas fa-info-circle"></i>
+        <span>Admin Access Only</span>
+        <div class="tooltip">
+          Default credentials: admin / admin123<br>
+          Change via Firebase after first login
+        </div>
+      </div>
+    </div>
+
+    <form class="login-form" id="loginForm">
+      <div class="form-group">
+        <label for="username">
+          Username
+          <span class="label-info">
+            <i class="fas fa-question-circle"></i>
+            <div class="tooltip">
+              Case-sensitive username. Contact system administrator for access.
+            </div>
+          </span>
+        </label>
+        <input type="text" id="username" placeholder="Enter your username" required autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label for="password">
+          Password
+          <span class="label-info">
+            <i class="fas fa-question-circle"></i>
+            <div class="tooltip">
+              Case-sensitive password. Minimum 8 characters. Contact admin if forgotten.
+            </div>
+          </span>
+        </label>
+        <div class="password-wrapper">
+          <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
+          <button type="button" class="password-toggle" id="passwordToggle">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <div class="caps-warning" id="capsWarning">
+          <i class="fas fa-exclamation-triangle"></i>
+          Caps Lock is ON
+        </div>
+        <div class="password-strength">
+          <div class="strength-bar" id="passwordStrength"></div>
+        </div>
+      </div>
+
+      <div class="error-message" id="errorMessage">
+        Invalid username or password
+      </div>
+
+      <div class="success-message" id="successMessage">
+        Login successful! Redirecting...
+      </div>
+
+      <button type="submit" class="login-btn" id="loginButton">
+        <span id="buttonText">Sign In to Dashboard</span>
+      </button>
+
+      <div class="attempts-counter" id="attemptsCounter">
+        <i class="fas fa-shield-alt"></i>
+        <span>Attempts: <span id="attemptsCount">0</span>/3</span>
+      </div>
+      
+      <div class="admin-notice">
+        <i class="fas fa-lock"></i>
+        <span>SECURED ADMIN PORTAL</span>
+      </div>
+    </form>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+  <script>
+    // ==================== CONFIGURATION ====================
+    const ADMIN_CREDENTIALS = {
+      username: "admin",
+      password: "admin123"
+    };
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDAdGUtNVgs5UspQeH8hL0i-L0WvPpOWnE",
+        authDomain: "appointment-e2050.firebaseapp.com",
+        projectId: "appointment-e2050",
+        storageBucket: "appointment-e2050.firebasestorage.app",
+        messagingSenderId: "367447068370",
+        appId: "1:367447068370:web:8e111bb010a19d21eda70b",
+        measurementId: "G-CRLSV1JJMQ"
+    };
+
+    // ==================== GLOBAL VARIABLES ====================
+    let loginAttempts = 0;
+    const MAX_ATTEMPTS = 3;
+    const LOCKOUT_TIME = 30000; // 30 seconds
+    let isLockedOut = false;
+    let lockoutTimer = null;
+    let db = null; // Firebase Firestore instance
+
+    // ==================== DOM ELEMENTS ====================
+    const elements = {
+      loginForm: document.getElementById('loginForm'),
+      username: document.getElementById('username'),
+      password: document.getElementById('password'),
+      passwordToggle: document.getElementById('passwordToggle'),
+      capsWarning: document.getElementById('capsWarning'),
+      passwordStrength: document.getElementById('passwordStrength'),
+      errorMessage: document.getElementById('errorMessage'),
+      successMessage: document.getElementById('successMessage'),
+      loginButton: document.getElementById('loginButton'),
+      buttonText: document.getElementById('buttonText'),
+      attemptsCounter: document.getElementById('attemptsCounter'),
+      attemptsCount: document.getElementById('attemptsCount'),
+      pageTitle: document.getElementById('pageTitle')
+    };
+
+    // ==================== UTILITY FUNCTIONS ====================
+    function showMessage(element, message, type = 'error') {
+      element.textContent = message;
+      element.style.display = 'flex';
+      
+      if (type === 'error') {
+        elements.successMessage.style.display = 'none';
+      } else {
+        elements.errorMessage.style.display = 'none';
+      }
+    }
+
+    function hideMessages() {
+      elements.errorMessage.style.display = 'none';
+      elements.successMessage.style.display = 'none';
+    }
+
+    function updateButtonState(isLoading, isDisabled = false, text = '') {
+      if (isLoading) {
+        elements.buttonText.innerHTML = '<div class="loading"></div> Authenticating...';
+      } else {
+        elements.buttonText.textContent = text || 'Sign In to Dashboard';
+      }
+      
+      elements.loginButton.disabled = isDisabled;
+    }
+
+    function updateAttemptsCounter() {
+      elements.attemptsCount.textContent = loginAttempts;
+      
+      if (loginAttempts >= 2) {
+        elements.attemptsCounter.style.color = '#dc2626';
+        elements.attemptsCounter.style.fontWeight = 'bold';
+      } else if (loginAttempts >= 1) {
+        elements.attemptsCounter.style.color = '#f59e0b';
+      } else {
+        elements.attemptsCounter.style.color = '#6b7280';
+      }
+    }
+
+    function checkLockout() {
+      const lockoutUntil = localStorage.getItem('loginLockoutUntil');
+      if (lockoutUntil && Date.now() < parseInt(lockoutUntil)) {
+        isLockedOut = true;
+        const remaining = Math.ceil((parseInt(lockoutUntil) - Date.now()) / 1000);
+        
+        updateButtonState(false, true, `Locked (${remaining}s)`);
+        elements.loginButton.style.background = 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)';
+        
+        showMessage(elements.errorMessage, `Too many attempts. Please wait ${remaining} seconds.`);
+        
+        // Update timer every second
+        clearInterval(lockoutTimer);
+        lockoutTimer = setInterval(() => {
+          const now = Date.now();
+          if (now >= parseInt(lockoutUntil)) {
+            clearInterval(lockoutTimer);
+            isLockedOut = false;
+            localStorage.removeItem('loginLockoutUntil');
+            updateButtonState(false, false, 'Sign In to Dashboard');
+            elements.loginButton.style.background = 'linear-gradient(135deg, #8ecae6 0%, #8ecae6 100%)';
+            hideMessages();
+            updateAttemptsCounter();
+          } else {
+            const rem = Math.ceil((parseInt(lockoutUntil) - now) / 1000);
+            updateButtonState(false, true, `Locked (${rem}s)`);
+          }
+        }, 1000);
+        
+        return true;
+      }
+      return false;
+    }
+
+    function applyLockout() {
+      loginAttempts = MAX_ATTEMPTS;
+      const lockoutTime = Date.now() + LOCKOUT_TIME;
+      localStorage.setItem('loginLockoutUntil', lockoutTime.toString());
+      checkLockout();
+    }
+
+    function clearCache() {
+      sessionStorage.removeItem('cachedAdminCreds');
+      sessionStorage.removeItem('credsCacheTime');
+      console.log('✅ Cache cleared');
+    }
+
+    // ==================== ANIMATION FUNCTIONS ====================
+    function typeWriter(element, text, speed = 50) {
+      element.innerHTML = '';
+      let i = 0;
+      
+      function typing() {
+        if (i < text.length) {
+          element.innerHTML += text.charAt(i);
+          i++;
+          setTimeout(typing, speed);
+        }
+      }
+      typing();
+    }
+
+    function shakeForm() {
+      elements.loginForm.style.animation = 'shake 0.5s';
+      setTimeout(() => {
+        elements.loginForm.style.animation = '';
+      }, 500);
+    }
+
+    // ==================== PASSWORD FUNCTIONS ====================
+    function setupPasswordToggle() {
+      elements.passwordToggle.addEventListener('click', function() {
+        const type = elements.password.getAttribute('type') === 'password' ? 'text' : 'password';
+        elements.password.setAttribute('type', type);
+        this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        
+        // Visual feedback
+        this.style.opacity = '1';
+        setTimeout(() => this.style.opacity = '0.6', 300);
+      });
+    }
+
+    function setupCapsLockDetection() {
+      elements.password.addEventListener('keyup', function(e) {
+        const capsOn = e.getModifierState && e.getModifierState('CapsLock');
+        elements.capsWarning.style.display = capsOn ? 'flex' : 'none';
+      });
+      
+      elements.password.addEventListener('keydown', function(e) {
+        const capsOn = e.getModifierState && e.getModifierState('CapsLock');
+        elements.capsWarning.style.display = capsOn ? 'flex' : 'none';
+      });
+    }
+
+    function updatePasswordStrength(password) {
+      let strength = 0;
+      
+      if (password.length >= 8) strength += 25;
+      if (/[A-Z]/.test(password)) strength += 25;
+      if (/[0-9]/.test(password)) strength += 25;
+      if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+      
+      elements.passwordStrength.style.width = strength + '%';
+      
+      if (strength < 50) {
+        elements.passwordStrength.style.background = '#dc2626';
+      } else if (strength < 75) {
+        elements.passwordStrength.style.background = '#f59e0b';
+      } else {
+        elements.passwordStrength.style.background = '#10b981';
+      }
+    }
+
+    // ==================== CREDENTIALS MANAGEMENT ====================
+    async function loadAdminCredentials() {
+      try {
+        console.log('🔄 Loading admin credentials...');
+        
+        // ✅ FIXED: Check URL parameter for force refresh
+        const urlParams = new URLSearchParams(window.location.search);
+        const forceRefresh = urlParams.get('forceRefresh') === 'true';
+        
+        if (forceRefresh) {
+          console.log('🔄 Force refresh requested, clearing cache');
+          clearCache();
+        }
+        
+        // Check cache (5 minutes) - but skip if force refresh
+        if (!forceRefresh) {
+          const cachedCreds = sessionStorage.getItem('cachedAdminCreds');
+          const cacheTime = sessionStorage.getItem('credsCacheTime');
+          const now = Date.now();
+          
+          if (cachedCreds && cacheTime && (now - cacheTime) < 300000) { // 5 minutes
+            console.log('✅ Using cached credentials (less than 5 minutes old)');
+            const creds = JSON.parse(cachedCreds);
+            console.log('Cached credentials:', creds.username);
+            return creds;
+          }
+        }
+        
+        console.log('🔄 Cache expired or force refresh, loading from Firebase...');
+        
+        // Initialize Firebase if not already initialized
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig); // ✅ FIXED: Use firebaseConfig (not FIREBASE_CONFIG)
+          console.log('✅ Firebase initialized');
+        }
+        
+        // Get Firestore instance
+        if (!db) {
+          db = firebase.firestore();
+        }
+        
+        // Try to load from Firebase
+        const doc = await db.collection('settings').doc('adminCredentials').get();
+        
+        if (doc.exists) {
+          const firebaseCredentials = doc.data();
+          console.log('✅ Credentials loaded from Firebase:', {
+            username: firebaseCredentials.username,
+            hasPassword: !!firebaseCredentials.password,
+            lastUpdated: firebaseCredentials.lastUpdated
+          });
+          
+          // Cache the credentials
+          sessionStorage.setItem('cachedAdminCreds', JSON.stringify(firebaseCredentials));
+          sessionStorage.setItem('credsCacheTime', Date.now().toString());
+          
+          return firebaseCredentials;
+        } else {
+          console.log('ℹ️ No credentials found in Firebase, using defaults');
+          // Cache defaults too
+          sessionStorage.setItem('cachedAdminCreds', JSON.stringify(ADMIN_CREDENTIALS));
+          sessionStorage.setItem('credsCacheTime', Date.now().toString());
+          return ADMIN_CREDENTIALS;
+        }
+      } catch (error) {
+        console.error('❌ Error loading credentials:', error);
+        
+        // Fallback to cached or default credentials
+        const cachedCreds = sessionStorage.getItem('cachedAdminCreds');
+        if (cachedCreds) {
+          console.log('🔄 Using cached credentials due to error');
+          return JSON.parse(cachedCreds);
+        }
+        
+        console.log('🔄 Using default credentials due to error');
+        return ADMIN_CREDENTIALS;
+      }
+    }
+
+    // ==================== LOGIN FUNCTION ====================
+    async function handleLogin(username, password) {
+      hideMessages();
+      
+      // Basic validation
+      if (!username.trim() || !password.trim()) {
+        showMessage(elements.errorMessage, 'Please fill in all fields');
+        return false;
+      }
+      
+      updateButtonState(true, true);
+      
+      try {
+        // Add slight delay for better UX
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        const currentCredentials = await loadAdminCredentials();
+        
+        console.log('🔑 Checking credentials...', {
+          expectedUser: currentCredentials.username,
+          enteredUser: username,
+          passwordMatch: password === currentCredentials.password ? 'Yes' : 'No'
+        });
+        
+        if (username === currentCredentials.username && password === currentCredentials.password) {
+          // SUCCESS
+          loginAttempts = 0;
+          localStorage.removeItem('loginLockoutUntil');
+          clearInterval(lockoutTimer);
+          
+          // Store session data
+          sessionStorage.setItem('adminLoggedIn', 'true');
+          sessionStorage.setItem('loginTime', Date.now().toString());
+          sessionStorage.setItem('adminUser', username);
+          
+          // Visual success feedback
+          updateButtonState(false, true, '✓ Access Granted');
+          elements.loginButton.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+          showMessage(elements.successMessage, 'Login successful! Redirecting to dashboard...', 'success');
+          
+          // Determine redirect URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const returnUrl = urlParams.get('return');
+          let redirectUrl = '/dashboard/';
+          
+          if (window.location.protocol === 'file:') {
+            redirectUrl = 'dashboard.html';
+          }
+          
+          if (returnUrl && returnUrl.startsWith('/')) {
+            redirectUrl = returnUrl;
+          }
+          
+          // Smooth redirect with fade out
+          setTimeout(() => {
+            document.body.style.opacity = '0.7';
+            document.body.style.transition = 'opacity 0.5s';
+            
+            setTimeout(() => {
+              window.location.href = redirectUrl;
+            }, 500);
+          }, 1500);
+          
+          return true;
+        } else {
+          // FAILURE
+          loginAttempts++;
+          updateAttemptsCounter();
+          
+          if (loginAttempts >= MAX_ATTEMPTS) {
+            applyLockout();
+            shakeForm();
+          } else {
+            const remaining = MAX_ATTEMPTS - loginAttempts;
+            showMessage(elements.errorMessage, `Invalid credentials. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`);
+            shakeForm();
+            elements.password.value = '';
+            elements.password.focus();
+          }
+          
+          updateButtonState(false, false);
+          return false;
+        }
+      } catch (error) {
+        console.error('❌ Login error:', error);
+        showMessage(elements.errorMessage, 'System error. Please try again or contact support.');
+        updateButtonState(false, false);
+        return false;
+      }
+    }
+
+    // ==================== SESSION MANAGEMENT ====================
+    function checkExistingSession() {
+      if (sessionStorage.getItem('adminLoggedIn')) {
+        const loginTime = parseInt(sessionStorage.getItem('loginTime'));
+        const currentTime = Date.now();
+        const sessionDuration = 2 * 60 * 60 * 1000; // 2 hours
+        
+        if (loginTime && (currentTime - loginTime) < sessionDuration) {
+          // Redirect based on environment
+          let redirectUrl = '/dashboard/';
+          if (window.location.protocol === 'file:') {
+            redirectUrl = 'dashboard.html';
+          }
+          
+          // Brief delay then redirect
+          setTimeout(() => {
+            window.location.href = redirectUrl;
+          }, 500);
+        } else {
+          // Clear expired session
+          sessionStorage.clear();
+          localStorage.removeItem('loginLockoutUntil');
+        }
+      }
+    }
+
+    // ==================== KEYBOARD SHORTCUTS ====================
+    function setupKeyboardShortcuts() {
+      document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + Enter to submit
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          elements.loginForm.requestSubmit();
+        }
+        
+        // Escape to clear form
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          elements.loginForm.reset();
+          elements.username.focus();
+          hideMessages();
+        }
+        
+        // Ctrl/Cmd + R to force refresh credentials
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+          e.preventDefault();
+          clearCache();
+          showMessage(elements.successMessage, 'Cache cleared. Try login again.', 'success');
+          setTimeout(() => hideMessages(), 3000);
+        }
+      });
+    }
+
+    // ==================== INITIALIZATION ====================
+    function init() {
+      console.log('🚀 Initializing Admin Login System...');
+      console.log('📱 User Agent:', navigator.userAgent);
+      
+      // Check for existing session
+      checkExistingSession();
+      
+      // Typewriter effect for title
+      setTimeout(() => {
+        typeWriter(elements.pageTitle, 'Admin Portal');
+      }, 500);
+      
+      // Setup password features
+      setupPasswordToggle();
+      setupCapsLockDetection();
+      
+      // Setup keyboard shortcuts
+      setupKeyboardShortcuts();
+      
+      // Check lockout status
+      checkLockout();
+      
+      // Update attempts counter
+      updateAttemptsCounter();
+      
+      // Auto-focus username with animation
+      setTimeout(() => {
+        elements.username.focus();
+        elements.username.style.transform = 'scale(1.02)';
+        setTimeout(() => elements.username.style.transform = 'scale(1)', 200);
+      }, 800);
+      
+      // Password strength indicator
+      elements.password.addEventListener('input', function() {
+        updatePasswordStrength(this.value);
+      });
+      
+      // Form submission
+      elements.loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (isLockedOut) {
+          showMessage(elements.errorMessage, 'Account is temporarily locked. Please wait.');
+          return;
+        }
+        
+        const username = elements.username.value.trim();
+        const password = elements.password.value;
+        
+        await handleLogin(username, password);
+      });
+      
+      // Input animations
+      [elements.username, elements.password].forEach(input => {
+        input.addEventListener('focus', function() {
+          this.style.transform = 'translateY(-2px)';
+          this.style.boxShadow = '0 5px 15px rgba(142, 202, 230, 0.3)';
+        });
+        
+        input.addEventListener('blur', function() {
+          this.style.transform = 'translateY(0)';
+          this.style.boxShadow = 'none';
+        });
+      });
+      
+      // Clear cache button (hidden but accessible via console)
+      window.clearLoginCache = function() {
+        clearCache();
+        alert('Login cache cleared!');
+      };
+      
+      console.log('✅ Admin Login System initialized');
+    }
+
+    // ==================== START APPLICATION ====================
+    // Wait for DOM and Firebase to be ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>

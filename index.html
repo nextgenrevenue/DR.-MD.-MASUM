@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="google-site-verification" content="q6qnX2SH5llFty6Oy1rgN5_49L_ChMSuhR4jn8mZJNE" />
+  <meta name="description" content="Book appointments with Dr. Md. Wahiduzzaman Masum - Skin, Allergy, and Sex Specialist at Khulna Medical College">
+  <meta name="keywords" content="doctor appointment, dermatology, Khulna, healthcare">
+  <title>Dr. Md. Wahiduzzaman Masum</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style> 
+    :root {
+      --primary-color: #8ecae6;
+      --secondary-color: #ff6f91;
+      --text-color: #333;
+      --light-bg: #fdfdff;
+      --white: #ffffff;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    html, body {
+      height: 100%;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--light-bg);
+      color: var(--text-color);
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    
+    main {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    header {
+      background-color: var(--primary-color);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow);
+      position: relative;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+    
+    header h1 {
+      color: var(--white);
+      font-size: 1.8rem;
+    }
+    
+    nav {
+      display: flex;
+      align-items: center;
+    }
+    
+    .nav-links {
+      list-style: none;
+      display: flex;
+      gap: 1.5rem;
+    }
+    
+    .nav-links a {
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      padding: 0.5rem;
+      border-radius: 4px;
+    }
+    
+    .nav-links a:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 30px;
+      height: 21px;
+      cursor: pointer;
+    }
+    
+    .hamburger span {
+      height: 3px;
+      width: 100%;
+      background-color: var(--white);
+      border-radius: 3px;
+      transition: all 0.3s ease;
+    }
+    
+    .hamburger.active span:nth-child(1) {
+      transform: rotate(45deg) translate(6px, 6px);
+    }
+    
+    .hamburger.active span:nth-child(2) {
+      opacity: 0;
+    }
+    
+    .hamburger.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(6px, -6px);
+    }
+    
+    .hero {
+      text-align: center;
+      padding: 3rem 2rem;
+      background: linear-gradient(135deg, #fef6fb 0%, #e6f0ff 100%);
+      position: relative;
+      overflow: hidden;
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+    }
+    
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: rgba(142, 202, 230, 0.2);
+      z-index: 0;
+    }
+    
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -50px;
+      left: -50px;   
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: rgba(255, 111, 145, 0.2);
+      z-index: 0;
+    }
+    
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .hero h2 {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      color: var(--secondary-color);
+      margin-bottom: 1.5rem;
+    }
+    
+    .hero p {
+      margin: 1rem 0;
+      color: #555;
+      font-size: clamp(1rem, 2vw, 1.1rem);
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  
+    /* 🔥 এনিমেশন ডেফিনিশন */
+    @keyframes slideInDown {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes slideInUp {
+      from {
+        transform: translateY(50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes zoomIn {
+      from {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    
+    @keyframes flyInRight {
+      from {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    @keyframes flyInBottom {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes fadeInUpStagger {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUpHospital {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes zoomInOut {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.2);
+      }
+    }
+    
+    /* Doctor Info - সাদা কার্ড ছাড়া */
+    .doctor-info {
+      background: transparent;
+      padding: 2rem;
+      border-radius: 0;
+      margin-bottom: 2rem;
+      box-shadow: none;
+    }
+    
+    .doctor-info p {
+      margin: 0.5rem 0;
+      font-weight: 500;
+    }
+    
+    /* টেক্সট এনিমেশন */
+    .doctor-info p:first-child {
+      animation: slideInDown 0.8s ease-out 0.3s both;
+      font-weight: 600;
+      color: #e74c3c;
+    }
+    
+    .doctor-info h2 {
+      animation: zoomIn 0.8s ease-out 0.6s both;
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      color: var(--secondary-color);
+      margin-bottom: 1rem;
+    }
+    
+    .doctor-details .doctor-right p {
+      animation: flyInRight 0.8s ease-out 0.9s both;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    
+    .doctor-details .doctor-left p:first-child {
+      animation: flyInBottom 0.8s ease-out 1.2s both;
+      font-weight: 600;
+      color: #2980b9;
+    }
+    
+    .doctor-details .doctor-left p:last-child {
+      animation: flyInBottom 0.8s ease-out 1.5s both;
+      font-weight: 700;
+      color: #16a085;
+    }
+
+    .doctor-details {
+      display: block; 
+    }
+
+    .doctor-right {
+      text-align: right; 
+      margin-bottom: 0.5rem;
+    }
+
+    .doctor-left {
+      text-align: left; 
+      margin-top: 1rem;
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 2rem;
+    }
+    
+    /* Button Animation */
+    button {
+      padding: 0.8rem 1.8rem;
+      border: none;
+      background-color: var(--secondary-color);
+      color: white;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow);
+      animation: slideInUp 0.8s ease-out 2s both;
+    }
+    
+    button:hover {
+      background-color: #ff5a7f;
+      transform: translateY(-2px);
+      animation: slideInUp 0.8s;
+
+    }
+
+    .btn-primary {
+      background-color: var(--secondary-color);
+    }
+    
+    .btn-secondary {
+      background-color: var(--primary-color);
+      color: var(--text-color);
+      animation: slideInUp 0.8s ease-out 2.2s both;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #7ab8d4;
+    }
+    
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Hospital Info Section */
+    .hospital-info {
+      background: linear-gradient(135deg, #8ecae6 0%, #7ab8d4 100%);
+      padding: 2rem;
+      color: white;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+      margin-top: auto;
+      width: 100%;
+    }
+
+    .hospital-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .hospital-content h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: var(--white);
+    }
+
+    .hospital-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .info-card {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1.5rem;
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+      transition: transform 0.3s ease;
+      opacity: 0;
+      animation: fadeInUpStagger 0.8s ease-out 2.8s forwards;
+    }
+    
+    .info-card:nth-child(2) {
+      animation-delay: 3s;
+    }
+    
+    .info-card:nth-child(3) {
+      animation-delay: 3.2s;
+    }
+    
+    .info-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .info-card h4 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: var(--white);
+    }
+
+    .info-card p {
+      margin: 0.3rem 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .contact-number {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #ffeb3b;
+      margin-top: 0.5rem;
+    }
+    
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      background-color: #2c3e50;
+      color: white;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+      min-height: 80px; 
+    }
+
+    .footer-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+      width: 100%;
+   }
+
+    .footer-content p {
+     margin: 0;
+     opacity: 0;
+     animation: fadeInUpStagger 0.8s ease-out 3.4s forwards;
+     line-height: 1.4;
+     padding: 0.2rem 0;
+   }
+    
+    /* Marquee Container */
+    /*.marquee-container {
+      background: rgba(255, 111, 145, 0.1);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 1rem;
+      border: 2px solid rgba(255, 111, 145, 0.3);
+      position: relative;
+      overflow: hidden;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }*/
+
+    /* Marquee Text */
+    /*.floating-notice-text {
+      color: #e74c3c;
+      font-weight: 600;
+      font-size: 1.1rem;
+      padding: 10px;
+      display: inline-block;
+      white-space: nowrap;
+      margin: 0;
+    }*/
+
+    /* Marquee Controls */
+    .marquee-controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .marquee-btn {
+      padding: 6px 12px;
+      background: rgba(142, 202, 230, 0.9);
+      border: none;
+      border-radius: 5px;
+      color: #333;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
+    }
+
+    .marquee-btn:hover {
+      background: rgba(142, 202, 230, 1);
+      transform: translateY(-2px);
+    }
+
+    /* Marquee Status Indicator */
+    .marquee-status {
+      position: absolute;
+      top: 5px;
+      right: 10px;
+      font-size: 0.7rem;
+      color: #666;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 2px 6px;
+      border-radius: 3px;
+      display: none;
+    }
+
+    /* Toast notifications */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #4CAF50;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 5px;
+      z-index: 10000;
+      animation: slideIn 0.3s ease;
+      max-width: 300px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .toast-error {
+      background: #f44336;
+    }
+
+    .toast-warning {
+      background: #ff9800;
+    }
+
+    .toast-info {
+      background: #2196F3;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+    
+    /* Beautiful Notice Popup */
+    .notice-popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .notice-popup-content {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 0;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      animation: slideUp 0.4s ease;
+    }
+
+    @keyframes slideUp {
+      from { 
+        transform: translateY(50px);
+        opacity: 0;
+      }
+      to { 
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .notice-header {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .notice-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+      display: block;
+      animation: zoomInOut 2s ease-in-out infinite;
+    }
+
+    .notice-header h3 {
+      color: white;
+      font-size: 24px;
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .notice-body {
+      padding: 30px;
+      background: white;
+    }
+
+    .notice-message {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #333;
+      text-align: center;
+      margin-bottom: 25px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      border-left: 4px solid #667eea;
+    }
+
+    .notice-time {
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 25px;
+      font-style: italic;
+    }
+
+    .notice-actions {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    .notice-btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .notice-btn-close {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .notice-btn-close:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      header {
+        padding: 0.8rem 1rem;
+      }
+      
+      .hamburger {
+        display: flex;
+      }
+      
+      .nav-links {
+        position: fixed;
+        top: 60px;
+        right: -100%;
+        background-color: var(--primary-color);
+        width: 70%;
+        height: calc(100vh - 60px);
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding-top: 2rem;
+        gap: 2rem;
+        transition: right 0.3s ease;
+        box-shadow: -5px 0 10px rgba(0, 0, 0, 0.1);
+        z-index: 99;
+        overflow-y: auto;
+      }
+      
+      .nav-links.active {
+        right: 0;
+      }
+      
+      .hero {
+        padding: 2rem 1rem;
+        min-height: 70vh;
+      }
+      
+      .hero-content {
+        padding: 1rem;
+      }
+      
+      .doctor-info {
+        padding: 1.5rem;
+      }
+      
+      .doctor-info p:first-child {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .doctor-info h2 {
+        font-size: 1.7rem !important;
+        font-weight: bold;
+        line-height: 1.2;
+        margin: 0.5rem 0;
+      }
+
+      .btn-group {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      button {
+        width: 200px;
+      }
+      
+      .hero h2 {
+        font-size: 1.8rem;
+      }
+      
+      .hero::after {
+        bottom: -30px;
+        left: -30px;
+        width: 150px;
+        height: 150px;
+      }
+      
+      .hero::before {
+        top: -30px;
+        right: -30px;
+        width: 150px;
+        height: 150px;
+      }
+
+      .hospital-info {
+        padding: 1.5rem 1rem;
+      }
+
+      .hospital-details {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .info-card {
+        padding: 1rem;
+      }
+      
+      footer {
+        padding: 1rem;
+      }
+      
+      /* Marquee responsive */
+      .marquee-container {
+        padding: 8px;
+        min-height: 40px;
+      }
+      
+      .floating-notice-text {
+        font-size: 0.9rem;
+        padding: 8px;
+      }
+      
+      .marquee-controls {
+        gap: 5px;
+      }
+      
+      .marquee-btn {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+      }
+      
+      /* Responsive Popup */
+      .notice-popup-content {
+        width: 95%;
+        margin: 20px;
+      }
+      
+      .notice-body {
+        padding: 20px;
+      }
+      
+      .notice-actions {
+        flex-direction: column;
+      }
+      
+      .notice-btn {
+        width: 100%;
+      }
+      
+      .notice-header h3 {
+        font-size: 20px;
+      }
+      
+      .notice-message {
+        font-size: 14px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      header h1 {
+        font-size: 1.4rem;
+      }
+      
+      .hero h2 {
+        font-size: 1.5rem;
+      }
+      
+      .hero p {
+        font-size: 0.9rem;
+      }
+      
+      button {
+        padding: 0.7rem 1.5rem;
+        font-size: 0.8rem;
+        width: 180px;
+      }
+      
+      .hero::after {
+        bottom: -20px;
+        left: -20px;
+        width: 120px;
+        height: 120px;
+      }
+      
+      .hero::before {
+        top: -20px;
+        right: -20px;
+        width: 120px;
+        height: 120px;
+      }
+      
+      .doctor-info {
+        padding: 1rem;
+      }
+      
+      .doctor-info p:first-child {
+        font-size: 0.9rem;
+      }
+      
+      .doctor-info h2 {
+        font-size: 1.5rem !important;
+      }
+
+      .hospital-content h3 {
+        font-size: 1.3rem;
+      }
+
+      .contact-number {
+        font-size: 1rem;
+      }
+      
+      .marquee-container {
+        padding: 6px;
+        min-height: 35px;
+      }
+      
+      .floating-notice-text {
+        font-size: 0.8rem;
+        padding: 6px;
+      }
+      
+      .notice-popup-content {
+        margin: 10px;
+        width: calc(100% - 20px);
+        padding: 12px;
+      }
+    }
+
+    @media (max-height: 600px) {
+      .hero {
+        min-height: 85vh;
+        padding: 1.5rem;
+      }
+      
+      .hero h2 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+      
+      .hero p {
+        margin: 0.5rem 0;
+        font-size: 0.9rem;
+      }
+      
+      button {
+        padding: 0.6rem 1.2rem;
+        margin-top: 0.3rem;
+      }
+      
+      .doctor-info {
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+    }
+
+    /* Scrollbar styling for better UX */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--primary-color);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #7ab8d4;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Appointment Booking System</h1>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="#">Home</a></li>
+        <li><a href="#">About</a></li>
+        <li><a href="/login">Login</a></li>
+      </ul>
+      <div class="hamburger" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </nav> 
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-content">
+        <!-- Notice Slider Section -->
+        <div class="notice-slider-content" id="noticeSliderContent">
+          <div class="marquee-container" id="marqueeContainer">
+            <marquee 
+              class="floating-notice-text" 
+              id="dynamicNoticeText"
+              behavior="scroll"
+              direction="left"
+              scrollamount="3"
+            >
+              প্রতিদিনের সিরিয়াল প্রতিদিন দিতে হবে
+            </marquee>
+          </div>
+          
+          <!-- Marquee Control Panel (Admin only) -->
+          <div class="marquee-controls" id="marqueeControls" style="display: none;">
+            <button onclick="toggleMarquee()" class="marquee-btn">⏸️ বিরতি</button>
+            <button onclick="increaseMarqueeSpeed()" class="marquee-btn">⚡ দ্রুত</button>
+            <button onclick="decreaseMarqueeSpeed()" class="marquee-btn">🐌 ধীর</button>
+            <button onclick="changeMarqueeDirection()" class="marquee-btn">🔄 দিক পরিবর্তন</button>
+          </div>
+        </div>
+        
+        <div class="doctor-info">
+          <p>চর্ম, এলার্জি, যৌনরোগ বিশেষজ্ঞ ও কসমেটিক ডার্মাটো সার্জন</p>
+          <h2>ডাঃ মোঃ ওয়াহিদুজ্জামান মাসুম</h2>
+         
+          <div class="doctor-details">
+            <div class="doctor-right">
+              <p class="qualification">এমবিবিএস, বিসিএস, ডিডিভি</p>
+            </div>
+            <div class="doctor-left">
+              <p class="position">সহকারী অধ্যাপক</p>
+              <p class="institution">খুলনা মেডিকেল কলেজ, খুলনা</p>
+            </div>
+          </div>
+        </div>
+         
+        <div class="btn-group">
+          <button class="btn-primary" onclick="checkNoticeBeforeAppointment()" aria-label="Book new appointment">
+            সিরিয়াল দিন
+          </button>
+          <button class="btn-secondary" onclick="location.href='/search'" aria-label="Find existing appointment">
+            সিরিয়াল খুঁজুন
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hospital Info Section -->
+    <section class="hospital-info">
+      <div class="hospital-content">
+        <div class="hospital-details">
+          <div class="info-card">
+            <h4>চেম্বার</h4>
+            <p>ল্যাবাইড ডায়াগনস্টিক, খুলনা</p>
+            <p>বাড়ি # A5, মজিদ সরণি, সোনাডাঙ্গা, খুলনা – 9000</p>
+          </div>
+          <div class="info-card">
+            <h4>⏰ রোগী দেখার সময়</h4>
+            <p>শনিবার, রবিবার, সোমবার ও বুধবার</p>
+            <p>বিকাল ৫টা থেকে রাত ৯টা</p> 
+          </div>
+          <div class="info-card">
+            <h4>📞 যোগাযোগ</h4>
+            <p class="contact-number">+৮৮০১৭৫৫৯০২৭৩৮</p>
+            <p>জরুরি যোগাযোগের জন্য কল করুন</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <p>© 2025 Appointment Booking System. All rights reserved.</p>
+    </div>
+  </footer>
+  
+  <!-- Beautiful Notice Popup -->
+  <div class="notice-popup" id="noticePopup">
+    <div class="notice-popup-content">
+      <div class="notice-header">
+        <span class="notice-icon">📢</span>
+        <h3>গুরুত্বপূর্ণ নোটিস</h3>
+      </div>
+      <div class="notice-body">
+        <div class="notice-message" id="popupNoticeMessage">
+          <!-- Notice message will appear here -->
+        </div>
+        <div class="notice-time" id="popupNoticeTime">
+          <!-- Update time will appear here -->
+        </div>
+        <div class="notice-actions">
+          <button class="notice-btn notice-btn-close" onclick="closeNoticePopup()">
+            ❌ বন্ধ করুন
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDAdGUtNVgs5UspQeH8hL0i-L0WvPpOWnE",
+        authDomain: "appointment-e2050.firebaseapp.com",
+        projectId: "appointment-e2050",
+        storageBucket: "appointment-e2050.firebasestorage.app",
+        messagingSenderId: "367447068370",
+        appId: "1:367447068370:web:8e111bb010a19d21eda70b",
+        measurementId: "G-CRLSV1JJMQ"
+    };
+
+    // Initialize Firebase
+    let firebaseApp;
+    let db;
+    
+    function initializeFirebase() {
+      try {
+        // Check if Firebase is already initialized
+        if (!firebase.apps || firebase.apps.length === 0) {
+          firebaseApp = firebase.initializeApp(firebaseConfig);
+          console.log("✅ Firebase initialized successfully");
+        } else {
+          firebaseApp = firebase.apps[0];
+          console.log("✅ Firebase already initialized");
+        }
+        db = firebase.firestore();
+        return true;
+      } catch (error) {
+        console.error("❌ Firebase initialization error:", error);
+        return false;
+      }
+    }
+
+    // Marquee Control Variables
+    let marqueeSpeed = 3;
+    let marqueeDirection = 'left';
+    let marqueeIsPaused = false;
+    let isAdmin = false;
+    let scheduleCheckerInterval;
+
+    // Check if user is admin
+    function checkAdminStatus() {
+      // Check for admin token in sessionStorage or localStorage
+      const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
+      const userRole = sessionStorage.getItem('userRole') || localStorage.getItem('userRole');
+      isAdmin = adminToken || userRole === 'admin';
+      
+      if (isAdmin) {
+        document.getElementById('marqueeControls').style.display = 'flex';
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'marquee-status';
+        statusDiv.id = 'marqueeStatus';
+        statusDiv.textContent = `Speed: ${marqueeSpeed} | Direction: ${marqueeDirection}`;
+        document.getElementById('marqueeContainer').appendChild(statusDiv);
+        document.getElementById('marqueeStatus').style.display = 'block';
+      }
+    }
+
+    // Marquee Control Functions
+    function toggleMarquee() {
+      const marquee = document.getElementById('dynamicNoticeText');
+      if (marqueeIsPaused) {
+        marquee.start();
+        marqueeIsPaused = false;
+        showToast('Marquee resumed', 'success');
+      } else {
+        marquee.stop();
+        marqueeIsPaused = true;
+        showToast('Marquee paused', 'warning');
+      }
+      updateMarqueeStatus();
+    }
+
+    function increaseMarqueeSpeed() {
+      if (marqueeSpeed < 10) {
+        marqueeSpeed++;
+        const marquee = document.getElementById('dynamicNoticeText');
+        marquee.setAttribute('scrollamount', marqueeSpeed);
+        updateMarqueeStatus();
+        showToast(`Speed increased to ${marqueeSpeed}`, 'info');
+      }
+    }
+
+    function decreaseMarqueeSpeed() {
+      if (marqueeSpeed > 1) {
+        marqueeSpeed--;
+        const marquee = document.getElementById('dynamicNoticeText');
+        marquee.setAttribute('scrollamount', marqueeSpeed);
+        updateMarqueeStatus();
+        showToast(`Speed decreased to ${marqueeSpeed}`, 'info');
+      }
+    }
+
+    function changeMarqueeDirection() {
+      const marquee = document.getElementById('dynamicNoticeText');
+      if (marqueeDirection === 'left') {
+        marqueeDirection = 'right';
+        marquee.setAttribute('direction', 'right');
+      } else {
+        marqueeDirection = 'left';
+        marquee.setAttribute('direction', 'left');
+      }
+      updateMarqueeStatus();
+      showToast(`Direction changed to ${marqueeDirection}`, 'info');
+    }
+
+    function updateMarqueeStatus() {
+      const statusDiv = document.getElementById('marqueeStatus');
+      if (statusDiv) {
+        statusDiv.textContent = `Speed: ${marqueeSpeed} | Direction: ${marqueeDirection} | ${marqueeIsPaused ? 'Paused' : 'Running'}`;
+      }
+    }
+
+    // Toast notification function
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Dynamic Content Loading
+    async function loadDynamicContent() {
+      try {
+        if (!firebaseApp) {
+          if (!initializeFirebase()) return;
+        }
+        
+        // Load both notice and marquee settings
+        const [noticeDoc, marqueeDoc] = await Promise.all([
+          db.collection('settings').doc('appointmentNotice').get(),
+          db.collection('settings').doc('marqueeSettings').get()
+        ]);
+        
+        // Update marquee from Firebase
+        const marqueeText = document.getElementById('dynamicNoticeText');
+        const noticeSlider = document.getElementById('noticeSliderContent');
+        
+        if (marqueeDoc.exists) {
+          const marqueeData = marqueeDoc.data();
+          
+          if (marqueeData.text && marqueeData.text.trim() !== '') {
+            marqueeText.textContent = marqueeData.text;
+            
+            // Apply settings
+            marqueeText.setAttribute('scrollamount', marqueeData.speed || 3);
+            marqueeText.setAttribute('direction', marqueeData.direction || 'left');
+            marqueeText.style.color = marqueeData.color || '#e74c3c';
+            
+            // Show/hide based on active status
+            if (marqueeData.active === false) {
+              marqueeText.style.display = 'none';
+              noticeSlider.style.opacity = '0.5';
+            } else {
+              marqueeText.style.display = 'inline-block';
+              noticeSlider.style.opacity = '1';
+            }
+            
+            // Update control variables
+            marqueeSpeed = marqueeData.speed || 3;
+            marqueeDirection = marqueeData.direction || 'left';
+            updateMarqueeStatus();
+            
+          } else {
+            // Default marquee text
+            marqueeText.textContent = 'প্রতিদিনের সিরিয়াল প্রতিদিন দিতে হবে';
+          }
+          
+          // Always show the notice slider
+          noticeSlider.style.display = 'block';
+          
+        } else {
+          // Default marquee text if no settings
+          marqueeText.textContent = 'প্রতিদিনের সিরিয়াল প্রতিদিন দিতে হবে';
+          noticeSlider.style.display = 'block';
+        }
+        
+        // Check for scheduled notices
+        await checkScheduledNotice();
+        
+      } catch (error) {
+        console.error('❌ Error loading dynamic content:', error);
+        
+        // Always show default marquee on error
+        const marqueeText = document.getElementById('dynamicNoticeText');
+        const noticeSlider = document.getElementById('noticeSliderContent');
+        
+        if (marqueeText) {
+          marqueeText.textContent = 'প্রতিদিনের সিরিয়াল প্রতিদিন দিতে হবে';
+        }
+        if (noticeSlider) {
+          noticeSlider.style.display = 'block';
+        }
+      }
+    }
+
+    // Check for scheduled notices
+    async function checkScheduledNotice() {
+      try {
+        if (!db) return;
+        
+        const doc = await db.collection('settings').doc('appointmentNotice').get();
+        
+        if (doc.exists) {
+          const noticeData = doc.data();
+          
+          if (noticeData.statusType === 'scheduled') {
+            const now = new Date();
+            const startTime = noticeData.startTime ? new Date(noticeData.startTime) : null;
+            const endTime = noticeData.endTime ? new Date(noticeData.endTime) : null;
+            
+            if (startTime && endTime) {
+              if (now >= startTime && now <= endTime && noticeData.active) {
+                console.log('✅ Scheduled notice is currently active');
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error checking scheduled notice:', error);
+      }
+    }
+
+    // Start schedule checker
+    function startScheduleChecker() {
+      if (scheduleCheckerInterval) {
+        clearInterval(scheduleCheckerInterval);
+      }
+      
+      // Check every 30 seconds
+      scheduleCheckerInterval = setInterval(async () => {
+        await checkScheduledNotice();
+      }, 30000);
+    }
+
+    // Beautiful Popup Functions
+    function showNoticePopup(message, updateTime) {
+      const popup = document.getElementById('noticePopup');
+      const messageElement = document.getElementById('popupNoticeMessage');
+      const timeElement = document.getElementById('popupNoticeTime');
+      
+      messageElement.textContent = message;
+      
+      if (updateTime) {
+        let date;
+        if (updateTime.toDate && typeof updateTime.toDate === 'function') {
+          date = updateTime.toDate();
+        } else if (updateTime.seconds) {
+          date = new Date(updateTime.seconds * 1000);
+        } else if (updateTime._seconds) {
+          date = new Date(updateTime._seconds * 1000);
+        } else {
+          date = new Date(updateTime);
+        }
+        
+        timeElement.textContent = `আপডেট: ${date.toLocaleDateString('bn-BD')} ${date.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' })}`;
+      } else {
+        timeElement.textContent = '';
+      }
+      
+      popup.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeNoticePopup() {
+      const popup = document.getElementById('noticePopup');
+      popup.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    // Updated function to check notice
+    async function checkNoticeBeforeAppointment() {
+      try {
+        // Initialize Firebase if not already
+        if (!firebaseApp) {
+          if (!initializeFirebase()) {
+            // If Firebase fails, proceed to appointment
+            window.location.href = '/appointment';
+            return true;
+          }
+        }
+        
+        const doc = await db.collection('settings').doc('appointmentNotice').get();
+        
+        if (doc.exists) {
+          const notice = doc.data();
+          
+          // Check if notice is scheduled and should be active
+          if (notice.statusType === 'scheduled') {
+            const now = new Date();
+            const startTime = notice.startTime ? new Date(notice.startTime) : null;
+            const endTime = notice.endTime ? new Date(notice.endTime) : null;
+            
+            if (startTime && endTime) {
+              if (now >= startTime && now <= endTime && notice.active) {
+                showNoticePopup(notice.message, notice.updatedAt);
+                return false;
+              } else {
+                window.location.href = '/appointment';
+                return true;
+              }
+            }
+          }
+          
+          // Manual notice
+          if (notice.active) {
+            showNoticePopup(notice.message, notice.updatedAt);
+            return false;
+          } else {
+            window.location.href = '/appointment';
+            return true;
+          }
+        } else {
+          window.location.href = '/appointment';
+          return true;
+        }
+      } catch (error) {
+        console.error('Error checking notice:', error);
+        window.location.href = '/appointment';
+        return true;
+      }
+    }
+
+    // Hamburger menu functionality
+    const hamburger = document.getElementById('hamburger');
+    const navLinks = document.querySelector('.nav-links');
+    const body = document.body;
+    
+    if (hamburger) {
+      hamburger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navLinks.classList.toggle('active');
+        hamburger.classList.toggle('active');
+        
+        if (navLinks.classList.contains('active')) {
+          body.style.overflow = 'hidden';
+        } else {
+          body.style.overflow = '';
+        }
+      });
+    }
+    
+    document.addEventListener('click', (e) => {
+      if (hamburger && !hamburger.contains(e.target) && navLinks && !navLinks.contains(e.target)) {
+        navLinks.classList.remove('active');
+        if (hamburger) hamburger.classList.remove('active');
+        body.style.overflow = '';
+      }
+    });
+
+    if (navLinks) {
+      document.querySelectorAll('.nav-links a').forEach(link => {
+        link.addEventListener('click', () => {
+          navLinks.classList.remove('active');
+          if (hamburger) hamburger.classList.remove('active');
+          body.style.overflow = '';
+        });
+      });
+    }
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768) {
+        if (navLinks) navLinks.classList.remove('active');
+        if (hamburger) hamburger.classList.remove('active');
+        body.style.overflow = '';
+      }
+    });
+
+    // Close popup when clicking outside
+    const noticePopup = document.getElementById('noticePopup');
+    if (noticePopup) {
+      noticePopup.addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeNoticePopup();
+        }
+      });
+    }
+
+    // Keyboard support for popup
+    document.addEventListener('keydown', function(e) {
+      const popup = document.getElementById('noticePopup');
+      if (popup && popup.style.display === 'flex') {
+        if (e.key === 'Escape') {
+          closeNoticePopup();
+        }
+        if (e.key === 'Enter') {
+          closeNoticePopup();
+        }
+      }
+    });
+
+    // Initialize Firebase when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Admin status check
+      checkAdminStatus();
+      
+      // Load Firebase SDK if not already loaded
+      if (typeof firebase === 'undefined') {
+        const firebaseScript = document.createElement('script');
+        firebaseScript.src = 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js';
+        firebaseScript.onload = function() {
+          const firestoreScript = document.createElement('script');
+          firestoreScript.src = 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js';
+          firestoreScript.onload = function() {
+            initializeFirebase();
+            // Load dynamic content after Firebase is ready
+            setTimeout(() => {
+              loadDynamicContent();
+              startScheduleChecker();
+            }, 1000);
+          };
+          document.head.appendChild(firestoreScript);
+        };
+        document.head.appendChild(firebaseScript);
+      } else {
+        initializeFirebase();
+        // Load dynamic content
+        setTimeout(() => {
+          loadDynamicContent();
+          startScheduleChecker();
+        }, 1000);
+      }
+    });
+  </script>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+</body>
+</html>

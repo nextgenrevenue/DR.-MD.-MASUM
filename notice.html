@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>নোটিস ম্যানেজমেন্ট</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --gray: #6b7280;
+      --light-gray: #f3f4f6;
+      --white: #ffffff;
+      --dark: #1f2937;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Noto Sans Bengali', sans-serif;
+      background-color: #f5f7fa;
+      min-height: 100vh;
+    }
+    
+    /* Admin Header */
+    .admin-header {
+      background-color: var(--dark);
+      color: var(--white);
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    
+    .admin-header h1 {
+      font-size: 22px;
+    }
+    
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--white);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 5px;
+    }
+    
+    .logout-btn {
+      padding: 8px 16px;
+      background-color: var(--danger);
+      color: var(--white);
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Noto Sans Bengali', sans-serif;
+    }
+    
+    .logout-btn:hover {
+      background-color: #b91c1c;
+    }
+    
+    /* Admin Container */
+    .admin-container {
+      display: flex;
+      min-height: calc(100vh - 60px);
+    }
+    
+    /* Sidebar */
+    .admin-sidebar {
+      width: 250px;
+      background-color: var(--white);
+      border-right: 1px solid #e5e7eb;
+      padding: 20px 0;
+      transition: transform 0.3s ease;
+    }
+    
+    .sidebar-menu {
+      list-style: none;
+    }
+    
+    .sidebar-menu li {
+      margin-bottom: 5px;
+    }
+    
+    .sidebar-menu a {
+      display: block;
+      padding: 12px 20px;
+      color: var(--dark);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+    
+    .sidebar-menu a:hover, 
+    .sidebar-menu a.active {
+      background-color: var(--light-gray);
+      color: var(--primary);
+    }
+    
+    .sidebar-menu a i {
+      margin-right: 10px;
+      width: 20px;
+      text-align: center;
+    }
+    
+    /* Main Content */
+    .admin-main {
+      flex: 1;
+      padding: 30px;
+      background-color: #f9fafb;
+      overflow-y: auto;
+    }
+    
+    .notice-card {
+      background-color: var(--white);
+      border-radius: 10px;
+      padding: 25px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    
+    .notice-card h2 {
+      color: var(--dark);
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--light-gray);
+      padding-bottom: 10px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--dark);
+    }
+    
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-family: 'Noto Sans Bengali', sans-serif;
+      resize: vertical;
+      min-height: 120px;
+    }
+    
+    .form-group select,
+    .form-group input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-family: 'Noto Sans Bengali', sans-serif;
+    }
+    
+    .time-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 10px;
+    }
+    
+    .time-control {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .time-control label {
+      font-size: 14px;
+      margin-bottom: 5px;
+      color: var(--gray);
+    }
+    
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 30px;
+    }
+    
+    .submit-btn {
+      background-color: var(--success);
+      color: var(--white);
+      padding: 12px 25px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Noto Sans Bengali', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    
+    .submit-btn:hover {
+      background-color: #15803d;
+    }
+    
+    .reset-btn {
+      background-color: var(--danger);
+      color: var(--white);
+      padding: 12px 25px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Noto Sans Bengali', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    
+    .reset-btn:hover {
+      background-color: #b91c1c;
+    }
+    
+    /* Current Notice Display */
+    .current-notice {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 30px;
+      border-left: 4px solid var(--primary);
+    }
+    
+    .current-notice h3 {
+      color: var(--dark);
+      margin-bottom: 15px;
+    }
+    
+    .notice-content {
+      background: var(--white);
+      padding: 15px;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .notice-active {
+      color: var(--success);
+      font-weight: 600;
+    }
+    
+    .notice-inactive {
+      color: var(--gray);
+      font-style: italic;
+    }
+    
+    .notice-scheduled {
+      color: var(--warning);
+      font-weight: 600;
+    }
+    
+    .time-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background: #fef3c7;
+      color: #92400e;
+      border-radius: 4px;
+      font-size: 12px;
+      margin: 0 5px;
+    }
+    
+    .alert {
+      padding: 12px 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+    
+    .alert-success {
+      background-color: #dcfce7;
+      color: var(--success);
+      border: 1px solid #bbf7d0;
+    }
+    
+    .alert-error {
+      background-color: #fee2e2;
+      color: var(--danger);
+      border: 1px solid #fecaca;
+    }
+    
+    .alert-warning {
+      background-color: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+    
+    /* Schedule Status */
+    .schedule-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+    
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    
+    .status-dot.active {
+      background-color: var(--success);
+    }
+    
+    .status-dot.scheduled {
+      background-color: var(--warning);
+    }
+    
+    .status-dot.inactive {
+      background-color: var(--gray);
+    }
+    
+    /* Marquee Control Section */
+    .color-preview {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border-radius: 3px;
+      margin-left: 10px;
+      vertical-align: middle;
+      border: 1px solid #ddd;
+    }
+    
+    .speed-slider {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-top: 10px;
+    }
+    
+    .speed-slider input[type="range"] {
+      flex: 1;
+    }
+    
+    .speed-value {
+      min-width: 30px;
+      text-align: center;
+      font-weight: bold;
+      color: var(--primary);
+    }
+    
+    .color-picker-container {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-top: 10px;
+    }
+    
+    .color-picker-container input[type="color"] {
+      width: 50px;
+      height: 40px;
+      padding: 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .color-picker-container span {
+      font-size: 14px;
+      color: var(--gray);
+    }
+    
+    /* Mobile Menu Button Hidden on Desktop */
+    .mobile-menu-btn {
+      display: none;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .mobile-menu-btn {
+        display: block;
+      }
+      
+      .admin-sidebar {
+        position: fixed;
+        top: 60px;
+        left: 0;
+        height: calc(100vh - 60px);
+        transform: translateX(-100%);
+        z-index: 100;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      }
+      
+      .admin-sidebar.mobile-open {
+        transform: translateX(0);
+      }
+      
+      .admin-container {
+        flex-direction: column;
+      }
+      
+      .admin-main {
+        padding: 20px 15px;
+      }
+      
+      .notice-card {
+        padding: 20px;
+      }
+      
+      .time-controls {
+        grid-template-columns: 1fr;
+      }
+      
+      .form-actions {
+        flex-direction: column;
+      }
+      
+      .submit-btn,
+      .reset-btn {
+        width: 100%;
+      }
+      
+      .color-picker-container {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      /* Mobile overlay for sidebar */
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 60px;
+        left: 0;
+        width: 100%;
+        height: calc(100vh - 60px);
+        background: rgba(0,0,0,0.5);
+        z-index: 99;
+      }
+      
+      .sidebar-overlay.active {
+        display: block;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .admin-main {
+        padding: 15px 10px;
+      }
+      
+      .notice-card {
+        padding: 15px;
+      }
+      
+      .current-notice {
+        padding: 15px;
+      }
+      
+      .form-group textarea {
+        min-height: 100px;
+      }
+      
+      .speed-slider {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+    
+    /* Flatpickr Customization */
+    .flatpickr-input {
+      background-color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- Admin Header -->
+  <header class="admin-header">
+    <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+    <h1>নোটিস ম্যানেজমেন্ট</h1>
+    <button class="logout-btn" id="logoutBtn">লগআউট</button>
+  </header>
+
+  <!-- Mobile Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Admin Container -->
+  <div class="admin-container">
+    <!-- Sidebar -->
+    <nav class="admin-sidebar" id="sidebar">
+      <ul class="sidebar-menu">
+        <li><a href="/dashboard"><i>📊</i> ড্যাশবোর্ড</a></li>
+        <li><a href="#"><i>📅</i> অ্যাপয়েন্টমেন্ট</a></li>
+        <li><a href="#"><i>👨‍⚕️</i> ডাক্তার</a></li>
+        <li><a href="#"><i>⏰</i> সিরিয়াল ম্যানেজমেন্ট</a></li>
+        <li><a href="/notice" class="active"><i>📢</i> নোটিস</a></li>
+        <li><a href="/settings"><i>⚙️</i> সেটিংস</a></li>
+      </ul>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="admin-main">
+      <!-- Alert Messages -->
+      <div id="alertContainer"></div>
+      
+      <!-- Notice Form -->
+      <div class="notice-card">
+        <h2>অ্যাপয়েন্টমেন্ট নোটিস সেট করুন</h2>
+        <form id="noticesForm">
+          <div class="form-group">
+            <label for="noticeMessage">নোটিস বার্তা</label>
+            <textarea 
+              id="noticeMessage" 
+              placeholder="নোটিস লিখুন... এই নোটিসটি সিরিয়াল দেওয়ার আগে ইউজারদের দেখানো হবে।"
+            ></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="noticeStatus">স্ট্যাটাস টাইপ</label>
+            <select id="noticeStatus">
+              <option value="manual">ম্যানুয়াল কন্ট্রোল</option>
+              <option value="scheduled">শিডিউলড (অটোমেটিক)</option>
+            </select>
+          </div>
+          
+          <div class="form-group" id="manualControl">
+            <label for="manualActiveStatus">ম্যানুয়াল স্ট্যাটাস</label>
+            <select id="manualActiveStatus">
+              <option value="true">সক্রিয়</option>
+              <option value="false">নিষ্ক্রিয়</option>
+            </select>
+          </div>
+          
+          <div class="form-group" id="scheduleControl" style="display: none;">
+            <label>সময়সূচী সেট করুন</label>
+            <div class="time-controls">
+              <div class="time-control">
+                <label for="startTime">শুরু হওয়ার সময়</label>
+                <input type="datetime-local" id="startTime">
+              </div>
+              <div class="time-control">
+                <label for="endTime">শেষ হওয়ার সময়</label>
+                <input type="datetime-local" id="endTime">
+              </div>
+            </div>
+            <small style="color: var(--gray); margin-top: 5px; display: block;">
+              নির্দিষ্ট সময়ে নোটিস স্বয়ংক্রিয়ভাবে সক্রিয়/নিষ্ক্রিয় হবে
+            </small>
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" class="submit-btn" id="submitNoticeBtn">সংরক্ষণ করুন</button>
+            <button type="button" class="reset-btn" id="resetNoticeBtn">নোটিস মুছুন</button>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Marquee Control Section -->
+      <div class="notice-card">
+        <h2>মারকিউ কন্ট্রোল</h2>
+        <form id="marqueeForm">
+          <div class="form-group">
+            <label for="marqueeText">মারকিউ টেক্সট</label>
+            <textarea 
+              id="marqueeText" 
+              placeholder="মারকিউতে প্রদর্শিত হবে এমন টেক্সট লিখুন..."
+              rows="3"
+            ></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="marqueeActive">মারকিউ স্ট্যাটাস</label>
+            <select id="marqueeActive">
+              <option value="true">সক্রিয়</option>
+              <option value="false">নিষ্ক্রিয়</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>মারকিউ সেটিংস</label>
+            <div class="speed-slider">
+              <label for="marqueeSpeed">গতি: </label>
+              <input 
+                type="range" 
+                id="marqueeSpeed" 
+                min="1" 
+                max="10" 
+                value="3"
+              >
+              <span class="speed-value" id="speedValue">3</span>
+            </div>
+            
+            <div class="form-group">
+              <label for="marqueeDirection">দিক</label>
+              <select id="marqueeDirection">
+                <option value="left">বাম থেকে ডানে</option>
+                <option value="right">ডান থেকে বামে</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>রং সেটিংস</label>
+            <div class="color-picker-container">
+              <input type="color" id="marqueeColor" value="#e74c3c">
+              <span id="colorValue">#e74c3c</span>
+              <div class="color-preview" id="colorPreview" style="background-color: #e74c3c;"></div>
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" class="submit-btn" id="saveMarqueeBtn">মারকিউ সেভ করুন</button>
+            <button type="button" class="reset-btn" onclick="resetMarquee()">ডিফল্ট সেট করুন</button>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Current Notice Display -->
+      <div class="current-notice">
+        <h3>বর্তমান অ্যাপয়েন্টমেন্ট নোটিস</h3>
+        <div class="notice-content" id="currentNoticeDisplay">
+          <p class="notice-inactive">কোনো নোটিস সেট করা নেই</p>
+        </div>
+      </div>
+      
+      <!-- Current Marquee Status -->
+      <div class="current-notice">
+        <h3>বর্তমান মারকিউ স্ট্যাটাস</h3>
+        <div class="notice-content" id="currentMarqueeDisplay">
+          <p class="notice-inactive">মারকিউ ডেটা লোড হচ্ছে...</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+  <script>
+    // ==================== FIREBASE CONFIGURATION ====================
+    const firebaseConfig = {
+        apiKey: "AIzaSyDAdGUtNVgs5UspQeH8hL0i-L0WvPpOWnE",
+        authDomain: "appointment-e2050.firebaseapp.com",
+        projectId: "appointment-e2050",
+        storageBucket: "appointment-e2050.firebasestorage.app",
+        messagingSenderId: "367447068370",
+        appId: "1:367447068370:web:8e111bb010a19d21eda70b",
+        measurementId: "G-CRLSV1JJMQ"
+    };
+
+    let db;
+    let checkScheduleInterval;
+
+    // ==================== INITIALIZATION ====================
+    function initializeFirebase() {
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        db = firebase.firestore();
+        console.log("✅ Firebase initialized successfully");
+        return true;
+      } catch (error) {
+        console.error("❌ Firebase initialization error:", error);
+        showAlert('Firebase initialization failed: ' + error.message, 'error');
+        return false;
+      }
+    }
+
+    // ==================== UTILITY FUNCTIONS ====================
+    function showAlert(message, type = 'success') {
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type}`;
+      alert.textContent = message;
+      document.getElementById('alertContainer').appendChild(alert);
+      
+      setTimeout(() => {
+        alert.remove();
+      }, 5000);
+    }
+
+    function checkDatabase() {
+      if (!db) {
+        showAlert('ডেটাবেস সংযোগ সমস্যা। পৃষ্ঠাটি রিফ্রেশ করুন।', 'error');
+        return false;
+      }
+      return true;
+    }
+
+    function formatFirestoreTimestamp(timestamp) {
+      if (!timestamp) return 'N/A';
+      
+      let date;
+      // Check if it's a Firestore Timestamp object
+      if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+        date = timestamp.toDate();
+      } else if (timestamp.seconds) {
+        // Convert from seconds to Date
+        date = new Date(timestamp.seconds * 1000);
+      } else if (timestamp._seconds) {
+        // Alternative property name
+        date = new Date(timestamp._seconds * 1000);
+      } else {
+        // Assume it's already a Date object
+        date = timestamp;
+      }
+      
+      return date.toLocaleString('bn-BD', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function formatDateTime(date) {
+      if (!date) return 'N/A';
+      const d = new Date(date);
+      return d.toLocaleString('bn-BD', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // ==================== SCHEDULE MANAGEMENT ====================
+    function calculateScheduleStatus(noticeData) {
+      if (!noticeData || noticeData.statusType !== 'scheduled') return noticeData;
+      
+      const now = new Date();
+      const startTime = noticeData.startTime ? new Date(noticeData.startTime) : null;
+      const endTime = noticeData.endTime ? new Date(noticeData.endTime) : null;
+      
+      if (startTime && endTime) {
+        const shouldBeActive = now >= startTime && now <= endTime;
+        
+        // Update if status has changed
+        if (noticeData.active !== shouldBeActive) {
+          noticeData.active = shouldBeActive;
+          noticeData.lastAutoUpdate = new Date();
+          
+          // Update in Firebase
+          updateNoticeStatusInFirebase(noticeData, shouldBeActive);
+        }
+      }
+      
+      return noticeData;
+    }
+
+    async function updateNoticeStatusInFirebase(noticeData, shouldBeActive) {
+      if (!checkDatabase()) return;
+      
+      try {
+        await db.collection('settings').doc('appointmentNotice').update({
+          active: shouldBeActive,
+          lastAutoUpdate: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        console.log('✅ Auto-updated notice status to:', shouldBeActive);
+      } catch (error) {
+        console.error('❌ Error auto-updating notice:', error);
+      }
+    }
+
+    function startScheduleChecker() {
+      if (checkScheduleInterval) {
+        clearInterval(checkScheduleInterval);
+      }
+      
+      // Check every minute
+      checkScheduleInterval = setInterval(async () => {
+        if (!checkDatabase()) return;
+        
+        try {
+          const doc = await db.collection('settings').doc('appointmentNotice').get();
+          if (doc.exists) {
+            const noticeData = doc.data();
+            calculateScheduleStatus(noticeData);
+          }
+        } catch (error) {
+          console.error('❌ Error checking schedule:', error);
+        }
+      }, 60000); // Check every minute
+    }
+
+    // ==================== NOTICE MANAGEMENT ====================
+    async function loadNotice() {
+      if (!checkDatabase()) return;
+      
+      try {
+        const doc = await db.collection('settings').doc('appointmentNotice').get();
+        
+        if (doc.exists) {
+          let noticeData = doc.data();
+          
+          // Check and update schedule status
+          noticeData = calculateScheduleStatus(noticeData);
+          
+          // Populate form
+          document.getElementById('noticeMessage').value = noticeData.message || '';
+          document.getElementById('noticeStatus').value = noticeData.statusType || 'manual';
+          
+          // Show/hide controls based on status type
+          toggleScheduleControls(noticeData.statusType);
+          
+          if (noticeData.statusType === 'manual') {
+            document.getElementById('manualActiveStatus').value = noticeData.active ? 'true' : 'false';
+          } else if (noticeData.statusType === 'scheduled') {
+            if (noticeData.startTime) {
+              const startDate = new Date(noticeData.startTime);
+              document.getElementById('startTime').value = startDate.toISOString().slice(0, 16);
+            }
+            if (noticeData.endTime) {
+              const endDate = new Date(noticeData.endTime);
+              document.getElementById('endTime').value = endDate.toISOString().slice(0, 16);
+            }
+          }
+          
+          // Display current notice
+          updateNoticeDisplay(noticeData);
+        } else {
+          document.getElementById('currentNoticeDisplay').innerHTML = 
+            '<p class="notice-inactive">কোনো নোটিস সেট করা নেই</p>';
+        }
+      } catch (error) {
+        console.error('❌ Error loading notice:', error);
+        showAlert('নোটিস লোড করতে সমস্যা হয়েছে', 'error');
+      }
+    }
+
+    function toggleScheduleControls(statusType) {
+      const manualControl = document.getElementById('manualControl');
+      const scheduleControl = document.getElementById('scheduleControl');
+      
+      if (statusType === 'manual') {
+        manualControl.style.display = 'block';
+        scheduleControl.style.display = 'none';
+      } else if (statusType === 'scheduled') {
+        manualControl.style.display = 'none';
+        scheduleControl.style.display = 'block';
+      }
+    }
+
+    function updateNoticeDisplay(noticeData) {
+      const noticeDisplay = document.getElementById('currentNoticeDisplay');
+      
+      if (!noticeData.message) {
+        noticeDisplay.innerHTML = '<p class="notice-inactive">কোনো নোটিস সেট করা নেই</p>';
+        return;
+      }
+      
+      let statusHtml = '';
+      let statusDotClass = '';
+      let statusText = '';
+      
+      if (noticeData.statusType === 'manual') {
+        if (noticeData.active) {
+          statusDotClass = 'active';
+          statusText = '<span class="notice-active">সক্রিয় (ম্যানুয়াল)</span>';
+        } else {
+          statusDotClass = 'inactive';
+          statusText = '<span class="notice-inactive">নিষ্ক্রিয় (ম্যানুয়াল)</span>';
+        }
+      } else if (noticeData.statusType === 'scheduled') {
+        const now = new Date();
+        const startTime = noticeData.startTime ? new Date(noticeData.startTime) : null;
+        const endTime = noticeData.endTime ? new Date(noticeData.endTime) : null;
+        
+        if (startTime && endTime) {
+          if (now >= startTime && now <= endTime) {
+            statusDotClass = 'active';
+            statusText = `<span class="notice-scheduled">সক্রিয় (শিডিউলড)</span>`;
+            statusHtml += `<p><span class="time-badge">শুরু: ${formatDateTime(startTime)}</span></p>`;
+            statusHtml += `<p><span class="time-badge">শেষ: ${formatDateTime(endTime)}</span></p>`;
+          } else if (now < startTime) {
+            statusDotClass = 'scheduled';
+            statusText = `<span class="notice-scheduled">শিডিউলড (আরম্ভ হবে)</span>`;
+            statusHtml += `<p><span class="time-badge">শুরু হবে: ${formatDateTime(startTime)}</span></p>`;
+          } else {
+            statusDotClass = 'inactive';
+            statusText = `<span class="notice-inactive">সময় শেষ (শিডিউলড)</span>`;
+          }
+        }
+      }
+      
+      let displayHtml = `
+        <p><strong>বার্তা:</strong> ${noticeData.message}</p>
+        <div class="schedule-status">
+          <span class="status-dot ${statusDotClass}"></span>
+          <p><strong>স্ট্যাটাস:</strong> ${statusText}</p>
+        </div>
+        ${statusHtml}
+      `;
+      
+      if (noticeData.updatedAt) {
+        displayHtml += `<p><strong>সর্বশেষ আপডেট:</strong> ${formatFirestoreTimestamp(noticeData.updatedAt)}</p>`;
+      }
+      
+      if (noticeData.lastAutoUpdate) {
+        displayHtml += `<p><strong>স্বয়ংক্রিয় আপডেট:</strong> ${formatFirestoreTimestamp(noticeData.lastAutoUpdate)}</p>`;
+      }
+      
+      noticeDisplay.innerHTML = displayHtml;
+    }
+
+    async function saveNotice(e) {
+      e.preventDefault();
+      
+      if (!checkDatabase()) return;
+      
+      const message = document.getElementById('noticeMessage').value.trim();
+      const statusType = document.getElementById('noticeStatus').value;
+      
+      if (!message) {
+        showAlert('নোটিস বার্তা লিখুন', 'error');
+        return;
+      }
+      
+      const noticeData = {
+        message: message,
+        statusType: statusType,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      
+      if (statusType === 'manual') {
+        const activeStatus = document.getElementById('manualActiveStatus').value;
+        noticeData.active = activeStatus === 'true';
+      } else if (statusType === 'scheduled') {
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
+        
+        if (!startTime || !endTime) {
+          showAlert('শুরু এবং শেষ সময় সেট করুন', 'error');
+          return;
+        }
+        
+        if (new Date(startTime) >= new Date(endTime)) {
+          showAlert('শেষ সময় শুরু সময়ের পরে হতে হবে', 'error');
+          return;
+        }
+        
+        noticeData.startTime = new Date(startTime).toISOString();
+        noticeData.endTime = new Date(endTime).toISOString();
+        
+        // Calculate initial active status
+        const now = new Date();
+        noticeData.active = now >= new Date(startTime) && now <= new Date(endTime);
+      }
+      
+      try {
+        document.getElementById('submitNoticeBtn').innerHTML = 'সংরক্ষণ করা হচ্ছে...';
+        document.getElementById('submitNoticeBtn').disabled = true;
+        
+        await db.collection('settings').doc('appointmentNotice').set(noticeData);
+        
+        showAlert('নোটিস সংরক্ষণ করা হয়েছে', 'success');
+        updateNoticeDisplay(noticeData);
+        
+        // Start schedule checker if scheduled
+        if (statusType === 'scheduled') {
+          startScheduleChecker();
+        }
+        
+      } catch (error) {
+        console.error('❌ Error saving notice:', error);
+        showAlert('নোটিস সংরক্ষণ করতে সমস্যা হয়েছে', 'error');
+      } finally {
+        document.getElementById('submitNoticeBtn').innerHTML = 'সংরক্ষণ করুন';
+        document.getElementById('submitNoticeBtn').disabled = false;
+      }
+    }
+
+    async function resetNotice() {
+      if (!checkDatabase()) return;
+      
+      if (confirm('আপনি কি নোটিস মুছতে চান? এটি সম্পূর্ণ ডিলিট হয়ে যাবে।')) {
+        try {
+          await db.collection('settings').doc('appointmentNotice').delete();
+          
+          document.getElementById('noticeMessage').value = '';
+          document.getElementById('noticeStatus').value = 'manual';
+          document.getElementById('manualActiveStatus').value = 'true';
+          document.getElementById('startTime').value = '';
+          document.getElementById('endTime').value = '';
+          document.getElementById('manualControl').style.display = 'block';
+          document.getElementById('scheduleControl').style.display = 'none';
+          
+          document.getElementById('currentNoticeDisplay').innerHTML = 
+            '<p class="notice-inactive">কোনো নোটিস সেট করা নেই</p>';
+          
+          showAlert('নোটিস মুছে ফেলা হয়েছে', 'success');
+        } catch (error) {
+          console.error('❌ Error resetting notice:', error);
+          showAlert('নোটিস মুছতে সমস্যা হয়েছে', 'error');
+        }
+      }
+    }
+
+    // ==================== MARQUEE MANAGEMENT ====================
+    async function loadMarqueeSettings() {
+      if (!checkDatabase()) return;
+      
+      try {
+        const doc = await db.collection('settings').doc('marqueeSettings').get();
+        
+        if (doc.exists) {
+          const marqueeData = doc.data();
+          
+          // Populate form
+          document.getElementById('marqueeText').value = marqueeData.text || '';
+          document.getElementById('marqueeActive').value = marqueeData.active ? 'true' : 'false';
+          document.getElementById('marqueeSpeed').value = marqueeData.speed || 3;
+          document.getElementById('speedValue').textContent = marqueeData.speed || 3;
+          document.getElementById('marqueeDirection').value = marqueeData.direction || 'left';
+          document.getElementById('marqueeColor').value = marqueeData.color || '#e74c3c';
+          document.getElementById('colorValue').textContent = marqueeData.color || '#e74c3c';
+          document.getElementById('colorPreview').style.backgroundColor = marqueeData.color || '#e74c3c';
+          
+          // Update display
+          updateMarqueeDisplay(marqueeData);
+        }
+      } catch (error) {
+        console.error('❌ Error loading marquee settings:', error);
+      }
+    }
+
+    async function saveMarqueeSettings(e) {
+      e.preventDefault();
+      
+      if (!checkDatabase()) return;
+      
+      const marqueeData = {
+        text: document.getElementById('marqueeText').value.trim(),
+        active: document.getElementById('marqueeActive').value === 'true',
+        speed: parseInt(document.getElementById('marqueeSpeed').value),
+        direction: document.getElementById('marqueeDirection').value,
+        color: document.getElementById('marqueeColor').value,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      
+      if (!marqueeData.text) {
+        showAlert('মারকিউ টেক্সট লিখুন', 'error');
+        return;
+      }
+      
+      try {
+        document.getElementById('saveMarqueeBtn').innerHTML = 'সংরক্ষণ করা হচ্ছে...';
+        document.getElementById('saveMarqueeBtn').disabled = true;
+        
+        await db.collection('settings').doc('marqueeSettings').set(marqueeData);
+        
+        showAlert('মারকিউ সেটিংস সংরক্ষণ করা হয়েছে', 'success');
+        updateMarqueeDisplay(marqueeData);
+        
+      } catch (error) {
+        console.error('❌ Error saving marquee settings:', error);
+        showAlert('মারকিউ সেভ করতে সমস্যা হয়েছে', 'error');
+      } finally {
+        document.getElementById('saveMarqueeBtn').innerHTML = 'মারকিউ সেভ করুন';
+        document.getElementById('saveMarqueeBtn').disabled = false;
+      }
+    }
+
+    function updateMarqueeDisplay(marqueeData) {
+      const displayDiv = document.getElementById('currentMarqueeDisplay');
+      
+      if (!marqueeData.text) {
+        displayDiv.innerHTML = '<p class="notice-inactive">কোনো মারকিউ সেট করা নেই</p>';
+        return;
+      }
+      
+      const statusClass = marqueeData.active ? 'notice-active' : 'notice-inactive';
+      const statusText = marqueeData.active ? 'সক্রিয়' : 'নিষ্ক্রিয়';
+      const directionText = marqueeData.direction === 'left' ? 'বাম থেকে ডানে' : 'ডান থেকে বামে';
+      
+      displayDiv.innerHTML = `
+        <p><strong>টেক্সট:</strong> ${marqueeData.text}</p>
+        <p><strong>স্ট্যাটাস:</strong> <span class="${statusClass}">${statusText}</span></p>
+        <p><strong>গতি:</strong> ${marqueeData.speed || 3}</p>
+        <p><strong>দিক:</strong> ${directionText}</p>
+        <p><strong>রং:</strong> <span style="color:${marqueeData.color || '#e74c3c'}">${marqueeData.color || '#e74c3c'}</span></p>
+        <p><strong>সর্বশেষ আপডেট:</strong> ${formatFirestoreTimestamp(marqueeData.updatedAt)}</p>
+      `;
+    }
+
+    function resetMarquee() {
+      if (confirm('আপনি কি মারকিউ ডিফল্ট সেট করতে চান?')) {
+        document.getElementById('marqueeText').value = 'প্রতিদিনের সিরিয়াল প্রতিদিন দিতে হবে';
+        document.getElementById('marqueeActive').value = 'true';
+        document.getElementById('marqueeSpeed').value = 3;
+        document.getElementById('speedValue').textContent = 3;
+        document.getElementById('marqueeDirection').value = 'left';
+        document.getElementById('marqueeColor').value = '#e74c3c';
+        document.getElementById('colorValue').textContent = '#e74c3c';
+        document.getElementById('colorPreview').style.backgroundColor = '#e74c3c';
+        
+        showAlert('মারকিউ ডিফল্ট সেট করা হয়েছে', 'success');
+      }
+    }
+
+    // ==================== AUTHENTICATION CHECK ====================
+    function checkAuthentication() {
+      const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
+      const loginTime = sessionStorage.getItem('loginTime');
+      
+      if (!isLoggedIn) {
+        alert('দয়া করে প্রথমে লগইন করুন!');
+        window.location.href = 'login.html';
+        return false;
+      }
+      
+      const currentTime = new Date().getTime();
+      const sessionDuration = 2 * 60 * 60 * 1000;
+      
+      if (currentTime - parseInt(loginTime) > sessionDuration) {
+        sessionStorage.clear();
+        alert('সেশন মেয়াদ শেষ! দয়া করে আবার লগইন করুন।');
+        window.location.href = 'login.html';
+        return false;
+      }
+      
+      return true;
+    }
+
+    // ==================== EVENT HANDLERS ====================
+    function setupEventListeners() {
+      // Status type change
+      document.getElementById('noticeStatus').addEventListener('change', function() {
+        toggleScheduleControls(this.value);
+      });
+      
+      // Form submission
+      document.getElementById('noticesForm').addEventListener('submit', saveNotice);
+      document.getElementById('resetNoticeBtn').addEventListener('click', resetNotice);
+      
+      // Marquee form submission
+      document.getElementById('marqueeForm').addEventListener('submit', saveMarqueeSettings);
+      
+      // Color picker live update
+      document.getElementById('marqueeColor').addEventListener('input', function() {
+        document.getElementById('colorValue').textContent = this.value;
+        document.getElementById('colorPreview').style.backgroundColor = this.value;
+      });
+      
+      // Speed slider live update
+      document.getElementById('marqueeSpeed').addEventListener('input', function() {
+        document.getElementById('speedValue').textContent = this.value;
+      });
+      
+      document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+      
+      // Set default datetime for inputs
+      const now = new Date();
+      const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
+      const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+      
+      document.getElementById('startTime').min = now.toISOString().slice(0, 16);
+      document.getElementById('endTime').min = nextHour.toISOString().slice(0, 16);
+      
+      // Set default values
+      document.getElementById('startTime').value = nextHour.toISOString().slice(0, 16);
+      document.getElementById('endTime').value = twoHoursLater.toISOString().slice(0, 16);
+    }
+
+    // ==================== MOBILE MENU FUNCTIONALITY ====================
+    function setupMobileMenu() {
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const sidebar = document.getElementById('sidebar');
+      const sidebarOverlay = document.getElementById('sidebarOverlay');
+      
+      if (mobileMenuBtn && sidebar) {
+        mobileMenuBtn.addEventListener('click', () => {
+          sidebar.classList.toggle('mobile-open');
+          sidebarOverlay.classList.toggle('active');
+          document.body.style.overflow = sidebar.classList.contains('mobile-open') ? 'hidden' : '';
+        });
+        
+        sidebarOverlay.addEventListener('click', () => {
+          sidebar.classList.remove('mobile-open');
+          sidebarOverlay.classList.remove('active');
+          document.body.style.overflow = '';
+        });
+        
+        document.querySelectorAll('.sidebar-menu a').forEach(link => {
+          link.addEventListener('click', () => {
+            sidebar.classList.remove('mobile-open');
+            sidebarOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+          });
+        });
+      }
+    }
+
+    function handleLogout() {
+      if (confirm('আপনি কি লগআউট করতে চান?')) {
+        sessionStorage.clear();
+        if (checkScheduleInterval) {
+          clearInterval(checkScheduleInterval);
+        }
+        alert('লগআউট সফল!');
+        window.location.href = 'login.html';
+      }
+    }
+
+    // ==================== INITIALIZATION ====================
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!checkAuthentication()) {
+        return;
+      }
+      
+      initializeFirebase();
+      setupMobileMenu();
+      setupEventListeners();
+      
+      // Load existing data
+      setTimeout(() => {
+        loadNotice();
+        loadMarqueeSettings();
+        startScheduleChecker(); // Start checking schedules
+      }, 500);
+      
+      // Handle window resize
+      window.addEventListener('resize', () => {
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        
+        if (window.innerWidth > 768) {
+          sidebar.classList.remove('mobile-open');
+          sidebarOverlay.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,2345 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>ড্যাশবোর্ড</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+
+<script src="components-inline.js"></script>
+<script src="grid.js"></script>
+<script src="table-manager.js"></script>
+<script src="quick-modal.js"></script>
+  
+  <style>
+    /* ======================================================== */
+    /* ভেরিয়েবল এবং বেসিক স্টাইল */
+    /* ======================================================== */
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #16a34a;
+      --success-hover: #15803d;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --warning: #f59e0b;
+      --info: #0ea5e9;
+      --gray: #6b7280;
+      --light-gray: #f3f4f6;
+      --white: #ffffff;
+      --dark: #1f2937;
+      --background: #f5f7fa; 
+      --card-background: #ffffff;
+      --text-color: var(--dark);
+      --secondary-text: var(--gray);
+      --border-color: #e5e7eb;
+      --sidebar-width: 250px;
+      
+      /* সার্ভিস কার্ড কালার */
+      --general-color: #3b82f6;
+      --microneedling-color: #8b5cf6;
+      --prp-color: #10b981;
+      --cryosurgery-color: #0ea5e9;
+      --electrocautery-color: #f59e0b;
+      --pending-color: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans Bengali', sans-serif;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--text-color);
+      overflow-x: hidden;
+    }
+
+    /* ======================================================== */
+    /* লেআউট স্টাইল */
+    /* ======================================================== */
+    .admin-container {
+      display: flex;
+      min-height: 100vh;
+      padding-top: 60px;
+    }
+
+    #sidebar-container {
+      flex-shrink: 0;
+    }
+
+    .admin-main {
+      flex: 1;
+      padding: 20px;
+      background-color: var(--background);
+      min-height: calc(100vh - 60px);
+      overflow-x: hidden;
+    }
+
+    /* ======================================================== */
+    /* নতুন ড্যাশবোর্ড কার্ড স্টাইল */
+    /* ======================================================== */
+    .dashboard-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+    
+    .stat-card {
+      background-color: var(--white);
+      border-radius: 12px;
+      padding: 22px 18px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+    
+    .stat-card i {
+      font-size: 32px;
+      margin-bottom: 15px;
+      display: block;
+    }
+    
+    .stat-card h3 {
+      color: var(--dark);
+      font-size: 16px;
+      margin-bottom: 10px;
+      font-weight: 600;
+      line-height: 1.4;
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .stat-card p {
+      font-size: 36px;
+      font-weight: 800;
+      margin: 10px 0 5px;
+    }
+    
+    .stat-card small {
+      font-size: 13px;
+      color: var(--gray);
+      display: block;
+    }
+    
+    /* সার্ভিস কার্ড কালার */
+    .stat-card.general {
+      border-color: var(--general-color);
+      color: var(--general-color);
+    }
+    
+    .stat-card.general p {
+      color: var(--general-color);
+    }
+    
+    .stat-card.microneedling {
+      border-color: var(--microneedling-color);
+      color: var(--microneedling-color);
+    }
+    
+    .stat-card.microneedling p {
+      color: var(--microneedling-color);
+    }
+    
+    .stat-card.prp {
+      border-color: var(--prp-color);
+      color: var(--prp-color);
+    }
+    
+    .stat-card.prp p {
+      color: var(--prp-color);
+    }
+    
+    .stat-card.cryosurgery {
+      border-color: var(--cryosurgery-color);
+      color: var(--cryosurgery-color);
+    }
+    
+    .stat-card.cryosurgery p {
+      color: var(--cryosurgery-color);
+    }
+    
+    .stat-card.electrocautery {
+      border-color: var(--electrocautery-color);
+      color: var(--electrocautery-color);
+    }
+    
+    .stat-card.electrocautery p {
+      color: var(--electrocautery-color);
+    }
+    
+    .stat-card.pending {
+      border-color: var(--pending-color);
+      color: var(--pending-color);
+    }
+    
+    .stat-card.pending p {
+      color: var(--pending-color);
+    }
+
+    /* ======================================================== */
+    /* ফিল্টার সেকশন স্টাইল - আপডেট করা */
+    /* ======================================================== */
+    .filter-section {
+      background-color: var(--white);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+
+    /* ডেস্কটপ ভিউ (1025px+): সবকিছু বাম পাশে */
+    @media (min-width: 1025px) {
+      .admin-table-header {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        margin-bottom: 15px;
+        flex-wrap: nowrap;
+        gap: 15px;
+      }
+      
+      .admin-table-header h2 {
+        font-size: 18px;
+        color: var(--dark);
+        margin: 0;
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-width: 160px;
+        order: 1;
+      }
+      
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        order: 2;
+      }
+      
+      .filter-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: nowrap;
+        flex: none;
+      }
+      
+      /* তারিখ পিকার স্টাইল */
+      .date-picker {
+        padding: 7px 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: 'Noto Sans Bengali', sans-serif;
+        font-size: 13px;
+        background-color: var(--white);
+        color: var(--dark);
+        cursor: pointer;
+        min-width: 130px;
+        max-width: 140px;
+        height: 36px;
+        flex-shrink: 0;
+      }
+      
+      .filter-group select {
+        padding: 7px 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: 'Noto Sans Bengali', sans-serif;
+        font-size: 13px;
+        background-color: var(--white);
+        color: var(--dark);
+        cursor: pointer;
+        min-width: 110px;
+        max-width: 120px;
+        height: 36px;
+        flex-shrink: 0;
+      }
+      
+      .search-box {
+        position: relative;
+        width: 180px;
+        flex-shrink: 0;
+        margin-left: 10px;
+      }
+      
+      .search-box input {
+        width: 100%;
+        padding: 7px 10px 7px 32px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: 'Noto Sans Bengali', sans-serif;
+        font-size: 13px;
+        height: 36px;
+        box-sizing: border-box;
+      }
+      
+      .add-btn {
+        padding: 7px 14px;
+        background-color: var(--success);
+        color: var(--white);
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.2s;
+        white-space: nowrap;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        flex-shrink: 0;
+        height: 36px;
+        margin-left: 10px;
+      }
+      
+      .download-btn {
+        padding: 7px 14px;
+        background-color: var(--info);
+        color: var(--white);
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.2s;
+        white-space: nowrap;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        flex-shrink: 0;
+        height: 36px;
+        margin-left: 10px;
+      }
+      
+      .download-btn:hover {
+        background-color: #0284c7;
+      }
+      
+      /* মোবাইল ভিউ সম্পূর্ণ লুকানো */
+      .mobile-date-picker-row,
+      .mobile-filter-row-1,
+      .mobile-filter-row-2,
+      .mobile-button-row {
+        display: none !important;
+      }
+      
+      .search-icon {
+        width: 14px;
+        height: 14px;
+        left: 10px;
+      }
+    }
+
+    /* ট্যাবলেট ভিউ (769px - 1024px) */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .admin-table-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+      
+      .admin-table-header h2 {
+        text-align: center;
+        width: 100%;
+        margin-bottom: 10px;
+        font-size: 16px;
+      }
+      
+      .header-actions {
+        width: 100%;
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .filter-group {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      .date-picker {
+        flex: 1 1 calc(25% - 6px);
+        min-width: 120px;
+        max-width: 150px;
+        padding: 8px 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: 'Noto Sans Bengali', sans-serif;
+        font-size: 13px;
+        background-color: var(--white);
+        color: var(--dark);
+        cursor: pointer;
+        height: 36px;
+      }
+      
+      .filter-group select {
+        flex: 1 1 calc(25% - 6px);
+        min-width: 110px;
+        max-width: 160px;
+        padding: 8px 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: 'Noto Sans Bengali', sans-serif;
+        font-size: 13px;
+        background-color: var(--white);
+        color: var(--dark);
+        cursor: pointer;
+        height: 36px;
+      }
+      
+      .search-box {
+        width: 100%;
+        position: relative;
+      }
+      
+      .search-box input {
+        width: 100%;
+        padding: 8px 10px 8px 32px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: 'Noto Sans Bengali', sans-serif;
+        font-size: 13px;
+        height: 36px;
+        box-sizing: border-box;
+      }
+      
+      .button-group {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+      }
+      
+      .add-btn, .download-btn {
+        flex: 1;
+        padding: 9px;
+        color: var(--white);
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.2s;
+        font-size: 13px;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        height: 36px;
+      }
+      
+      .add-btn {
+        background-color: var(--success);
+      }
+      
+      .download-btn {
+        background-color: var(--info);
+      }
+      
+      /* মোবাইল ভিউ সম্পূর্ণ লুকানো */
+      .mobile-date-picker-row,
+      .mobile-filter-row-1,
+      .mobile-filter-row-2,
+      .mobile-button-row {
+        display: none !important;
+      }
+      
+      .search-icon {
+        width: 14px;
+        height: 14px;
+        left: 10px;
+      }
+    }
+
+    /* মোবাইল ভিউ (768px নিচে): ৫ লাইন */
+    @media (max-width: 768px) {
+      /* ডেস্কটপ ভিউ লুকানো */
+      .header-actions {
+        display: none !important;
+      }
+      
+      .admin-table-header {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 15px;
+        width: 100%;
+      }
+      
+      /* লাইন ১: আজকের অ্যাপয়েন্টমেন্ট (সেন্টারে) */
+      .admin-table-header h2 {
+        font-size: 16px;
+        color: var(--dark);
+        text-align: center;
+        margin: 0;
+        width: 100%;
+        order: 1;
+        display: block !important;
+      }
+      
+      /* লাইন ২: তারিখ পিকার */
+      .mobile-date-picker-row {
+        display: flex !important;
+        width: 100%;
+        order: 2;
+      }
+      
+      .mobile-date-picker-row .date-picker {
+        width: 100%;
+        font-size: 14px;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: 'Noto Sans Bengali', sans-serif;
+        background-color: var(--white);
+        color: var(--dark);
+        cursor: pointer;
+        display: block !important;
+        height: 40px;
+        box-sizing: border-box;
+      }
+      
+      /* লাইন ৩: ফিল্টার ১, ২ - 2টি এক লাইনে */
+      .mobile-filter-row-1 {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        width: 100%;
+        order: 3;
+        align-items: stretch;
+      }
+      
+      .mobile-filter-row-1 .filter-group {
+        display: contents !important;
+      }
+      
+      .mobile-filter-row-1 select {
+        width: 100%;
+        font-size: 13px;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: 'Noto Sans Bengali', sans-serif;
+        background-color: var(--white);
+        color: var(--dark);
+        cursor: pointer;
+        display: block !important;
+        height: 40px;
+        box-sizing: border-box;
+      }
+      
+      /* লাইন ৪: ফিল্টার ৩, সার্চ - 3টি এক লাইনে */
+      .mobile-filter-row-2 {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr 2fr;
+        gap: 8px;
+        width: 100%;
+        order: 4;
+        align-items: stretch;
+      }
+      
+      .mobile-filter-row-2 select {
+        width: 100%;
+        font-size: 13px;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: 'Noto Sans Bengali', sans-serif;
+        background-color: var(--white);
+        color: var(--dark);
+        cursor: pointer;
+        display: block !important;
+        height: 40px;
+        box-sizing: border-box;
+      }
+      
+      .mobile-search-box {
+        position: relative;
+        display: block !important;
+      }
+      
+      .mobile-search-box input {
+        width: 100%;
+        padding: 10px 12px 10px 40px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: 'Noto Sans Bengali', sans-serif;
+        font-size: 13px;
+        display: block !important;
+        height: 40px;
+        box-sizing: border-box;
+      }
+      
+      /* লাইন ৫: সিরিয়াল যুক্ত করুন এবং ডাউনলোড বাটন */
+      .mobile-button-row {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        width: 100%;
+        order: 5;
+        margin-top: 5px;
+      }
+      
+      .mobile-add-btn, .mobile-download-btn {
+        width: 100%;
+        padding: 11px;
+        color: var(--white);
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.2s;
+        font-size: 14px;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        height: 44px;
+      }
+      
+      .mobile-add-btn {
+        background-color: var(--success);
+      }
+      
+      .mobile-download-btn {
+        background-color: var(--info);
+      }
+      
+      /* ডেস্কটপ এলিমেন্ট লুকানো */
+      .filter-group:not(.mobile-filter-row-1 .filter-group):not(.mobile-filter-row-2 .filter-group),
+      .search-box:not(.mobile-search-box),
+      .add-btn:not(.mobile-add-btn),
+      .download-btn:not(.mobile-download-btn) {
+        display: none !important;
+      }
+      
+      .search-icon {
+        left: 14px;
+      }
+    }
+
+    /* কমন স্টাইলস */
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--gray);
+    }
+
+    .date-picker:focus,
+    .filter-group select:focus,
+    .mobile-date-picker-row .date-picker:focus,
+    .mobile-filter-row-1 select:focus,
+    .mobile-filter-row-2 select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .search-box input:focus,
+    .mobile-search-box input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .add-btn:hover,
+    .mobile-add-btn:hover {
+      background-color: var(--success-hover);
+    }
+
+    .download-btn:hover,
+    .mobile-download-btn:hover {
+      background-color: #0284c7;
+    }
+
+    .stats-info {
+      background-color: #eff6ff;
+      color: var(--primary);
+      padding: 12px 20px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 14px;
+      margin-top: 15px;
+    }
+
+    /* ছোট মোবাইলের জন্য অতিরিক্ত স্টাইল (480px নিচে) */
+    @media (max-width: 480px) {
+      .dashboard-cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      
+      .stat-card {
+        padding: 18px 12px;
+      }
+      
+      .stat-card i {
+        font-size: 28px;
+        margin-bottom: 12px;
+      }
+      
+      .stat-card h3 {
+        font-size: 14px;
+        height: 38px;
+      }
+      
+      .stat-card p {
+        font-size: 28px;
+      }
+      
+      .stat-card small {
+        font-size: 12px;
+      }
+      
+      /* ফিল্টার সেকশন */
+      .mobile-filter-row-1,
+      .mobile-filter-row-2 {
+        gap: 6px;
+      }
+      
+      .mobile-filter-row-1 select,
+      .mobile-filter-row-2 select {
+        font-size: 12px;
+        padding: 9px 10px;
+        height: 38px;
+      }
+      
+      .mobile-search-box input {
+        font-size: 12px;
+        padding: 9px 10px 9px 36px;
+        height: 38px;
+      }
+      
+      .mobile-add-btn,
+      .mobile-download-btn {
+        font-size: 13px;
+        padding: 10px;
+        height: 40px;
+      }
+      
+      /* মোবাইল ভিউ এডজাস্টমেন্ট */
+      .mobile-filter-row-2 {
+        grid-template-columns: 1fr 1fr 1.5fr;
+      }
+    }
+
+    /* খুব ছোট ফোনের জন্য (360px নিচে) */
+    @media (max-width: 360px) {
+      .dashboard-cards {
+        grid-template-columns: 1fr;
+      }
+      
+      .stat-card {
+        padding: 16px 10px;
+      }
+      
+      .stat-card i {
+        font-size: 24px;
+      }
+      
+      .stat-card h3 {
+        font-size: 13px;
+        height: 36px;
+      }
+      
+      .stat-card p {
+        font-size: 24px;
+      }
+      
+      .filter-section {
+        padding: 15px;
+      }
+      
+      .admin-table-header h2 {
+        font-size: 15px;
+      }
+      
+      .mobile-filter-row-1,
+      .mobile-filter-row-2 {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+      
+      .mobile-filter-row-2 {
+        grid-template-columns: 1fr;
+      }
+      
+      .mobile-button-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+      
+      .mobile-add-btn,
+      .mobile-download-btn {
+        font-size: 13px;
+        padding: 9px;
+        height: 38px;
+      }
+    }
+    
+    /* ======================================================== */
+    /* টেবিল স্টাইল (table-manager.js এ স্থানান্তর করা হবে) */
+    /* ======================================================== */
+    .table-container {
+      background-color: var(--card-background);
+      padding: 0;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      margin-top: 20px;
+    }
+    
+    .table-wrapper {
+      overflow-x: auto;
+      max-height: calc(100vh - 350px);
+      min-height: 400px;
+    }
+    
+    .table-wrapper::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    
+    .table-wrapper::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    
+    .table-wrapper::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+    
+    .table-wrapper::-webkit-scrollbar-thumb:hover {
+      background: #a1a1a1;
+    }
+    
+    #appointmentsTable {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1200px;
+    }
+    
+    #appointmentsTable th {
+      background-color: var(--light-gray);
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--dark);
+      font-size: 14px;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 2px solid var(--border-color);
+    }
+    
+    #appointmentsTable td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 13px;
+      vertical-align: middle;
+    }
+    
+    #appointmentsTable tr:hover {
+      background-color: rgba(243, 244, 246, 0.5);
+    }
+    
+    #appointmentsTable tr:last-child td {
+      border-bottom: none;
+    }
+    
+    /* স্ট্যাটাস ব্যাজ */
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      min-width: 100px;
+      text-align: center;
+    }
+    
+    .status-called {
+      background-color: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+    
+    .status-not-called {
+      background-color: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+    
+    .status-token-given {
+      background-color: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+    
+    .status-token-not-given {
+      background-color: #f3e8ff;
+      color: #5b21b6;
+      border: 1px solid #e9d5ff;
+    }
+    
+    /* সার্ভিস ব্যাজ */
+    .service-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      min-width: 100px;
+      text-align: center;
+    }
+    
+    .service-general {
+      background-color: rgba(59, 130, 246, 0.1);
+      color: #1d4ed8;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .service-microneedling {
+      background-color: rgba(139, 92, 246, 0.1);
+      color: #6d28d9;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+    
+    .service-prp {
+      background-color: rgba(16, 185, 129, 0.1);
+      color: #047857;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .service-cryosurgery {
+      background-color: rgba(14, 165, 233, 0.1);
+      color: #0369a1;
+      border: 1px solid rgba(14, 165, 233, 0.3);
+    }
+    
+    .service-electrocautery {
+      background-color: rgba(245, 158, 11, 0.1);
+      color: #b45309;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    /* অ্যাকশন বাটন */
+    .action-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      min-width: 90px;
+      white-space: nowrap;
+    }
+    
+    .btn-call {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    .btn-call:hover {
+      background-color: var(--primary-hover);
+    }
+    
+    .btn-call-undo {
+      background-color: var(--danger);
+      color: white;
+    }
+    
+    .btn-call-undo:hover {
+      background-color: var(--danger-hover);
+    }
+    
+    .btn-token {
+      background-color: var(--warning);
+      color: white;
+    }
+    
+    .btn-token:hover {
+      background-color: #eab308;
+    }
+    
+    .btn-token-undo {
+      background-color: var(--info);
+      color: white;
+    }
+    
+    .btn-token-undo:hover {
+      background-color: #0284c7;
+    }
+    
+    /* লোডিং মেসেজ */
+    #loadingMessage {
+      text-align: center;
+      padding: 40px;
+      color: var(--gray);
+      font-size: 16px;
+      display: none;
+    }
+    
+    #loadingMessage.show {
+      display: block;
+    }
+    
+    /* ======================================================== */
+    /* মোবাইল রেসপনসিভ */
+    /* ======================================================== */
+    @media (max-width: 768px) {
+      .admin-container {
+        padding-top: 60px;
+      }
+      
+      .admin-main {
+        padding: 15px;
+        min-height: calc(100vh - 60px);
+      }
+      
+      .table-wrapper {
+        max-height: calc(100vh - 100px);
+      }
+      
+      .modal-content {
+        margin: 10px;
+        width: calc(100% - 20px);
+        padding: 20px 15px;
+      }
+      
+      .age-inputs {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .service-types {
+        grid-template-columns: 1fr;
+      }
+      
+      .serial-types {
+        flex-direction: column;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .admin-main {
+        padding: 12px;
+      }
+      
+      .status-badge,
+      .service-badge {
+        min-width: 80px;
+        font-size: 11px;
+        padding: 3px 8px;
+      }
+      
+      .action-btn {
+        min-width: 75px;
+        padding: 5px 10px;
+        font-size: 12px;
+      }
+      
+      #appointmentsTable th,
+      #appointmentsTable td {
+        padding: 10px 8px;
+        font-size: 12px;
+      }
+      
+      .stats-info {
+        padding: 10px 15px;
+        font-size: 13px;
+      }
+    }
+    
+    /* ======================================================== */
+    /* ল্যান্ডস্কেপ মোড */
+    /* ======================================================== */
+    @media (max-height: 600px) and (orientation: landscape) {
+      .dashboard-cards {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+      
+      .stat-card {
+        padding: 15px 10px;
+      }
+      
+      .stat-card h3 {
+        font-size: 13px;
+        height: 32px;
+      }
+      
+      .stat-card p {
+        font-size: 24px;
+      }
+      
+      .table-wrapper {
+        max-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body data-auto-load-components="true"> 
+
+  <div id="header-container"></div> 
+
+  <div class="admin-container">
+    <div id="sidebar-container"></div> 
+    
+    <main class="admin-main">
+      <h2 style="margin-bottom: 20px; color: var(--dark); font-size: 22px;">রিয়েল-টাইম সিরিয়াল ট্র্যাকিং</h2> 
+      
+      <!-- ড্যাশবোর্ড কার্ড -->
+      <div class="dashboard-cards"> 
+        <div class="stat-card general">
+          <h3>সাধারণ সিরিয়াল</h3>
+          <p id="generalSerials">0</p>
+        </div>
+        
+        <div class="stat-card microneedling">
+          <h3>মাইক্রোনিডলিং</h3>
+          <p id="microneedlingSerials">0</p>
+        </div>
+        
+        <div class="stat-card prp">
+          <h3>পি আর পি</h3>
+          <p id="prpSerials">0</p>
+        </div>
+        
+        <div class="stat-card cryosurgery">
+          <h3>ক্রায়োসার্জারি</h3>
+          <p id="cryosurgerySerials">0</p>
+        </div>
+        
+        <div class="stat-card electrocautery">
+          <h3>ইলেক্ট্রোক্যাটারি</h3>
+          <p id="electrocauterySerials">0</p>
+        </div>
+        
+        <!-- পেন্ডিং এবং সময়ভিত্তিক কার্ড -->
+        <div class="stat-card pending">
+          <h3>পেন্ডিং সিরিয়াল</h3>
+          <p id="pendingSerials">0</p>
+        </div>
+      </div>
+      
+      <!-- আপডেট করা ফিল্টার সেকশন -->
+      <div class="filter-section">
+        <div class="admin-table-header">
+          <h2>আজকের অ্যাপয়েন্টমেন্ট</h2>
+          
+          <!-- ডেস্কটপ ভিউ (1025px+): সবকিছু এক লাইনে -->
+          <div class="header-actions">
+            <div class="filter-group">
+              <!-- তারিখ পিকার -->
+              <input type="date" id="dateFilter" class="date-picker" value="">
+              
+              <!-- সার্ভিস টাইপ ফিল্টার -->
+              <select id="serviceFilter">
+                <option value="all">সকল সার্ভিস</option>
+                <option value="general">সাধারণ সিরিয়াল</option>
+                <option value="microneedling">মাইক্রোনিডলিং</option>
+                <option value="prp">পি আর পি</option>
+                <option value="cryosurgery">ক্রায়োসার্জারি</option>
+                <option value="electrocautery">ইলেক্ট্রোক্যাটারি</option>
+              </select>
+              
+              <!-- রোগীর ধরন ফিল্টার -->
+              <select id="typeFilter">
+                <option value="all">সকল রোগী</option>
+                <option value="new">নতুন রোগী</option>
+                <option value="old">পুরাতন রোগী</option>
+              </select>
+              
+              <!-- কল স্ট্যাটাস ফিল্টার -->
+              <select id="call-status-filter">
+                <option value="all">কল স্ট্যাটাস</option>
+                <option value="called">কল করা হয়েছে</option>
+                <option value="not_called">কল করা হয়নি</option>
+              </select>
+              
+              <!-- টোকেন স্ট্যাটাস ফিল্টার -->
+              <select id="token-status-filter">
+                <option value="all">টোকেন স্ট্যাটাস</option>
+                <option value="given">টোকেন দেওয়া হয়েছে</option>
+                <option value="not_given">টোকেন দেওয়া হয়নি</option>
+              </select>
+            </div>
+            
+            <div class="search-box">
+              <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+              <input type="text" id="searchInput" placeholder="নাম, ফোন বা সিরিয়াল দিয়ে খুঁজুন..." />
+            </div>
+            
+            <div class="button-group">
+              <button class="add-btn" id="openAddSerialModalBtn">
+                <i class="fas fa-plus-circle"></i>
+                সিরিয়াল যুক্ত করুন
+              </button>
+              
+              <button class="download-btn" id="downloadDataBtn">
+                <i class="fas fa-download"></i>
+                ডেটা ডাউনলোড
+              </button>
+            </div>
+          </div>
+          
+          <!-- মোবাইল ভিউ (768px নিচে): ৫ লাইন -->
+          <!-- লাইন ২: তারিখ পিকার -->
+          <div class="mobile-date-picker-row">
+            <input type="date" id="dateFilterMobile" class="date-picker" value="">
+          </div>
+          
+          <!-- লাইন ৩: ফিল্টার ১, ২ - সার্ভিস এবং রোগীর ধরন -->
+          <div class="mobile-filter-row-1">
+            <div class="filter-group">
+              <select id="serviceFilterMobile">
+                <option value="all">সকল সার্ভিস</option>
+                <option value="general">সাধারণ সিরিয়াল</option>
+                <option value="microneedling">মাইক্রোনিডলিং</option>
+                <option value="prp">পি আর পি</option>
+                <option value="cryosurgery">ক্রায়োসার্জারি</option>
+                <option value="electrocautery">ইলেক্ট্রোক্যাটারি</option>
+              </select>
+              
+              <select id="typeFilterMobile">
+                <option value="all">সকল রোগী</option>
+                <option value="new">নতুন রোগী</option>
+                <option value="old">পুরাতন রোগী</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- লাইন ৪: ফিল্টার ৩, সার্চ - কল স্ট্যাটাস, টোকেন স্ট্যাটাস এবং সার্চ -->
+          <div class="mobile-filter-row-2">
+            <select id="call-status-filter-mobile">
+              <option value="all">কল স্ট্যাটাস</option>
+              <option value="called">কল করা হয়েছে</option>
+              <option value="not_called">কল করা হয়নি</option>
+            </select>
+
+            <select id="token-status-filter-mobile">
+              <option value="all">টোকেন স্ট্যাটাস</option>
+              <option value="given">টোকেন দেওয়া হয়েছে</option>
+              <option value="not_given">টোকেন দেওয়া হয়নি</option>
+            </select>
+            
+            <div class="search-box mobile-search-box">
+              <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+              <input type="text" id="searchInputMobile" placeholder="নাম, ফোন বা সিরিয়াল..." />
+            </div>
+          </div>
+          
+          <!-- লাইন ৫: সিরিয়াল যুক্ত করুন এবং ডাউনলোড বাটন -->
+          <div class="mobile-button-row">
+            <button class="add-btn mobile-add-btn" id="openAddSerialModalBtnMobile">
+              <i class="fas fa-plus-circle"></i>
+              সিরিয়াল যুক্ত করুন
+            </button>
+            
+            <button class="download-btn mobile-download-btn" id="downloadDataBtnMobile">
+              <i class="fas fa-download"></i>
+              ডেটা ডাউনলোড
+            </button>
+          </div>
+        </div>
+        
+        <!-- স্ট্যাটাস বার্তা -->
+        <div id="statusMessage" class="stats-info">
+          মোট বুকিং: <span id="filteredCount">০</span> টি। প্রদর্শিত: <span id="displayedCount">০</span> টি।
+        </div>
+      </div>
+      
+      <!-- টেবিল কন্টেন্ট -->
+      <div class="table-container">
+        <div class="table-wrapper">
+          <table id="appointmentsTable"> 
+            <thead> 
+              <tr>
+                <th>সিরিয়াল</th>
+                <th>কল স্ট্যাটাস</th>
+                <th>টোকেন স্ট্যাটাস</th>
+                <th>রোগীর নাম</th>
+                <th>বয়স</th>
+                <th>ফোন</th>
+                <th>সার্ভিস</th>
+                <th>তারিখ/সময়</th>
+                <th>ধরন</th> 
+                <th>বুকিং তারিখ</th>
+                <th>কল অ্যাকশন</th>
+                <th>টোকেন অ্যাকশন</th>
+                <th>এডিট/ডিলিট</th>
+              </tr>
+            </thead> 
+            <tbody id="appointmentsBody"></tbody> 
+          </table>
+        </div>
+        <p id="loadingMessage" class="loading-message">ডেটা লোড হচ্ছে...</p>
+      </div>
+    </main>
+  </div>
+
+  <div id="footer-container"></div>
+  
+<script>
+    // =======================================================
+    // AUTHENTICATION CHECK - FIXED
+    // =======================================================
+    function checkAuthentication() {
+      const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
+      const loginTime = sessionStorage.getItem('loginTime');
+      
+      if (!isLoggedIn || isLoggedIn !== 'true') {
+        console.log('Not logged in, redirecting to login');
+        alert('Please login first!!');
+        window.location.href = '/login';
+        return false;
+      }
+      
+      const currentTime = new Date().getTime();
+      const sessionDuration = 2 * 60 * 60 * 1000; // 2 hours
+      
+      if (currentTime - parseInt(loginTime) > sessionDuration) {
+        console.log('Session expired');
+        sessionStorage.clear();
+        alert('Session expired! Please login again.');
+        window.location.href = '/login';
+        return false;
+      }
+      
+      console.log('Authentication successful');
+      return true;
+    }
+
+    // 🔴 IMMEDIATE AUTH CHECK
+    if (!checkAuthentication()) {
+      // Stop execution if not authenticated
+      throw new Error('Authentication failed - redirecting to login');
+    }
+    
+    // =======================================================
+    // ১. ফায়ারবেস কনফিগারেশন
+    // =======================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyDAdGUtNVgs5UspQeH8hL0i-L0WvPpOWnE",
+        authDomain: "appointment-e2050.firebaseapp.com",
+        projectId: "appointment-e2050",
+        storageBucket: "appointment-e2050.firebasestorage.app",
+        messagingSenderId: "367447068370",
+        appId: "1:367447068370:web:8e111bb010a19d21eda70b",
+        measurementId: "G-CRLSV1JJMQ"
+    };
+
+    let db;
+    let allAppointmentsSnapshot = null;
+    let tableManager = null;
+    let pendingSelections = {};
+    let adminSessionId = 'admin_' + Date.now();
+    let appointmentsData = []; // Store all appointments globally
+    
+    try {
+      const app = firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore(app);
+      console.log("✅ Firebase initialized");
+    } catch (e) {
+      console.error("❌ Firebase initialization error:", e);
+    }
+
+    // =======================================================
+    // ২. DOM উপাদান - আপডেট করা
+    // =======================================================
+    const elements = {
+      loadingMessage: document.getElementById('loadingMessage'),
+      appointmentsTable: document.getElementById('appointmentsTable'),
+      appointmentsBody: document.getElementById('appointmentsBody'),
+      statusMessage: document.getElementById('statusMessage'),
+      filteredCount: document.getElementById('filteredCount'),
+      displayedCount: document.getElementById('displayedCount'),
+      
+      // নতুন কার্ড এলিমেন্টস
+      generalSerials: document.getElementById('generalSerials'),
+      microneedlingSerials: document.getElementById('microneedlingSerials'),
+      prpSerials: document.getElementById('prpSerials'),
+      cryosurgerySerials: document.getElementById('cryosurgerySerials'),
+      electrocauterySerials: document.getElementById('electrocauterySerials'),
+      pendingSerials: document.getElementById('pendingSerials'),
+      
+      // ডেস্কটপ ফিল্টার
+      dateFilter: document.getElementById('dateFilter'),
+      serviceFilter: document.getElementById('serviceFilter'),
+      typeFilter: document.getElementById('typeFilter'),
+      callStatusFilter: document.getElementById('call-status-filter'),
+      tokenStatusFilter: document.getElementById('token-status-filter'),
+      searchInput: document.getElementById('searchInput'),
+      downloadDataBtn: document.getElementById('downloadDataBtn'),
+      
+      // মোবাইল ফিল্টার
+      dateFilterMobile: document.getElementById('dateFilterMobile'),
+      serviceFilterMobile: document.getElementById('serviceFilterMobile'),
+      typeFilterMobile: document.getElementById('typeFilterMobile'),
+      callStatusFilterMobile: document.getElementById('call-status-filter-mobile'),
+      tokenStatusFilterMobile: document.getElementById('token-status-filter-mobile'),
+      searchInputMobile: document.getElementById('searchInputMobile'),
+      downloadDataBtnMobile: document.getElementById('downloadDataBtnMobile'),
+    };
+
+    // =======================================================
+    // ৩. ইউটিলিটি ফাংশন
+    // =======================================================
+    const toBengaliNumber = (num) => {
+      if (num === null || num === undefined || num === '—') return '—';
+      const numStr = String(num); 
+      const bengaliMap = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+      return numStr.replace(/\d/g, digit => bengaliMap[digit]);
+    };
+
+    // তারিখ ফরম্যাট ফাংশন
+    const formatDateForDisplay = (dateStr) => {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      return date.toLocaleDateString('bn-BD', options);
+    };
+
+    // শুরুতেই আজকের তারিখ সেট করা
+    function setDefaultDate() {
+      const today = new Date();
+      const formattedDate = today.toISOString().split('T')[0];
+      
+      // তারিখ পিকার সেট
+      if (elements.dateFilter) {
+        elements.dateFilter.value = formattedDate;
+        elements.dateFilter.min = '2024-01-01';
+        elements.dateFilter.max = '2030-12-31';
+      }
+      
+      if (elements.dateFilterMobile) {
+        elements.dateFilterMobile.value = formattedDate;
+        elements.dateFilterMobile.min = '2024-01-01';
+        elements.dateFilterMobile.max = '2030-12-31';
+      }
+      
+      return formattedDate;
+    }
+
+    // শুরুতেই স্ট্যাটাস বার্তা আপডেট করা - NEW
+    function updateStatusMessage(count) {
+      if (elements.filteredCount && elements.displayedCount) {
+        elements.filteredCount.textContent = toBengaliNumber(count);
+        elements.displayedCount.textContent = toBengaliNumber(count);
+        console.log('✅ Status message updated:', count);
+      }
+    }
+
+    // showAlert ফাংশন
+    const showAlert = (message, type = 'info') => {
+      const alert = document.createElement('div');
+      alert.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        padding: 16px 24px;
+        border-radius: 10px;
+        color: white;
+        font-weight: 600;
+        z-index: 3000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideIn 0.3s ease;
+        font-family: 'Noto Sans Bengali', sans-serif;
+      `;
+      
+      if (type === 'success') {
+        alert.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+      } else if (type === 'error') {
+        alert.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+      } else if (type === 'warning') {
+        alert.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+      } else {
+        alert.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
+      }
+      
+      alert.textContent = message;
+      document.body.appendChild(alert);
+      
+      setTimeout(() => {
+        alert.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => alert.remove(), 300);
+      }, 3000);
+    };
+
+    // CSS অ্যানিমেশন যোগ
+    if (!document.querySelector('style[data-alert-animation]')) {
+      const style = document.createElement('style');
+      style.setAttribute('data-alert-animation', 'true');
+      style.textContent = `
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(100%); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+   
+// =======================================================
+// ৪. নতুন ড্যাশবোর্ড কার্ড আপডেট - FIXED VERSION
+// =======================================================
+async function updateDashboardCards(snapshot) {
+    if (!snapshot) {
+        console.log('❌ No snapshot for dashboard');
+        return;
+    }
+    
+    // সার্ভিস অনুযায়ী কাউন্টার
+    let serviceCounts = {
+        general: 0,
+        microneedling: 0,
+        prp: 0,
+        cryosurgery: 0,
+        electrocautery: 0
+    };
+    
+    let pendingCount = 0;
+    let confirmedCount = 0;
+    
+    // নির্বাচিত তারিখ
+    let selectedDate = '';
+    if (tableManager && tableManager.currentFilters && tableManager.currentFilters.date) {
+        selectedDate = tableManager.currentFilters.date;
+    } else {
+        selectedDate = setDefaultDate();
+    }
+    
+    console.log('📊 Dashboard update for date:', selectedDate);
+    console.log('📅 Current time:', new Date().toLocaleString());
+    
+    // ১. কনফার্মড বুকিং গণনা
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        
+        // তারিখ চেক
+        let appointmentDate = '';
+        if (data.timestamp && data.timestamp.toDate) {
+            appointmentDate = data.timestamp.toDate().toISOString().split('T')[0];
+        } else if (data.date) {
+            appointmentDate = data.date;
+        }
+        
+        const dateMatch = !selectedDate || appointmentDate === selectedDate;
+        
+        if (dateMatch) {
+            confirmedCount++;
+            const serviceType = data.serviceType || 'general';
+            if (serviceCounts.hasOwnProperty(serviceType)) {
+                serviceCounts[serviceType]++;
+            }
+        }
+    });
+    
+    console.log('✅ Confirmed bookings:', serviceCounts, 'Total:', confirmedCount);
+    
+    // ২. পেন্ডিং গণনা - EXTRA DEBUG VERSION
+    try {
+        if (db) {
+            const now = new Date();
+            console.log('🕐 Now time for pending check:', now.toLocaleString());
+            
+            // শুধু তারিখের উপর ফিল্টার
+            const pendingQuery = db.collection('pendingSelections')
+                .where('date', '==', selectedDate);
+            
+            const pendingSnapshot = await pendingQuery.get();
+            console.log(`📝 Found ${pendingSnapshot.size} pending documents for date: ${selectedDate}`);
+            
+            if (pendingSnapshot.size === 0) {
+                console.log('⚠️ No pending documents found for this date');
+            }
+            
+            pendingSnapshot.forEach(doc => {
+                const data = doc.data();
+                console.log(`📄 Processing pending doc ${doc.id}:`, {
+                    serial: data.serial,
+                    date: data.date,
+                    service: data.service,
+                    bookedBy: data.bookedBy,
+                    expiresAt: data.expiresAt ? 'Has expiresAt' : 'No expiresAt'
+                });
+                
+                const expiresAt = data.expiresAt ? data.expiresAt.toDate() : null;
+                
+                if (expiresAt) {
+                    console.log(`  ⏰ Expires at: ${expiresAt.toLocaleString()}`);
+                    console.log(`  ⏳ Time remaining: ${Math.round((expiresAt - now) / 1000)} seconds`);
+                    console.log(`  ✅ Is active? ${expiresAt > now ? 'YES' : 'NO (expired)'}`);
+                    
+                    if (expiresAt > now) {
+                        pendingCount++;
+                        console.log(`  🎯 Added to count: ${pendingCount}`);
+                    }
+                } else {
+                    console.log(`  ❌ No expiresAt field - skipping`);
+                }
+            });
+            
+            console.log(`📈 Final pending count: ${pendingCount}`);
+        }
+    } catch (error) {
+        console.error('❌ Error counting pending:', error);
+        console.error('Error stack:', error.stack);
+        pendingCount = 0;
+    }
+    
+    // ৩. UI আপডেট
+    if (elements.generalSerials) {
+        elements.generalSerials.textContent = toBengaliNumber(serviceCounts.general);
+    }
+    
+    if (elements.microneedlingSerials) {
+        elements.microneedlingSerials.textContent = toBengaliNumber(serviceCounts.microneedling);
+    }
+    
+    if (elements.prpSerials) {
+        elements.prpSerials.textContent = toBengaliNumber(serviceCounts.prp);
+    }
+    
+    if (elements.cryosurgerySerials) {
+        elements.cryosurgerySerials.textContent = toBengaliNumber(serviceCounts.cryosurgery);
+    }
+    
+    if (elements.electrocauterySerials) {
+        elements.electrocauterySerials.textContent = toBengaliNumber(serviceCounts.electrocautery);
+    }
+    
+    // ৪. PENDING কার্ড আপডেট
+    if (elements.pendingSerials) {
+        elements.pendingSerials.textContent = toBengaliNumber(pendingCount);
+        console.log('✅ Updated pending serials to:', pendingCount);
+    }
+    
+    console.log('🎯 Final dashboard counts:', {
+        general: serviceCounts.general,
+        microneedling: serviceCounts.microneedling,
+        prp: serviceCounts.prp,
+        cryosurgery: serviceCounts.cryosurgery,
+        electrocautery: serviceCounts.electrocautery,
+        pending: pendingCount,
+        confirmed: confirmedCount
+    });
+    
+    // স্ট্যাটাস বার্তাও আপডেট করুন
+    updateStatusMessage(confirmedCount);
+} 
+
+    // =======================================================
+    // ৫. ফিল্টার লিসেনার সেটআপ - FIXED MISSING FUNCTION
+    // =======================================================
+    function setupFilterListeners() {
+        // ডাউনলোড বাটন ইভেন্ট
+        if (elements.downloadDataBtn) {
+            elements.downloadDataBtn.addEventListener('click', () => {
+                if (tableManager) {
+                    tableManager.exportToCSV();
+                }
+            });
+        }
+        
+        if (elements.downloadDataBtnMobile) {
+            elements.downloadDataBtnMobile.addEventListener('click', () => {
+                if (tableManager) {
+                    tableManager.exportToCSV();
+                }
+            });
+        }
+        
+        // সার্চ ফাংশন
+        const handleSearch = (value) => {
+            if (tableManager) {
+                tableManager.search(value);
+            }
+        };
+        
+        // সার্চ টাইমআউট
+        let searchTimeout;
+        
+        // ডেস্কটপ ফিল্টার ইভেন্ট
+        if (elements.dateFilter) {
+            elements.dateFilter.addEventListener('change', (e) => {
+                const value = e.target.value;
+                if (elements.dateFilterMobile) elements.dateFilterMobile.value = value;
+                if (tableManager) tableManager.setFilters({ date: value });
+            });
+        }
+        
+        if (elements.serviceFilter) {
+            elements.serviceFilter.addEventListener('change', (e) => {
+                const value = e.target.value;
+                if (elements.serviceFilterMobile) elements.serviceFilterMobile.value = value;
+                if (tableManager) tableManager.setFilters({ service: value });
+            });
+        }
+        
+        if (elements.typeFilter) {
+            elements.typeFilter.addEventListener('change', (e) => {
+                const value = e.target.value;
+                if (elements.typeFilterMobile) elements.typeFilterMobile.value = value;
+                if (tableManager) tableManager.setFilters({ type: value });
+            });
+        }
+        
+        if (elements.callStatusFilter) {
+            elements.callStatusFilter.addEventListener('change', (e) => {
+                const value = e.target.value;
+                if (elements.callStatusFilterMobile) elements.callStatusFilterMobile.value = value;
+                if (tableManager) tableManager.setFilters({ callStatus: value });
+            });
+        }
+        
+        if (elements.tokenStatusFilter) {
+            elements.tokenStatusFilter.addEventListener('change', (e) => {
+                const value = e.target.value;
+                if (elements.tokenStatusFilterMobile) elements.tokenStatusFilterMobile.value = value;
+                if (tableManager) tableManager.setFilters({ tokenStatus: value });
+            });
+        }
+        
+        if (elements.searchInput) {
+            elements.searchInput.addEventListener('input', (e) => {
+                const value = e.target.value;
+                if (elements.searchInputMobile) elements.searchInputMobile.value = value;
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => handleSearch(value), 300);
+            });
+        }
+        
+        // মোবাইল ফিল্টার ইভেন্ট
+        if (elements.dateFilterMobile) {
+            elements.dateFilterMobile.addEventListener('change', (e) => {
+                const value = e.target.value;
+                if (elements.dateFilter) elements.dateFilter.value = value;
+                if (tableManager) tableManager.setFilters({ date: value });
+            });
+        }
+        
+        if (elements.serviceFilterMobile) {
+            elements.serviceFilterMobile.addEventListener('change', (e) => {
+                const value = e.target.value;
+                if (elements.serviceFilter) elements.serviceFilter.value = value;
+                if (tableManager) tableManager.setFilters({ service: value });
+            });
+        }
+        
+        if (elements.typeFilterMobile) {
+            elements.typeFilterMobile.addEventListener('change', (e) => {
+                const value = e.target.value;
+                if (elements.typeFilter) elements.typeFilter.value = value;
+                if (tableManager) tableManager.setFilters({ type: value });
+            });
+        }
+        
+        if (elements.callStatusFilterMobile) {
+            elements.callStatusFilterMobile.addEventListener('change', (e) => {
+                const value = e.target.value;
+                if (elements.callStatusFilter) elements.callStatusFilter.value = value;
+                if (tableManager) tableManager.setFilters({ callStatus: value });
+            });
+        }
+        
+        if (elements.tokenStatusFilterMobile) {
+            elements.tokenStatusFilterMobile.addEventListener('change', (e) => {
+                const value = e.target.value;
+                if (elements.tokenStatusFilter) elements.tokenStatusFilter.value = value;
+                if (tableManager) tableManager.setFilters({ tokenStatus: value });
+            });
+        }
+        
+        if (elements.searchInputMobile) {
+            elements.searchInputMobile.addEventListener('input', (e) => {
+                const value = e.target.value;
+                if (elements.searchInput) elements.searchInput.value = value;
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => handleSearch(value), 300);
+            });
+        }
+        
+        console.log('✅ Filter listeners setup complete');
+    }
+
+    // =======================================================
+    // ৬. Table Manager কনফিগারেশন এবং সেটআপ - FIXED
+    // =======================================================
+    function setupTableManager() {
+        if (!db) {
+            showAlert('Firebase সংযোগ নেই', 'error');
+            return;
+        }
+        
+        const tableConfig = {
+            db: db,
+            tableId: 'appointmentsTable',
+            tbodyId: 'appointmentsBody',
+            loadingMessageId: 'loadingMessage',
+            
+            onStatusUpdate: async function(docId, field, newStatus, button) {
+                if (!db) return;
+                
+                const row = button.closest('tr');
+                const patientNameCell = row.querySelector('td:nth-child(4)');
+                const patientName = patientNameCell ? patientNameCell.textContent : '';
+                
+                try {
+                    await db.collection('appointments').doc(docId).update({
+                        [field]: newStatus,
+                        [`${field}Timestamp`]: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // সফল মেসেজ
+                    const messages = {
+                        called: {
+                            true: `${patientName} - কল করা হয়েছে`,
+                            false: `${patientName} - কল বাতিল করা হয়েছে`
+                        },
+                        tokenGiven: {
+                            true: `${patientName} - টোকেন দেওয়া হয়েছে`,
+                            false: `${patientName} - টোকেন বাতিল করা হয়েছে`
+                        }
+                    };
+                    
+                    showAlert(messages[field][newStatus] || 'স্ট্যাটাস আপডেট হয়েছে', 'success');
+                    
+                } catch (error) {
+                    console.error(`Error updating ${field}:`, error);
+                    showAlert('আপডেটে সমস্যা হয়েছে', 'error');
+                    
+                    // বাটন আগের অবস্থায় ফিরিয়ে দিন
+                    if (tableManager) {
+                        tableManager.updateButtonStatus(button, !newStatus, field);
+                    }
+                }
+            },
+            
+            onFilterChange: function(filters, count) {
+                // ফিল্টার আপডেট হলে স্ট্যাটাস বার্তা আপডেট
+                updateStatusMessage(count);
+                
+                // ড্যাশবোর্ড কার্ড আপডেট
+                if (allAppointmentsSnapshot) {
+                    updateDashboardCards(allAppointmentsSnapshot);
+                }
+            },
+            
+            onDataLoaded: function(data) {
+                // ডেটা লোড হওয়ার সাথে সাথে স্ট্যাটাস বার্তা আপডেট
+                if (data && data.length > 0) {
+                    const todayDate = setDefaultDate();
+                    const todayData = data.filter(item => {
+                        const itemDate = item.data.timestamp && item.data.timestamp.toDate 
+                            ? item.data.timestamp.toDate().toISOString().split('T')[0]
+                            : item.data.date || '';
+                        return itemDate === todayDate;
+                    });
+                    
+                    updateStatusMessage(todayData.length);
+                } else {
+                    updateStatusMessage(0);
+                }
+                
+                // ড্যাশবোর্ড কার্ড আপডেট
+                if (allAppointmentsSnapshot) {
+                    updateDashboardCards(allAppointmentsSnapshot);
+                }
+            },
+            
+            // নতুন কলব্যাক যোগ
+            onEdit: function(docId) {
+                openEditModal(docId);
+            },
+            
+            onDelete: async function(docId) {
+                try {
+                    if (!confirm('আপনি কি নিশ্চিত যে আপনি এই এন্ট্রি ডিলিট করতে চান?')) {
+                        return;
+                    }
+                    
+                    await db.collection('appointments').doc(docId).delete();
+                    showAlert('সিরিয়াল সফলভাবে ডিলিট করা হয়েছে', 'success');
+                    
+                    // টেবিল রিফ্রেশ (TableManager স্বয়ংক্রিয়ভাবে আপডেট করবে)
+                } catch (error) {
+                    console.error('ডিলিট ত্রুটি:', error);
+                    showAlert('ডিলিট করতে সমস্যা হয়েছে', 'error');
+                }
+            }
+        };
+        
+        // TableManager ইনিশিয়ালাইজ
+        tableManager = new TableManager(tableConfig);
+        
+        // শুরুতেই আজকের তারিখ সেট করে ফিল্টার প্রয়োগ
+        const todayDate = setDefaultDate();
+        if (tableManager) {
+            tableManager.setFilters({ date: todayDate });
+        }
+        
+        console.log('✅ Table Manager setup complete');
+    }
+
+    // =======================================================
+    // এডিট মোডাল ফাংশন
+    // =======================================================
+    async function openEditModal(docId) {
+        if (!db || !docId) {
+            showAlert('ডেটা লোড করতে সমস্যা হয়েছে', 'error');
+            return;
+        }
+        
+        try {
+            // ডেটা লোড করুন
+            const doc = await db.collection('appointments').doc(docId).get();
+            
+            if (!doc.exists) {
+                showAlert('সিরিয়াল পাওয়া যায়নি', 'error');
+                return;
+            }
+            
+            const data = doc.data();
+            
+            // QuickModal এর এডিট মোড ব্যবহার করুন
+            if (window.quickModal && typeof window.quickModal.openEditModal === 'function') {
+                window.quickModal.openEditModal(docId, data);
+            } else {
+                // Fallback: সরাসরি QuickModal ক্লাস ব্যবহার
+                const editModal = new QuickModal(db, adminSessionId, showAlert);
+                if (editModal.openEditModal) {
+                    editModal.openEditModal(docId, data);
+                } else {
+                    showAlert('এডিট মোডাল উপলব্ধ নেই', 'error');
+                }
+            }
+            
+        } catch (error) {
+            console.error('এডিট মোডাল ত্রুটি:', error);
+            showAlert('ডেটা লোড করতে সমস্যা হয়েছে', 'error');
+        }
+    }
+
+    // =======================================================
+    // ৭. রিয়েল-টাইম লিসেনার - FIXED
+    // =======================================================
+    function setupRealtimeListener() {
+        if (!db) {
+            showAlert('Firebase সংযোগ নেই', 'error');
+            return;
+        }
+        
+        let cleanupAppointments = null;
+        let cleanupPending = null;
+        
+        // অ্যাপয়েন্টমেন্ট লিসেনার
+        cleanupAppointments = db.collection('appointments')
+            .orderBy('timestamp', 'desc')
+            .onSnapshot(snapshot => {
+                console.log('🔄 Appointments update:', snapshot.size, 'appointments');
+                allAppointmentsSnapshot = snapshot;
+                
+                // appointments array আপডেট
+                const appointments = [];
+                snapshot.forEach(doc => {
+                    appointments.push({
+                        id: doc.id,
+                        data: doc.data()
+                    });
+                });
+                
+                // গ্লোবাল ভেরিয়েবলে স্টোর করুন
+                appointmentsData = appointments;
+                
+                // TableManager কে ডেটা দিন
+                if (tableManager) {
+                    tableManager.setAppointments(appointments);
+                }
+                
+                // ড্যাশবোর্ড কার্ড অবশ্যই আপডেট করুন
+                updateDashboardCards(snapshot);
+                
+            }, error => {
+                console.error('❌ Appointments listener error:', error);
+                if (tableManager) {
+                    tableManager.showError('ডেটা লোডে সমস্যা হয়েছে');
+                }
+                showAlert('রিয়েল-টাইম ডেটা লোডে সমস্যা হয়েছে', 'error');
+            });
+        
+        // পেন্ডিং সিলেকশন লিসেনার - নতুন আপডেট
+        cleanupPending = db.collection('pendingSelections')
+            .onSnapshot(snapshot => {
+                console.log('🔄 Pending selections update:', snapshot.size, 'pending items');
+                
+                // পেন্ডিং সিলেকশন প্রসেস
+                const now = new Date();
+                pendingSelections = {};
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const expiresAt = data.expiresAt ? data.expiresAt.toDate() : null;
+                    
+                    if (expiresAt && expiresAt > now) {
+                        const key = `${data.date}_${data.service}_${data.type}`;
+                        
+                        if (!pendingSelections[key]) {
+                            pendingSelections[key] = {
+                                user: [],
+                                admin: []
+                            };
+                        }
+                        
+                        if (data.bookedBy === 'user') {
+                            pendingSelections[key].user.push({
+                                serial: data.serial,
+                                id: doc.id,
+                                expiresAt: expiresAt
+                            });
+                        } else if (data.bookedBy === 'admin') {
+                            pendingSelections[key].admin.push({
+                                serial: data.serial,
+                                id: doc.id,
+                                expiresAt: expiresAt
+                            });
+                        }
+                    }
+                });
+                
+                // পেন্ডিং আপডেট হলে ড্যাশবোর্ড কার্ড আপডেট
+                if (allAppointmentsSnapshot) {
+                    updateDashboardCards(allAppointmentsSnapshot);
+                }
+                
+            }, error => {
+                console.error('❌ Pending selections listener error:', error);
+            });
+        
+        // ক্লিনআপ ফাংশন
+        return () => {
+            if (cleanupAppointments) cleanupAppointments();
+            if (cleanupPending) cleanupPending();
+        };
+    }
+
+    // =======================================================
+    // ৮. কুইক মোডাল বাটন সেটআপ
+    // =======================================================
+    function setupQuickModalButtons() {
+        // কুইক সিরিয়াল মোডাল
+        const quickModal = new QuickModal(db, adminSessionId, showAlert);
+        quickModal.initialize();
+        
+        // সিরিয়াল যুক্ত করুন বাটন ইভেন্ট
+        const setupButtons = () => {
+            const openBtns = [
+                document.getElementById('openAddSerialModalBtn'),
+                document.getElementById('openAddSerialModalBtnMobile')
+            ];
+            
+            openBtns.forEach(btn => {
+                if (btn) {
+                    // Remove any existing event listeners
+                    btn.replaceWith(btn.cloneNode(true));
+                }
+            });
+            
+            // Re-attach event listeners
+            const newOpenBtn = document.getElementById('openAddSerialModalBtn');
+            const newOpenBtnMobile = document.getElementById('openAddSerialModalBtnMobile');
+            
+            if (newOpenBtn) {
+                newOpenBtn.addEventListener('click', () => {
+                    quickModal.openModal();
+                });
+            }
+            
+            if (newOpenBtnMobile) {
+                newOpenBtnMobile.addEventListener('click', () => {
+                    quickModal.openModal();
+                });
+            }
+        };
+        
+        // DOM ready হওয়ার পর সেটআপ করুন
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupButtons);
+        } else {
+            setupButtons();
+        }
+        
+        // QuickModal ইনস্ট্যান্স গ্লোবাল করা
+        window.quickModal = quickModal;
+        
+        console.log('✅ Quick Modal buttons setup complete');
+        return quickModal;
+    }
+
+    // =======================================================
+    // ৯. ইনিশিয়ালাইজেশন - COMPLETE FIXED VERSION
+    // =======================================================
+    function initializeDashboard() {
+        console.log('🚀 Initializing dashboard...');
+        
+        // Firebase চেক
+        if (!db) {
+            showAlert('Firebase সংযোগ নেই', 'error');
+            return;
+        }
+        
+        // শুরুতেই স্ট্যাটাস বার্তা সেট করুন (ডিফল্ট)
+        updateStatusMessage(0);
+        
+        // শুরুর তারিখ সেট
+        const todayDate = setDefaultDate();
+        console.log('📅 Today date:', todayDate);
+        
+        // TableManager সেটআপ
+        setupTableManager();
+        
+        // ফিল্টার লিসেনার
+        setupFilterListeners();
+        
+        // কুইক মোডাল
+        const quickModal = setupQuickModalButtons();
+        
+        // রিয়েল-টাইম লিসেনার
+        const cleanupListeners = setupRealtimeListener();
+        
+        // ৫ সেকেন্ড পর ডাটা চেক করুন (ফলব্যাক)
+        setTimeout(() => {
+            if (appointmentsData.length === 0 && allAppointmentsSnapshot) {
+                console.log('🔄 Fallback: Manually updating counts');
+                const todayAppointments = appointmentsData.filter(item => {
+                    const itemDate = item.data.timestamp && item.data.timestamp.toDate 
+                        ? item.data.timestamp.toDate().toISOString().split('T')[0]
+                        : item.data.date || '';
+                    return itemDate === todayDate;
+                });
+                
+                updateStatusMessage(todayAppointments.length);
+                updateDashboardCards(allAppointmentsSnapshot);
+            }
+        }, 5000);
+        
+        // পেন্ডিং কাউন্ট টেস্ট
+        setTimeout(async () => {
+            console.log('🧪 Testing pending count logic...');
+            await testPendingCount();
+        }, 2000);
+        
+        // বেফোর আনলোড ক্লিনআপ
+        window.addEventListener('beforeunload', () => {
+            console.log('🧹 Cleaning up listeners...');
+            if (typeof cleanupListeners === 'function') {
+                cleanupListeners();
+            }
+            
+            if (quickModal && typeof quickModal.cleanup === 'function') {
+                quickModal.cleanup();
+            }
+            
+            if (tableManager && typeof tableManager.cleanup === 'function') {
+                tableManager.cleanup();
+            }
+        });
+        
+        // পৃষ্ঠা লোড হওয়ার পর স্ট্যাটাস বার্তা আপডেটের চেষ্টা করুন
+        window.addEventListener('load', () => {
+            console.log('📄 Page fully loaded');
+            setTimeout(() => {
+                if (elements.filteredCount && elements.filteredCount.textContent === '০' && appointmentsData.length > 0) {
+                    console.log('🔄 Post-load update of status message');
+                    const todayAppointments = appointmentsData.filter(item => {
+                        const itemDate = item.data.timestamp && item.data.timestamp.toDate 
+                            ? item.data.timestamp.toDate().toISOString().split('T')[0]
+                            : item.data.date || '';
+                        return itemDate === todayDate;
+                    });
+                    
+                    updateStatusMessage(todayAppointments.length);
+                }
+            }, 1000);
+        });
+        
+        console.log('✅ Dashboard initialization complete');
+    }
+
+    // =======================================================
+    // ১০. পেন্ডিং কাউন্ট টেস্ট ফাংশন - NEW
+    // =======================================================
+    async function testPendingCount() {
+        try {
+            const todayDate = setDefaultDate();
+            console.log('🔍 Testing pending count for date:', todayDate);
+            
+            const snapshot = await db.collection('pendingSelections').get();
+            const now = new Date();
+            
+            console.log('📊 Total pending documents:', snapshot.size);
+            
+            let userCount = 0;
+            let adminCount = 0;
+            let expiredCount = 0;
+            let todayCount = 0;
+            
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const expiresAt = data.expiresAt ? data.expiresAt.toDate() : null;
+                const isExpired = expiresAt ? expiresAt < now : true;
+                const dateMatch = data.date === todayDate;
+                
+                if (dateMatch && !isExpired) {
+                    todayCount++;
+                    if (data.bookedBy === 'user') userCount++;
+                    if (data.bookedBy === 'admin') adminCount++;
+                }
+                
+                if (isExpired) expiredCount++;
+            });
+            
+            console.log('📈 Pending Count Results:');
+            console.log('  Today\'s pending:', todayCount);
+            console.log('  - User bookings:', userCount);
+            console.log('  - Admin bookings:', adminCount);
+            console.log('  Total expired:', expiredCount);
+            
+            // Update pending count directly
+            if (elements.pendingSerials) {
+                elements.pendingSerials.textContent = toBengaliNumber(todayCount);
+            }
+            
+        } catch (error) {
+            console.error('❌ Error in pending count test:', error);
+        }
+    }
+
+    // =======================================================
+    // ১১. স্টার্ট ইন্সটান্স
+    // =======================================================
+    // DOM লোড হওয়ার সাথে সাথে ইনিশিয়ালাইজেশন শুরু করুন
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeDashboard);
+    } else {
+        initializeDashboard();
+    }
+
+    // ডিবাগিং ফাংশন (শুধু ডেভেলপমেন্টের জন্য)
+    window.debugDashboard = function() {
+        console.log('=== DASHBOARD DEBUG INFO ===');
+        console.log('Firebase DB:', db ? 'Connected' : 'Not connected');
+        console.log('TableManager:', tableManager ? 'Initialized' : 'Not initialized');
+        console.log('All appointments:', allAppointmentsSnapshot ? allAppointmentsSnapshot.size : 0);
+        console.log('Appointments data:', appointmentsData.length);
+        console.log('Pending selections:', pendingSelections);
+        console.log('Current date:', setDefaultDate());
+        console.log('Status message:', elements.statusMessage ? elements.statusMessage.textContent : 'N/A');
+        console.log('Filtered count:', elements.filteredCount ? elements.filteredCount.textContent : 'N/A');
+        console.log('=======================');
+    };
+    
+    // ডিবাগ ফাংশন - পেন্ডিং ডেটা চেক
+    window.checkPendingData = async function() {
+        const now = new Date();
+        const selectedDate = setDefaultDate();
+        
+        console.log('🔍 Checking ALL pending data...');
+        
+        try {
+            const snapshot = await db.collection('pendingSelections').get();
+            
+            console.log('📊 Total pending documents in collection:', snapshot.size);
+            console.log('📅 Filtering for date:', selectedDate);
+            
+            let userCount = 0;
+            let adminCount = 0;
+            let expiredCount = 0;
+            let activeCount = 0;
+            
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const expiresAt = data.expiresAt ? data.expiresAt.toDate() : null;
+                const isExpired = expiresAt ? expiresAt < now : true;
+                const dateMatch = !selectedDate || data.date === selectedDate;
+                
+                console.log('📄 Pending item:', {
+                    id: doc.id,
+                    serial: data.serial,
+                    service: data.service,
+                    type: data.type,
+                    bookedBy: data.bookedBy || 'unknown',
+                    date: data.date,
+                    expiresAt: expiresAt ? expiresAt.toLocaleString() : 'N/A',
+                    isExpired: isExpired,
+                    dateMatch: dateMatch
+                });
+                
+                if (dateMatch && !isExpired) {
+                    activeCount++;
+                    if (data.bookedBy === 'user') userCount++;
+                    if (data.bookedBy === 'admin') adminCount++;
+                }
+                
+                if (isExpired) expiredCount++;
+            });
+            
+            console.log('📈 Summary:');
+            console.log('  Active pendings:', activeCount);
+            console.log('  - User bookings:', userCount);
+            console.log('  - Admin bookings:', adminCount);
+            console.log('  Expired pendings:', expiredCount);
+            
+            // Update UI directly
+            if (elements.pendingSerials) {
+                elements.pendingSerials.textContent = toBengaliNumber(activeCount);
+            }
+            
+        } catch (error) {
+            console.error('❌ Error checking pending:', error);
+        }
+    };
+</script>
+</body>
+</html>

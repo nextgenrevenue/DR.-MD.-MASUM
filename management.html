@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>সিরিয়াল ম্যানেজমেন্ট</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- SweetAlert2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+  
+<style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --gray: #6b7280;
+      --light-gray: #f3f4f6;
+      --white: #ffffff;
+      --dark: #1f2937;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Noto Sans Bengali', sans-serif;
+      background-color: #f5f7fa;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Admin Container */
+    .admin-container {
+      display: flex;
+      flex: 1;
+      margin-top: 60px; 
+      height: calc(100vh - 60px);
+    }
+    
+    /* Main Content */
+    .admin-main {
+      flex: 1;
+      padding: 20px;
+      background-color: #f9fafb;
+      overflow-y: auto;
+    }
+    
+    .page-title {
+      color: var(--dark);
+      margin-bottom: 25px;
+      font-size: 24px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--light-gray);
+    }
+    
+    /* Statistics Cards */
+    .stats-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    
+    .stat-card {
+      background-color: var(--white);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .stat-card h3 {
+      color: var(--gray);
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    
+    .stat-card p {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+    
+    .stat-card.general p {
+      color: #2563eb;
+    }
+    
+    .stat-card.microneedling p {
+      color: #7c3aed;
+    }
+    
+    .stat-card.prp p {
+      color: #d97706;
+    }
+    
+    .stat-card.cryosurgery p {
+      color: #16a34a;
+    }
+    
+    .stat-card.electrocautery p {
+      color: #be185d;
+    }
+    
+    .stat-card.pending p {
+      color: #0ea5e9;
+    }
+    
+    /* Multi-select Service Styles */
+.multiselect-container {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 10px;
+  background-color: white;
+  display: flex; /* নতুন যোগ করুন */
+  flex-wrap: wrap; /* নতুন যোগ করুন */
+  gap: 10px; /* নতুন যোগ করুন */
+  align-items: center; /* নতুন যোগ করুন */
+}
+
+.service-checkbox {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0; /* পরিবর্তন করুন */
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  border: 1px solid #e5e7eb; /* নতুন যোগ করুন */
+  min-width: 140px; /* নতুন যোগ করুন */
+}
+
+.service-checkbox:hover {
+  background-color: #f3f4f6;
+}
+
+.service-checkbox input {
+  margin-right: 8px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.service-checkbox label {
+  cursor: pointer;
+  flex: 1;
+  font-weight: normal;
+  white-space: nowrap; /* নতুন যোগ করুন */
+}
+
+.selected-services-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.service-tag {
+  background-color: #dbeafe;
+  color: #2563eb;
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+}
+
+.service-tag .remove-tag {
+  margin-left: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.service-tag.general { background-color: #dbeafe; color: #2563eb; }
+.service-tag.microneedling { background-color: #f3e8ff; color: #7c3aed; }
+.service-tag.prp { background-color: #fef3c7; color: #d97706; }
+.service-tag.electrocautery { background-color: #fce7f3; color: #be185d; }
+.service-tag.cryosurgery { background-color: #dcfce7; color: #16a34a; }
+
+/* শুধু "সাধারণ" এবং "পি আর পি" এর জন্য */
+#servicesContainer > .service-checkbox:first-child,
+#servicesContainer > .service-checkbox:nth-child(3) {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px 12px;
+  background-color: white;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* চেকড হলে */
+#servicesContainer > .service-checkbox:first-child input:checked + label,
+#servicesContainer > .service-checkbox:nth-child(3) input:checked + label {
+  color: #2563eb;
+  font-weight: 600;
+}
+    
+    /* Serial Management Component Styles */
+    .serial-management-component {
+      margin-top: 20px;
+    }
+    
+    .serial-management-component .admin-table {
+      width: 100%;
+      background-color: var(--white);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    
+    .serial-management-component .admin-table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    
+    .serial-management-component .admin-table-header h2 {
+      font-size: 18px;
+      color: var(--dark);
+      flex: 1 0 100%;
+      text-align: center;
+      margin-bottom: 10px;
+      order: 1;
+    }
+    
+    .serial-management-component .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex: 1 0 100%;
+      order: 3;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .serial-management-component .filter-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: right;
+      order: 2;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    
+    .serial-management-component .filter-group select {
+      padding: 8px 15px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-family: 'Noto Sans Bengali', sans-serif;
+      background-color: var(--white);
+      cursor: pointer;
+      flex: 1;
+      min-width: 120px;
+      max-width: 200px;
+    }
+    
+    .serial-management-component .filter-group select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .serial-management-component .search-box {
+      position: relative;
+      order: 4;
+      flex: 1;
+      min-width: 200px;
+      max-width: 300px;
+    }
+    
+    .serial-management-component .search-box input {
+      padding: 8px 15px 8px 35px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-family: 'Noto Sans Bengali', sans-serif;
+      width: 100%;
+    }
+    
+    .serial-management-component .search-box input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .serial-management-component .search-box i {
+      position: absolute;
+      left: 12px;
+      top: 10px;
+      color: var(--gray);
+    }
+    
+    .serial-management-component .add-btn {
+      background-color: var(--primary);
+      color: var(--white);
+      padding: 8px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Noto Sans Bengali', sans-serif;
+      font-weight: 600;
+      transition: background-color 0.2s ease;
+      order: 5;
+      white-space: nowrap;
+    }
+    
+    .serial-management-component .add-btn:hover {
+      background-color: var(--primary-hover);
+    }
+    
+    .serial-management-component .table-container {
+      overflow-x: auto;
+    }
+    
+    .serial-management-component table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 800px;
+    }
+    
+    .serial-management-component th, 
+    .serial-management-component td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .serial-management-component th {
+      background-color: var(--light-gray);
+      font-weight: 600;
+      color: var(--dark);
+    }
+    
+    .serial-management-component tr {
+      transition: all 0.2s ease;
+    }
+    
+    .serial-management-component tr:hover {
+      background-color: #f9fafb;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* রঙিন ব্যাকগ্রাউন্ডের জন্য স্টাইল */
+    .serial-management-component tr.fully-booked {
+      background-color: #fef2f2 !important;
+    }
+    
+    .serial-management-component tr.fully-available {
+      background-color: #f0fdf4 !important;
+    }
+    
+    .serial-management-component tr.low-availability {
+      background-color: #fffbeb !important;
+    }
+    
+    .serial-management-component .status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 5px;
+    }
+    
+    .serial-management-component .status.booked {
+      background-color: #fee2e2;
+      color: var(--danger);
+    }
+    
+    .serial-management-component .status.available {
+      background-color: #dcfce7;
+      color: var(--success);
+    }
+    
+    .serial-management-component .status.pending {
+      background-color: #dbeafe;
+      color: #2563eb;
+    }
+    
+    .serial-management-component .status.disabled {
+      background-color: #f3f4f6;
+      color: var(--gray);
+    }
+
+    .serial-management-component .action-btn {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Noto Sans Bengali', sans-serif;
+      font-size: 13px;
+      margin-right: 5px;
+      transition: background-color 0.2s ease;
+    }
+    
+    .serial-management-component .edit-btn {
+      background-color: #bfdbfe;
+      color: var(--primary);
+    }
+    
+    .serial-management-component .edit-btn:hover {
+      background-color: #93c5fd;
+    }
+    
+    .serial-management-component .cancel-btn {
+      background-color: #fee2e2;
+      color: var(--danger);
+    }
+    
+    .serial-management-component .cancel-btn:hover {
+      background-color: #fecaca;
+    }
+    
+    .serial-management-component .disable-btn {
+      background-color: #fef3c7;
+      color: var(--warning);
+    }
+    
+    .serial-management-component .disable-btn:hover {
+      background-color: #fde68a;
+    }
+    
+    .serial-management-component .enable-btn {
+      background-color: #dcfce7;
+      color: var(--success);
+    }
+    
+    .serial-management-component .enable-btn:hover {
+      background-color: #bbf7d0;
+    }
+    
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-content {
+      background-color: var(--white);
+      padding: 25px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .modal-header h2 {
+      color: var(--dark);
+      font-size: 20px;
+    }
+    
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--gray);
+    }
+    
+    .close-btn:hover {
+      color: var(--dark);
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--dark);
+    }
+    
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px 15px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-family: 'Noto Sans Bengali', sans-serif;
+      font-size: 14px;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .form-actions button {
+      padding: 8px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Noto Sans Bengali', sans-serif;
+      font-weight: 600;
+      border: none;
+      transition: background-color 0.2s ease;
+    }
+    
+    .submit-btn {
+      background-color: var(--primary);
+      color: var(--white);
+    }
+    
+    .submit-btn:hover {
+      background-color: var(--primary-hover);
+    }
+    
+    .cancel-btn-modal {
+      background-color: var(--light-gray);
+      color: var(--dark);
+    }
+    
+    .cancel-btn-modal:hover {
+      background-color: #e5e7eb;
+    }
+    
+    /* Loading Spinner */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--gray);
+    }
+    
+    .empty-state i {
+      font-size: 48px;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+    
+    .empty-state h3 {
+      margin-bottom: 10px;
+      color: var(--dark);
+    }
+    
+    .empty-state p {
+      margin-bottom: 20px;
+    }
+    
+    /* Mobile Responsive */
+@media (max-width: 768px) {
+  .admin-main {
+    padding: 15px;
+  }
+  
+  .stats-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 25px;
+  }
+  
+  .stat-card {
+    background-color: var(--white);
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .stat-card h3 {
+    color: var(--gray);
+    font-size: 13px;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  
+  .stat-card p {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--dark);
+  }
+
+   .multiselect-container {
+    flex-direction: column; /* মোবাইলে ভের্টিকাল */
+    align-items: stretch;
+  }
+  
+  .service-checkbox {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
+  .serial-management-component .admin-table-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  
+  .serial-management-component .admin-table-header h2 {
+    order: 1;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  
+  .serial-management-component .header-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+  
+  .serial-management-component .search-box {
+    order: 3;
+    width: 100%;
+    min-width: auto;
+    max-width: none;
+    margin-bottom: 10px;
+  }
+  
+  .serial-management-component .search-box input {
+    width: 100%;
+    font-size: 14px;
+  }
+  
+  .serial-management-component .add-btn {
+    order: 4;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+  }
+  
+  .modal-content {
+    margin: 10px;
+    width: calc(100% - 20px);
+    padding: 15px;
+  }
+  
+  .serial-management-component th, 
+  .serial-management-component td {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-main {
+    padding: 10px;
+  }
+  
+  .stats-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .stat-card {
+    padding: 12px;
+    min-height: 85px;
+  }
+  
+  .stat-card h3 {
+    font-size: 12px;
+  }
+  
+  .stat-card p {
+    font-size: 20px;
+  }
+  
+  .page-title {
+    font-size: 20px;
+  }
+  
+  .modal-content {
+    margin: 5px;
+    width: calc(100% - 10px);
+    padding: 12px;
+  }
+  
+  .serial-management-component .action-btn {
+    padding: 4px 8px;
+    font-size: 12px;
+    margin-right: 3px;
+    margin-bottom: 3px;
+  }
+  
+  .serial-management-component .status {
+    font-size: 11px;
+    padding: 3px 6px;
+    margin-right: 3px;
+    margin-bottom: 3px;
+  }
+}
+
+/* খুব ছোট ফোনের জন্য */
+@media (max-width: 360px) {
+  .stats-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  
+  .stat-card {
+    padding: 10px;
+    min-height: 80px;
+  }
+  
+  .stat-card h3 {
+    font-size: 11px;
+  }
+  
+  .stat-card p {
+    font-size: 18px;
+  }
+}
+    
+/* ডেস্কটপের জন্য */
+@media (min-width: 769px) {
+  .serial-management-component .admin-table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    flex-wrap: nowrap;
+  }
+  
+  .serial-management-component .admin-table-header h2 {
+    flex: 0 0 auto;
+    margin: 0;
+    white-space: nowrap;
+  }
+  
+  .serial-management-component .header-actions {
+    display: flex;
+    flex: 1;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+  }
+  
+  .serial-management-component .search-box {
+    order: 2;
+    width: 200px;
+    margin: 0;
+  }
+  
+  .serial-management-component .add-btn {
+    order: 3;
+    white-space: nowrap;
+  }
+}
+    
+    /* Print Styles */
+    @media print {
+      .serial-management-component .admin-table-header,
+      .serial-management-component .add-btn,
+      .serial-management-component .action-btn {
+        display: none !important;
+      }
+      
+      .serial-management-component table {
+        min-width: auto;
+      }
+      
+      .admin-main {
+        padding: 0;
+      }
+      
+      .stats-cards {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- হেডার কন্টেইনার -->
+  <div id="header-container"></div>
+  
+  <!-- Admin Container -->
+  <div class="admin-container">
+    <!-- সাইডবার কন্টেইনার -->
+    <div id="sidebar-container"></div>
+    
+    <!-- Main Content -->
+    <main class="admin-main">
+      <!-- Page Title -->
+      <h1 class="page-title">সিরিয়াল ম্যানেজমেন্ট</h1>
+      
+      <!-- Statistics Cards -->
+      <div class="stats-cards">
+        <div class="stat-card general">
+          <h3>সাধারণ</h3>
+          <p id="generalSerials">0</p>
+        </div>
+        
+        <div class="stat-card microneedling">
+          <h3>মাইক্রোনিডলিং</h3>
+          <p id="microneedlingSerials">0</p>
+        </div>
+        
+        <div class="stat-card prp">
+          <h3>পি আর পি</h3>
+          <p id="prpSerials">0</p>
+        </div>
+        
+        <div class="stat-card cryosurgery">
+          <h3>ক্রায়োসার্জারি</h3>
+          <p id="cryosurgerySerials">0</p>
+        </div>
+        
+        <div class="stat-card electrocautery">
+          <h3>ইলেক্ট্রোক্যাটারি</h3>
+          <p id="electrocauterySerials">0</p>
+        </div>
+        
+        <div class="stat-card pending">
+          <h3>পেন্ডিং সিরিয়াল</h3>
+          <p id="pendingSerials">0</p>
+        </div>
+      </div>
+      
+      <!-- Serial Management Section HTML -->
+      <div class="serial-management-component">
+        <div class="admin-table">
+          <div class="admin-table-header">
+            <h2>সিরিয়াল ম্যানেজমেন্ট</h2>
+            <div class="header-actions">
+              <button class="add-btn add-serial-range-btn">সিরিয়াল রেঞ্জ যোগ করুন</button>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="serials-table">
+              <thead>
+                <tr>
+                  <th>দিন</th>
+                  <th>সময়</th>
+                  <th>ধরন</th>
+                  <th>সেবা</th>
+                  <th>সিরিয়াল রেঞ্জ</th>
+                  <th>স্ট্যাটাস</th>
+                  <th>অ্যাকশন</th>
+                </tr>
+              </thead>
+              <tbody id="serialsTableBody">
+                <tr>
+                  <td colspan="7" style="text-align: center; padding: 20px; color: #6b7280;">
+                    লোড হচ্ছে...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Serial Modal HTML -->
+      <div class="modal" id="serialModal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 id="serialModalTitle">সিরিয়াল রেঞ্জ যোগ করুন</h2>
+            <button class="close-btn" id="closeSerialModal">&times;</button>
+          </div>
+          <form id="serialForm">
+            <div class="form-group">
+              <label for="serialDay">দিন</label>
+              <select id="serialDay" required>
+                <option value="">-- নির্বাচন করুন --</option>
+                <option value="Saturday">শনিবার</option>
+                <option value="Sunday">রবিবার</option>
+                <option value="Monday">সোমবার</option>
+                <option value="Wednesday">বুধবার</option>
+              </select>
+            </div>
+             
+            <!-- মাল্টিপল সার্ভিস সিলেক্ট -->
+            <div class="form-group">
+              <label for="serialServices">সেবা সমূহ (একাধিক নির্বাচন করুন)</label>
+              <div class="multiselect-container" id="servicesContainer">
+                <div class="service-checkbox">
+                  <input type="checkbox" id="service_general" value="general">
+                  <label for="service_general">সাধারণ</label>
+                </div>
+                <div class="service-checkbox">
+                  <input type="checkbox" id="service_microneedling" value="microneedling">
+                  <label for="service_microneedling">মাইক্রোনিডলিং</label>
+                </div>
+                <div class="service-checkbox">
+                  <input type="checkbox" id="service_prp" value="prp">
+                  <label for="service_prp">পি আর পি</label>
+                </div>
+                <div class="service-checkbox">
+                  <input type="checkbox" id="service_electrocautery" value="electrocautery">
+                  <label for="service_electrocautery">ইলেক্ট্রোক্যাটারি</label>
+                </div>
+                <div class="service-checkbox">
+                  <input type="checkbox" id="service_cryosurgery" value="cryosurgery">
+                  <label for="service_cryosurgery">ক্রায়োসার্জারি</label>
+                </div>
+              </div>
+              <div class="selected-services-tags" id="selectedServicesTags">
+                <!-- সিলেক্টেড সার্ভিস ট্যাগগুলো এখানে দেখাবে -->
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="serialTime">সময়</label>
+              <input type="text" id="serialTime" placeholder="যেমন: 5:00 PM" required>
+            </div>
+            <div class="form-group">
+              <label for="serialType">ধরন</label>
+              <select id="serialType" required>
+                <option value="">-- নির্বাচন করুন --</option>
+                <option value="new">নতুন রোগী</option>
+                <option value="old">পুরাতন রোগী</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="serialStart">শুরু সিরিয়াল</label>
+              <input type="number" id="serialStart" min="1" required>
+            </div>
+            <div class="form-group">
+              <label for="serialEnd">শেষ সিরিয়াল</label>
+              <input type="number" id="serialEnd" min="1" required>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="cancel-btn-modal" id="cancelSerialModal">বাতিল</button>
+              <button type="submit" class="submit-btn" id="submitSerialBtn">সংরক্ষণ করুন</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ফুটার কন্টেইনার -->
+  <div id="footer-container"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+  
+  <!-- কম্পোনেন্ট লোডার -->
+  <script src="components-inline.js"></script>
+
+<script>
+    // ==================== FIREBASE CONFIGURATION ====================
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAdGUtNVgs5UspQeH8hL0i-L0WvPpOWnE",
+      authDomain: "appointment-e2050.firebaseapp.com",
+      projectId: "appointment-e2050",
+      storageBucket: "appointment-e2050.firebasestorage.app",
+      messagingSenderId: "367447068370",
+      appId: "1:367447068370:web:8e111bb010a19d21eda70b",
+      measurementId: "G-CRLSV1JJMQ"
+    };
+
+    let db;
+    let realtimeListeners = [];
+    let serialManager = null;
+    let currentAdminSessionId = null;
+
+    // ==================== UTILITY FUNCTIONS ====================
+    function showSweetAlert(message, type = 'success', title = null) {
+      const titles = {
+        'success': 'সফল!',
+        'error': 'ত্রুটি!',
+        'warning': 'সতর্কতা!',
+        'info': 'তথ্য'
+      };
+      
+      Swal.fire({
+        title: title || titles[type],
+        text: message,
+        icon: type,
+        confirmButtonText: 'ঠিক আছে',
+        confirmButtonColor: '#2563eb',
+        customClass: {
+          popup: 'sweet-alert-popup'
+        }
+      });
+    }
+
+    // ==================== AUTHENTICATION CHECK ====================
+    function checkAuthentication() {
+      const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
+      const loginTime = sessionStorage.getItem('loginTime');
+      
+      if (!isLoggedIn) {
+        showSweetAlert('দুঃখিত! আপনাকে প্রথমে লগইন করতে হবে।', 'warning', 'লগইন প্রয়োজন');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1500);
+        return false;
+      }
+      
+      const currentTime = new Date().getTime();
+      const sessionDuration = 2 * 60 * 60 * 1000; // 2 hours
+      
+      if (currentTime - parseInt(loginTime) > sessionDuration) {
+        sessionStorage.clear();
+        showSweetAlert('সেশন শেষ হয়েছে! অনুগ্রহ করে আবার লগইন করুন।', 'warning', 'সেশন মেয়াদ শেষ');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1500);
+        return false;
+      }
+      
+      return true;
+    }
+
+    // ==================== SERIAL MANAGEMENT CLASS ====================
+    class SerialManagement {
+      constructor() {
+        this.db = window.db;
+        this.appointments = [];
+        this.serialRanges = {}; // নতুন স্ট্রাকচার: day -> service -> type -> time -> [start, end]
+        this.pendingSelections = {};
+        this.adminPendingSelections = {};
+        this.realtimeListeners = [];
+        this.searchTimer = null;
+        this.disabledSlots = {};
+        this.selectedServices = [];
+        
+        this.initialize();
+      }
+      
+      async initialize() {
+        console.log('Initializing SerialManagement...');
+        
+        try {
+          // Load disabled slots
+          this.disabledSlots = JSON.parse(localStorage.getItem('disabledSerialSlots') || '{}');
+          
+          // Load initial data
+          await this.loadSerialRanges();
+          await this.loadAppointments();
+          await this.loadAllPendingSelections();
+          
+          // Setup event listeners
+          this.setupEventListeners();
+          this.setupServiceCheckboxes();
+          
+          // Load table
+          await this.loadSerialTable();
+          
+          // Update stats
+          this.updateStats();
+          
+          console.log('SerialManagement initialized successfully');
+        } catch (error) {
+          console.error('Error initializing SerialManagement:', error);
+          showSweetAlert('সিস্টেম লোড করতে সমস্যা হয়েছে: ' + error.message, 'error');
+        }
+      }
+      
+      // সার্ভিস চেকবক্স ইভেন্ট সেটআপ
+      setupServiceCheckboxes() {
+        const checkboxes = document.querySelectorAll('#servicesContainer input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+          checkbox.addEventListener('change', () => {
+            this.updateSelectedServices();
+          });
+        });
+      }
+      
+      // সিলেক্টেড সার্ভিস আপডেট
+      updateSelectedServices() {
+        const checkboxes = document.querySelectorAll('#servicesContainer input[type="checkbox"]:checked');
+        this.selectedServices = Array.from(checkboxes).map(cb => cb.value);
+        
+        // ট্যাগগুলো দেখান
+        const tagsContainer = document.getElementById('selectedServicesTags');
+        tagsContainer.innerHTML = '';
+        
+        this.selectedServices.forEach(service => {
+          const serviceNames = {
+            'general': 'সাধারণ',
+            'microneedling': 'মাইক্রোনিডলিং',
+            'prp': 'পি আর পি',
+            'electrocautery': 'ইলেক্ট্রোক্যাটারি',
+            'cryosurgery': 'ক্রায়োসার্জারি'
+          };
+          
+          const tag = document.createElement('span');
+          tag.className = `service-tag ${service}`;
+          tag.innerHTML = `
+            ${serviceNames[service]}
+            <span class="remove-tag" onclick="serialManager.removeService('${service}')">×</span>
+          `;
+          tagsContainer.appendChild(tag);
+        });
+      }
+      
+      // সার্ভিস রিমুভ ফাংশন
+      removeService(service) {
+        const checkbox = document.getElementById(`service_${service}`);
+        if (checkbox) {
+          checkbox.checked = false;
+          this.updateSelectedServices();
+        }
+      }
+      
+      async loadSerialRanges() {
+        try {
+          if (!this.db) {
+            console.error('Firebase not initialized');
+            showSweetAlert('Firebase লোড হয়নি। পেজ রিলোড করুন।', 'error');
+            return;
+          }
+          
+          console.log('Loading serial ranges from Firebase...');
+          const doc = await this.db.collection('settings').doc('serialRanges').get();
+          
+          if (doc.exists) {
+            const data = doc.data();
+            console.log('Loaded serial ranges from Firebase:', data);
+            
+            // ডেটা স্ট্রাকচার চেক করুন
+            if (data && typeof data === 'object') {
+              this.serialRanges = data;
+              
+              // ডেটা স্ট্রাকচার ভ্যালিডেট করুন
+              this.validateAndFixDataStructure();
+            } else {
+              this.serialRanges = {};
+              console.log('Invalid data structure, creating empty object');
+            }
+          } else {
+            // Create default if not exists
+            console.log('No serial ranges found, creating default structure');
+            this.serialRanges = {};
+            await this.db.collection('settings').doc('serialRanges').set(this.serialRanges);
+          }
+          
+          console.log('Final serialRanges structure:', this.serialRanges);
+          
+        } catch (error) {
+          console.error('Error loading serial ranges:', error);
+          showSweetAlert('সিরিয়াল রেঞ্জ লোড করতে সমস্যা হয়েছে: ' + error.message, 'error');
+        }
+      }
+      
+      // ডেটা স্ট্রাকচার ভ্যালিডেশন
+      validateAndFixDataStructure() {
+        try {
+          // যদি পুরানো স্ট্রাকচার থাকে (day -> type -> time -> [start, end])
+          // তাহলে নতুন স্ট্রাকচারে কনভার্ট করুন (day -> service -> type -> time -> [start, end])
+          let needsUpdate = false;
+          
+          for (const day in this.serialRanges) {
+            // চেক করুন যদি পুরানো ফরম্যাটে থাকে (service key না থাকলে)
+            const hasServiceStructure = Object.keys(this.serialRanges[day]).some(key => 
+              key === 'general' || key === 'microneedling' || key === 'prp' || 
+              key === 'electrocautery' || key === 'cryosurgery'
+            );
+            
+            if (!hasServiceStructure) {
+              // পুরানো স্ট্রাকচার, কনভার্ট করুন
+              console.log(`Converting old structure for day: ${day}`);
+              
+              const oldData = this.serialRanges[day];
+              const newData = {};
+              
+              // ধরে নিই সব 'general' সার্ভিসের জন্য
+              if (!newData['general']) newData['general'] = {};
+              
+              for (const type in oldData) {
+                if (type === 'new' || type === 'old') {
+                  if (!newData['general'][type]) newData['general'][type] = {};
+                  
+                  for (const time in oldData[type]) {
+                    if (Array.isArray(oldData[type][time]) && oldData[type][time].length === 2) {
+                      newData['general'][type][time] = oldData[type][time];
+                    }
+                  }
+                }
+              }
+              
+              this.serialRanges[day] = newData;
+              needsUpdate = true;
+            }
+          }
+          
+          if (needsUpdate && this.db) {
+            // Firebase-এ আপডেট করুন
+            this.db.collection('settings').doc('serialRanges').set(this.serialRanges);
+            console.log('Updated data structure in Firebase');
+          }
+          
+        } catch (error) {
+          console.error('Error validating data structure:', error);
+        }
+      }
+      
+      async loadAppointments() {
+        try {
+          if (!this.db) return;
+          
+          console.log('Loading appointments...');
+          const listener = this.db.collection('appointments')
+            .orderBy('timestamp', 'desc')
+            .onSnapshot(snapshot => {
+              this.appointments = [];
+              snapshot.forEach(doc => {
+                this.appointments.push({
+                  id: doc.id,
+                  ...doc.data()
+                });
+              });
+              
+              console.log(`Loaded ${this.appointments.length} appointments`);
+              this.loadSerialTable();
+              this.updateStats();
+            }, error => {
+              console.error('Error loading appointments:', error);
+            });
+          
+          this.realtimeListeners.push(listener);
+          
+        } catch (error) {
+          console.error('Error loading appointments:', error);
+        }
+      }
+      
+      async loadAllPendingSelections() {
+        try {
+          if (!this.db) return;
+          
+          console.log('Loading pending selections...');
+          const listener = this.db.collection('pendingSelections')
+            .where('expiresAt', '>', new Date())
+            .onSnapshot(snapshot => {
+              this.pendingSelections = {};
+              this.adminPendingSelections = {};
+              
+              snapshot.forEach(doc => {
+                const data = doc.data();
+                const service = data.service || 'general'; // Default to 'general' if no service field
+                const key = `${data.day}_${data.time}_${data.type}_${service}`;
+                
+                const bookedBy = data.bookedBy || 'user';
+                
+                if (bookedBy === 'user') {
+                  if (!this.pendingSelections[key]) {
+                    this.pendingSelections[key] = new Set();
+                  }
+                  this.pendingSelections[key].add(data.serial);
+                } else if (bookedBy === 'admin') {
+                  if (!this.adminPendingSelections[key]) {
+                    this.adminPendingSelections[key] = {};
+                  }
+                  this.adminPendingSelections[key][data.serial] = {
+                    id: doc.id,
+                    sessionId: data.sessionId || ''
+                  };
+                } else {
+                  if (!this.pendingSelections[key]) {
+                    this.pendingSelections[key] = new Set();
+                  }
+                  this.pendingSelections[key].add(data.serial);
+                }
+              });
+              
+              console.log('Pending data loaded');
+              this.loadSerialTable();
+              this.updateStats();
+            }, error => {
+              console.error('Error loading pending selections:', error);
+            });
+          
+          this.realtimeListeners.push(listener);
+          
+        } catch (error) {
+          console.error('Error loading pending selections:', error);
+        }
+      }
+      
+      // টেবিল লোড ফাংশন
+      async loadSerialTable(searchTerm = '') {
+        const tableBody = document.getElementById('serialsTableBody');
+        if (!tableBody) return;
+        
+        try {
+          console.log('Loading serial table...');
+          let foundSlots = false;
+          
+          const timeSlots = [];
+          
+          // নতুন ডেটা স্ট্রাকচার প্রসেসিং
+          for (const day in this.serialRanges) {
+            for (const service in this.serialRanges[day]) {
+              for (const type in this.serialRanges[day][service]) {
+                for (const time in this.serialRanges[day][service][type]) {
+                  if (searchTerm && 
+                      !time.toLowerCase().includes(searchTerm.toLowerCase()) && 
+                      !type.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                      !day.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                      !service.toLowerCase().includes(searchTerm.toLowerCase())) {
+                    continue;
+                  }
+                  
+                  const range = this.serialRanges[day][service][type][time];
+                  if (Array.isArray(range) && range.length === 2) {
+                    timeSlots.push({ 
+                      day, 
+                      service, 
+                      type, 
+                      time, 
+                      range 
+                    });
+                  }
+                }
+              }
+            }
+          }
+          
+          timeSlots.sort((a, b) => this.extractTimeNumber(a.time) - this.extractTimeNumber(b.time));
+          
+          // Clear table
+          tableBody.innerHTML = '';
+          
+          for (const slot of timeSlots) {
+            foundSlots = true;
+            const [start, end] = slot.range;
+            const total = end - start + 1;
+            
+            // Count booked appointments
+            const bookedCount = this.appointments.filter(app => {
+              const patientType = app.patientType || app.type;
+              const service = app.service || 'general';
+              return app.day === slot.day && 
+                     app.time === slot.time && 
+                     patientType === slot.type &&
+                     service === slot.service;
+            }).length;
+            
+            // Count pending selections
+            const key = `${slot.day}_${slot.time}_${slot.type}_${slot.service}`;
+            
+            // User pending
+            const userPendingCount = this.pendingSelections[key] ? this.pendingSelections[key].size : 0;
+            
+            // Admin pending
+            const adminPendingCount = this.adminPendingSelections[key] ? Object.keys(this.adminPendingSelections[key]).length : 0;
+            
+            const pendingCount = userPendingCount + adminPendingCount;
+            const available = total - bookedCount - pendingCount;
+            const isDisabled = this.disabledSlots[key] === true;
+            
+            // বাংলা দিনের নাম
+            const dayNames = {
+              'Saturday': 'শনিবার',
+              'Sunday': 'রবিবার',
+              'Monday': 'সোমবার',
+              'Wednesday': 'বুধবার'
+            };
+            
+            // বাংলা সার্ভিস নাম
+            const serviceNames = {
+              'general': 'সাধারণ',
+              'microneedling': 'মাইক্রোনিডলিং',
+              'prp': 'পি আর পি',
+              'electrocautery': 'ইলেক্ট্রোক্যাটারি',
+              'cryosurgery': 'ক্রায়োসার্জারি'
+            };
+            
+            const dayText = dayNames[slot.day] || slot.day;
+            const typeText = slot.type === 'new' ? 'নতুন রোগী' : 'পুরাতন রোগী';
+            const serviceText = serviceNames[slot.service] || slot.service;
+            
+            const row = document.createElement('tr');
+            
+            // রঙিন ব্যাকগ্রাউন্ড ক্লাস যোগ করুন
+            if (available === 0) {
+              row.classList.add('fully-booked');
+            } else if (available === total) {
+              row.classList.add('fully-available');
+            } else if (available < total / 2) {
+              row.classList.add('low-availability');
+            }
+            
+            row.innerHTML = `
+              <td>${dayText}</td>
+              <td>${slot.time}</td>
+              <td>${typeText}</td>
+              <td>${serviceText}</td>
+              <td>${start} - ${end} (মোট: ${total})</td>
+              <td>
+                ${pendingCount > 0 ? `<span class="status pending">পেন্ডিং: ${pendingCount}</span>` : ''}
+                <span class="status booked">বুকড: ${bookedCount}</span>
+                <span class="status available">খালি: ${available}</span>
+                ${isDisabled ? '<span class="status disabled">ডিসেবল</span>' : ''}
+              </td>
+              <td>
+                <button class="action-btn edit-btn" onclick="serialManager.editSerial('${slot.day}', '${slot.service}', '${slot.type}', '${slot.time}')">
+                  এডিট
+                </button>
+                ${isDisabled ? 
+                  `<button class="action-btn enable-btn" onclick="serialManager.toggleSlot('${slot.day}', '${slot.service}', '${slot.type}', '${slot.time}', true)">
+                    এনাবল
+                  </button>` : 
+                  `<button class="action-btn disable-btn" onclick="serialManager.toggleSlot('${slot.day}', '${slot.service}', '${slot.type}', '${slot.time}', false)">
+                    ডিসেবল
+                  </button>`
+                }
+                <button class="action-btn cancel-btn" onclick="serialManager.showDeleteConfirm('${slot.day}', '${slot.service}', '${slot.type}', '${slot.time}')">
+                  মুছুন
+                </button>
+              </td>
+            `;
+            
+            tableBody.appendChild(row);
+          }
+          
+          if (!foundSlots) {
+            tableBody.innerHTML = `
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 20px; color: #6b7280;">
+                  ${searchTerm ? 'কোনো সিরিয়াল পাওয়া যায়নি' : 'কোনো সিরিয়াল স্লট নেই। "সিরিয়াল রেঞ্জ যোগ করুন" বাটনে ক্লিক করে নতুন সিরিয়াল যোগ করুন।'}
+                </td>
+              </tr>
+            `;
+          }
+          
+          console.log(`Loaded ${timeSlots.length} serial slots`);
+        } catch (error) {
+          console.error('Error loading serial table:', error);
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 20px; color: #dc2626;">
+                ডেটা লোড করতে সমস্যা হয়েছে। পেজ রিলোড করুন।
+              </td>
+            </tr>
+          `;
+        }
+      }
+      
+      // টাইম নম্বর এক্সট্রাক্ট
+      extractTimeNumber(timeStr) {
+        if (!timeStr) return 0;
+        
+        const timePart = timeStr.split(' ')[0];
+        const [hours, minutes] = timePart.split(':');
+        const hour = parseInt(hours) || 0;
+        const minute = parseInt(minutes) || 0;
+        
+        const isPM = timeStr.toUpperCase().includes('PM');
+        let militaryHour = hour;
+        
+        if (isPM && hour !== 12) {
+          militaryHour += 12;
+        } else if (!isPM && hour === 12) {
+          militaryHour = 0;
+        }
+        
+        return militaryHour * 100 + minute;
+      }
+      
+      // এডিট সিরিয়াল ফাংশন
+      async editSerial(day, service, type, time) {
+        try {
+          const range = this.serialRanges[day]?.[service]?.[type]?.[time];
+          if (!range) {
+            showSweetAlert('সিরিয়াল খুঁজে পাওয়া যায়নি', 'error');
+            return;
+          }
+          
+          const [start, end] = range;
+          
+          document.getElementById('serialModalTitle').textContent = 'সিরিয়াল রেঞ্জ এডিট করুন';
+          document.getElementById('serialDay').value = day;
+          document.getElementById('serialTime').value = time;
+          document.getElementById('serialType').value = type;
+          document.getElementById('serialStart').value = start;
+          document.getElementById('serialEnd').value = end;
+          
+          // সার্ভিস সিলেক্ট করা
+          const checkboxes = document.querySelectorAll('#servicesContainer input[type="checkbox"]');
+          checkboxes.forEach(checkbox => {
+            checkbox.checked = checkbox.value === service;
+          });
+          this.updateSelectedServices();
+          
+          // Store original values for comparison
+          document.getElementById('serialDay').dataset.originalDay = day;
+          document.getElementById('serialType').dataset.originalType = type;
+          document.getElementById('serialTime').dataset.originalTime = time;
+          document.getElementById('serialDay').dataset.originalService = service;
+          
+          document.getElementById('serialModal').style.display = 'flex';
+        } catch (error) {
+          console.error('Error editing serial:', error);
+          showSweetAlert('সিরিয়াল এডিট করতে সমস্যা হয়েছে: ' + error.message, 'error');
+        }
+      }
+      
+      // ডিলিট কনফার্মেশন শো
+      async showDeleteConfirm(day, service, type, time) {
+        try {
+          const serviceNames = {
+            'general': 'সাধারণ',
+            'microneedling': 'মাইক্রোনিডলিং',
+            'prp': 'পি আর পি',
+            'electrocautery': 'ইলেক্ট্রোক্যাটারি',
+            'cryosurgery': 'ক্রায়োসার্জারি'
+          };
+          
+          const dayNames = {
+            'Saturday': 'শনিবার',
+            'Sunday': 'রবিবার',
+            'Monday': 'সোমবার',
+            'Wednesday': 'বুধবার'
+          };
+          
+          const serviceText = serviceNames[service] || service;
+          const typeText = type === 'new' ? 'নতুন রোগী' : 'পুরাতন রোগী';
+          const dayText = dayNames[day] || day;
+          
+          Swal.fire({
+            title: 'আপনি কি নিশ্চিত?',
+            html: `<div style="text-align: center;">
+                    <p style="margin-bottom: 10px;">আপনি কি <strong>${dayText} ${time}</strong> সময়ের</p>
+                    <p style="margin-bottom: 15px;"><strong>${typeText} - ${serviceText}</strong> সেবার সিরিয়াল মুছতে চান?</p>
+                    <p style="color: #dc2626; font-size: 14px;">এই একশনটি রিভার্স করা যাবে না!</p>
+                  </div>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'হ্যাঁ, মুছুন',
+            cancelButtonText: 'না, বাতিল করুন',
+            reverseButtons: true
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.deleteSerial(day, service, type, time);
+            }
+          });
+        } catch (error) {
+          console.error('Error showing delete confirmation:', error);
+          showSweetAlert('কনফার্মেশন দেখাতে সমস্যা হয়েছে', 'error');
+        }
+      }
+      
+      // সিরিয়াল ডিলিট ফাংশন
+      async deleteSerial(day, service, type, time) {
+        try {
+          // সিরিয়াল রেঞ্জ থেকে মুছুন
+          if (this.serialRanges[day]?.[service]?.[type]?.[time]) {
+            delete this.serialRanges[day][service][type][time];
+            this.cleanupEmptyObjects(day, service, type);
+          }
+          
+          // Firebase-এ সেভ করুন
+          if (this.db) {
+            await this.db.collection('settings').doc('serialRanges').set(this.serialRanges);
+            console.log('Deleted serial from Firebase:', { day, service, type, time });
+          }
+          
+          // ডিসেবলড স্লট থেকে মুছুন
+          const key = `${day}_${time}_${type}_${service}`;
+          if (this.disabledSlots[key]) {
+            delete this.disabledSlots[key];
+            localStorage.setItem('disabledSerialSlots', JSON.stringify(this.disabledSlots));
+            
+            // Firebase-এ সেভ করুন
+            if (this.db) {
+              try {
+                await this.db.collection('settings').doc('disabledSlots').set(this.disabledSlots, { merge: true });
+              } catch (error) {
+                console.error('Error saving disabled slots:', error);
+              }
+            }
+          }
+          
+          // পেন্ডিং সিলেকশন ক্লিনআপ
+          await this.cleanupPendingSelections(day, time, type, service);
+          
+          // UI আপডেট
+          await this.loadSerialTable();
+          this.updateStats();
+          showSweetAlert('সিরিয়াল সফলভাবে মুছে ফেলা হয়েছে', 'success');
+          
+        } catch (error) {
+          console.error('Error deleting serial:', error);
+          showSweetAlert('সিরিয়াল মুছতে সমস্যা হয়েছে: ' + error.message, 'error');
+        }
+      }
+      
+      // খালি অবজেক্ট ক্লিনআপ হেল্পার
+      cleanupEmptyObjects(day, service, type) {
+        try {
+          if (this.serialRanges[day]?.[service]?.[type]) {
+            if (Object.keys(this.serialRanges[day][service][type]).length === 0) {
+              delete this.serialRanges[day][service][type];
+            }
+          }
+          if (this.serialRanges[day]?.[service]) {
+            if (Object.keys(this.serialRanges[day][service]).length === 0) {
+              delete this.serialRanges[day][service];
+            }
+          }
+          if (this.serialRanges[day]) {
+            if (Object.keys(this.serialRanges[day]).length === 0) {
+              delete this.serialRanges[day];
+            }
+          }
+        } catch (error) {
+          console.error('Error cleaning up objects:', error);
+        }
+      }
+      
+      // পেন্ডিং সিলেকশন ক্লিনআপ
+      async cleanupPendingSelections(day, time, type, service) {
+        if (!this.db) return;
+        
+        try {
+          const pendingSnapshot = await this.db.collection('pendingSelections')
+            .where('day', '==', day)
+            .where('time', '==', time)
+            .where('type', '==', type)
+            .where('service', '==', service)
+            .get();
+          
+          if (!pendingSnapshot.empty) {
+            const batch = this.db.batch();
+            pendingSnapshot.forEach(doc => {
+              batch.delete(doc.ref);
+            });
+            await batch.commit();
+            console.log(`Cleaned up ${pendingSnapshot.size} pending selections`);
+          }
+        } catch (error) {
+          console.error('Error cleaning up pending selections:', error);
+        }
+      }
+      
+      // স্লট টগল ফাংশন
+      async toggleSlot(day, service, type, time, enable) {
+        try {
+          const key = `${day}_${time}_${type}_${service}`;
+          
+          const serviceNames = {
+            'general': 'সাধারণ',
+            'microneedling': 'মাইক্রোনিডলিং',
+            'prp': 'পি আর পি',
+            'electrocautery': 'ইলেক্ট্রোক্যাটারি',
+            'cryosurgery': 'ক্রায়োসার্জারি'
+          };
+          
+          const dayNames = {
+            'Saturday': 'শনিবার',
+            'Sunday': 'রবিবার',
+            'Monday': 'সোমবার',
+            'Wednesday': 'বুধবার'
+          };
+          
+          const serviceText = serviceNames[service] || service;
+          const dayText = dayNames[day] || day;
+          const typeText = type === 'new' ? 'নতুন রোগী' : 'পুরাতন রোগী';
+          const actionText = enable ? 'এনাবল' : 'ডিসেবল';
+          
+          Swal.fire({
+            title: `${actionText} করতে চান?`,
+            html: `<div style="text-align: center;">
+                    <p><strong>${dayText} - ${time}</strong></p>
+                    <p><strong>${typeText} - ${serviceText}</strong></p>
+                  </div>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: enable ? '#16a34a' : '#f59e0b',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: `হ্যাঁ, ${actionText} করুন`,
+            cancelButtonText: 'না, বাতিল করুন',
+            reverseButtons: true
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              if (enable) {
+                delete this.disabledSlots[key];
+              } else {
+                this.disabledSlots[key] = true;
+              }
+              
+              // Save to localStorage
+              localStorage.setItem('disabledSerialSlots', JSON.stringify(this.disabledSlots));
+              
+              // Firebase-এ সেভ করুন
+              if (this.db) {
+                try {
+                  await this.db.collection('settings').doc('disabledSlots').set(this.disabledSlots, { merge: true });
+                } catch (error) {
+                  console.error('Error saving disabled slots to Firebase:', error);
+                }
+              }
+              
+              await this.loadSerialTable();
+              this.updateStats();
+              
+              showSweetAlert(
+                `${dayText} - ${time} (${typeText} - ${serviceText}) ${enable ? 'এনাবল' : 'ডিসেবল'} করা হয়েছে`,
+                'success'
+              );
+            }
+          });
+        } catch (error) {
+          console.error('Error toggling slot:', error);
+          showSweetAlert('স্লট টগল করতে সমস্যা হয়েছে: ' + error.message, 'error');
+        }
+      }
+      
+      // সিরিয়াল সেভ ফাংশন
+      async saveSerial(e) {
+        e.preventDefault();
+        
+        try {
+          const day = document.getElementById('serialDay').value;
+          const time = document.getElementById('serialTime').value.trim();
+          const type = document.getElementById('serialType').value;
+          const start = parseInt(document.getElementById('serialStart').value);
+          const end = parseInt(document.getElementById('serialEnd').value);
+          
+          // ভ্যালিডেশন
+          if (!day || !time || !type || isNaN(start) || isNaN(end)) {
+            showSweetAlert('অনুগ্রহ করে ফর্মের সকল ঘর পূরণ করুন।', 'error');
+            return;
+          }
+          
+          if (start > end) {
+            showSweetAlert('শুরু সিরিয়াল শেষ সিরিয়ালের চেয়ে বেশি হতে পারে না', 'error');
+            return;
+          }
+        
+          if (start < 1) {
+            showSweetAlert('সিরিয়াল নম্বর ১ বা তার বেশি হতে হবে', 'error');
+            return;
+          }
+          
+          // একাধিক সার্ভিস সিলেক্ট করা হয়েছে কিনা চেক করুন
+          if (this.selectedServices.length === 0) {
+            showSweetAlert('অনুগ্রহ করে অন্তত একটি সেবা নির্বাচন করুন।', 'error');
+            return;
+          }
+          
+          const originalDay = document.getElementById('serialDay').dataset.originalDay;
+          const originalType = document.getElementById('serialType').dataset.originalType;
+          const originalTime = document.getElementById('serialTime').dataset.originalTime;
+          const originalService = document.getElementById('serialDay').dataset.originalService;
+          
+          const isEdit = !!originalDay;
+          
+          // যদি এডিট মোড হয় এবং পুরানো ডেটা মুছতে হয়
+          if (isEdit && (originalDay !== day || originalType !== type || originalTime !== time)) {
+            if (this.serialRanges[originalDay]?.[originalService]?.[originalType]?.[originalTime]) {
+              delete this.serialRanges[originalDay][originalService][originalType][originalTime];
+              this.cleanupEmptyObjects(originalDay, originalService, originalType);
+            }
+          }
+          
+          // প্রতিটি সিলেক্টেড সার্ভিসের জন্য চেক করুন
+          for (const service of this.selectedServices) {
+            // ডুপ্লিকেট চেক (একই দিন, সময়, টাইপ এবং সার্ভিস)
+            if (this.serialRanges[day]?.[service]?.[type]?.[time]) {
+              const serviceNames = {
+                'general': 'সাধারণ',
+                'microneedling': 'মাইক্রোনিডলিং',
+                'prp': 'পি আর পি',
+                'electrocautery': 'ইলেক্ট্রোক্যাটারি',
+                'cryosurgery': 'ক্রায়োসার্জারি'
+              };
+              const serviceText = serviceNames[service] || service;
+              showSweetAlert(`${serviceText} সেবার জন্য এই দিন, সময় এবং ধরনের জন্য ইতিমধ্যেই সিরিয়াল সেট করা আছে!`, 'error');
+              return;
+            }
+          }
+          
+          // প্রতিটি সিলেক্টেড সার্ভিসের জন্য স্লট তৈরি করুন
+          for (const service of this.selectedServices) {
+            // ডেটা স্ট্রাকচার তৈরি করুন
+            if (!this.serialRanges[day]) this.serialRanges[day] = {};
+            if (!this.serialRanges[day][service]) this.serialRanges[day][service] = {};
+            if (!this.serialRanges[day][service][type]) this.serialRanges[day][service][type] = {};
+            
+            this.serialRanges[day][service][type][time] = [start, end];
+          }
+          
+          console.log('Updated serialRanges:', this.serialRanges);
+          
+          // Firebase-এ সেভ করুন
+          if (this.db) {
+            await this.db.collection('settings').doc('serialRanges').set(this.serialRanges);
+          }
+          
+          // মডাল বন্ধ করুন
+          document.getElementById('serialModal').style.display = 'none';
+          document.getElementById('serialForm').reset();
+          this.selectedServices = [];
+          document.getElementById('selectedServicesTags').innerHTML = '';
+          
+          // Clear original data
+          delete document.getElementById('serialDay').dataset.originalDay;
+          delete document.getElementById('serialType').dataset.originalType;
+          delete document.getElementById('serialTime').dataset.originalTime;
+          delete document.getElementById('serialDay').dataset.originalService;
+          
+          await this.loadSerialTable();
+          this.updateStats();
+          
+          showSweetAlert(
+            isEdit ? 'সিরিয়াল সফলভাবে আপডেট করা হয়েছে' : 'সিরিয়াল সফলভাবে যোগ করা হয়েছে',
+            'success'
+          );
+          
+        } catch (error) {
+          console.error('Error saving serial:', error);
+          showSweetAlert('সিরিয়াল সংরক্ষণ করতে সমস্যা হয়েছে: ' + error.message, 'error');
+        }
+      }
+      
+      // স্ট্যাটস আপডেট ফাংশন
+      updateStats() {
+        try {
+          // প্রতিটি সার্ভিসের জন্য আলাদা আলাদা সংখ্যা গণনা
+          const serviceCounts = {
+            'general': 0,
+            'microneedling': 0,
+            'prp': 0,
+            'electrocautery': 0,
+            'cryosurgery': 0
+          };
+          
+          let pendingTotal = 0;
+          
+          // সার্ভিসগুলোর স্লট সংখ্যা গণনা
+          for (const day in this.serialRanges) {
+            for (const service in this.serialRanges[day]) {
+              for (const type in this.serialRanges[day][service]) {
+                for (const time in this.serialRanges[day][service][type]) {
+                  const range = this.serialRanges[day][service][type][time];
+                  if (Array.isArray(range) && range.length === 2) {
+                    const [start, end] = range;
+                    const slotCount = end - start + 1;
+                    
+                    // প্রতিটি সার্ভিসের টোটাল স্লট
+                    if (serviceCounts[service] !== undefined) {
+                      serviceCounts[service] += slotCount;
+                    }
+                    
+                    // পেন্ডিং সংখ্যা
+                    const key = `${day}_${time}_${type}_${service}`;
+                    const userPendingCount = this.pendingSelections[key] ? this.pendingSelections[key].size : 0;
+                    const adminPendingCount = this.adminPendingSelections[key] ? Object.keys(this.adminPendingSelections[key]).length : 0;
+                    pendingTotal += userPendingCount + adminPendingCount;
+                  }
+                }
+              }
+            }
+          }
+          
+          // HTML-এ স্ট্যাটস আপডেট
+          document.getElementById('generalSerials').textContent = serviceCounts.general;
+          document.getElementById('microneedlingSerials').textContent = serviceCounts.microneedling;
+          document.getElementById('prpSerials').textContent = serviceCounts.prp;
+          document.getElementById('electrocauterySerials').textContent = serviceCounts.electrocautery;
+          document.getElementById('cryosurgerySerials').textContent = serviceCounts.cryosurgery;
+          document.getElementById('pendingSerials').textContent = pendingTotal;
+          
+          console.log('Stats updated:', serviceCounts);
+        } catch (error) {
+          console.error('Error updating stats:', error);
+        }
+      }
+      
+      // মডাল ওপেন ফাংশন
+      openSerialModal() {
+        document.getElementById('serialModalTitle').textContent = 'সিরিয়াল রেঞ্জ যোগ করুন';
+        document.getElementById('serialForm').reset();
+        this.selectedServices = [];
+        document.getElementById('selectedServicesTags').innerHTML = '';
+        
+        // চেকবক্স আনচেক করুন
+        const checkboxes = document.querySelectorAll('#servicesContainer input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = false;
+        });
+        
+        // Clear original data
+        delete document.getElementById('serialDay').dataset.originalDay;
+        delete document.getElementById('serialType').dataset.originalType;
+        delete document.getElementById('serialTime').dataset.originalTime;
+        delete document.getElementById('serialDay').dataset.originalService;
+        
+        document.getElementById('serialModal').style.display = 'flex';
+      }
+      
+      setupEventListeners() {
+        // মডাল ইভেন্ট
+        document.querySelector('.add-serial-range-btn')?.addEventListener('click', () => {
+          this.openSerialModal();
+        });
+        
+        document.getElementById('closeSerialModal')?.addEventListener('click', () => {
+          document.getElementById('serialModal').style.display = 'none';
+        });
+        
+        document.getElementById('cancelSerialModal')?.addEventListener('click', () => {
+          document.getElementById('serialModal').style.display = 'none';
+        });
+        
+        document.getElementById('serialForm')?.addEventListener('submit', (e) => {
+          this.saveSerial(e);
+        });
+        
+        window.addEventListener('click', (e) => {
+          if (e.target === document.getElementById('serialModal')) {
+            document.getElementById('serialModal').style.display = 'none';
+          }
+        });
+      }
+      
+      destroy() {
+        this.realtimeListeners.forEach(unsubscribe => {
+          if (unsubscribe && typeof unsubscribe === 'function') {
+            unsubscribe();
+          }
+        });
+      }
+    }
+
+    // ==================== INITIALIZATION ====================
+    function initializeFirebase() {
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        db = firebase.firestore();
+        console.log("✅ Firebase initialized successfully");
+        
+        window.db = db;
+        
+        // Admin session ID
+        if (!sessionStorage.getItem('adminSessionId')) {
+          const sessionId = 'admin_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+          sessionStorage.setItem('adminSessionId', sessionId);
+        }
+        currentAdminSessionId = sessionStorage.getItem('adminSessionId');
+        console.log('✅ Admin Session ID:', currentAdminSessionId);
+        
+        return true;
+      } catch (error) {
+        console.error("❌ Firebase initialization error:", error);
+        showSweetAlert('Firebase initialization failed: ' + error.message, 'error');
+        return false;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // ১. প্রথমে কম্পোনেন্ট লোড করুন
+      if (typeof ComponentLoader !== 'undefined') {
+        ComponentLoader.loadAllComponents('সিরিয়াল ম্যানেজমেন্ট');
+      }
+      
+      // ২. তারপর authentication চেক করুন
+      if (!checkAuthentication()) {
+        return;
+      }
+      
+      // ৩. Firebase ইনিশিয়ালাইজ
+      if (initializeFirebase()) {
+        // ৪. Serial Manager শুরু করুন
+        setTimeout(() => {
+          serialManager = new SerialManagement();
+          console.log('✅ Serial Management initialized');
+          
+          // ডিবাগিং জন্য
+          window.serialManager = serialManager;
+        }, 500);
+      }
+    });
+
+    // ==================== CLEANUP ====================
+    window.addEventListener('beforeunload', function() {
+      if (serialManager) {
+        serialManager.destroy();
+      }
+      
+      if (realtimeListeners.length > 0) {
+        realtimeListeners.forEach(unsubscribe => {
+          if (unsubscribe && typeof unsubscribe === 'function') {
+            unsubscribe();
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
