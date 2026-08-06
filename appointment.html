@@ -1484,11 +1484,12 @@ function checkSelectedDate() {
     const selectedDate = new Date(dateInput.value);
     const dayName = getDayNameInBangla(selectedDate);
     const englishDay = getDayNameInEnglish(selectedDate);
+    
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // শুধু তারিখের অংশ নিন
+    today.setHours(0, 0, 0, 0);
     
     const selected = new Date(selectedDate);
-    selected.setHours(0, 0, 0, 0); // শুধু তারিখের অংশ নিন
+    selected.setHours(0, 0, 0, 0);
 
     console.log('📅 Selected date check:', {
         date: dateInput.value,
@@ -1502,61 +1503,47 @@ function checkSelectedDate() {
     // রিসেট সবকিছু
     resetServiceAndTimeFields();
 
-    // ✅ ১. শুধুমাত্র আজকের তারিখ চেক (অতীত এবং ভবিষ্যত ব্লক)
+    // ✅ ১. শুধুমাত্র আজকের তারিখ চেক (অতীত এবং ভবিষ্যৎ ব্লক)
     if (selected.getTime() !== today.getTime()) {
-        if (selected < today) {
-            // অতীতের তারিখ
-            if (dateWarning) {
-                dateWarning.style.display = 'block';
+        if (dateWarning) {
+            dateWarning.style.display = 'block';
+            if (selected < today) {
                 dateWarning.textContent = 'অতীতের তারিখ নির্বাচন করা যাবে না। শুধুমাত্র আজকের তারিখ নির্বাচন করুন।';
+            } else {
+                dateWarning.textContent = 'ভবিষ্যতের তারিখ নির্বাচন করা যাবে না। শুধুমাত্র আজকের তারিখ নির্বাচন করুন।';
             }
-            console.log('❌ Past date selected:', dateInput.value);
-        } else {
-            // ভবিষ্যতের তারিখ
-            if (dateWarning) {
-                dateWarning.style.display = 'block';
-                dateWarning.textContent = 'ভবিষ্যতের তারিখ নির্বাচন করা যাবে না। শুধুমাত্র আজকের তারিখ নির্বাচন করুন। কালকের জন্য আগামীকাল আসুন।';
-            }
-            console.log('❌ Future date selected:', dateInput.value);
         }
         
-        // তারিখ ইনপুটকে আজকের তারিখে ফিরিয়ে আনুন
-        const todayFormatted = formatDate(today);
-        dateInput.value = todayFormatted;
-        
-        // আবার চেক করুন
-        setTimeout(() => checkSelectedDate(), 100);
-        return;
+        // তারিখ পরিবর্তন না করে শুধু ইনপুট ফিল্ডকে আজকের তারিখে রিসেট করুন (কোনো রিকার্সিভ কল ছাড়াই)
+        dateInput.value = formatDate(today);
+        return; 
     }
 
-    // ✅ ২. চেক করুন ডেটটা আমাদের ৪ দিনের মধ্যে কি না
+    // ✅ ২. আজ চেম্বার খোলা আছে কি না চেক (অন্য দিনে রিডাইরেক্ট করা বন্ধ)
     if (!activeBanglaDays.includes(dayName)) {
         if (dateWarning) {
             dateWarning.style.display = 'block';
-            dateWarning.textContent = `"${dayName}" দিনে চেম্বার খোলা নেই। শনিবার, রবিবার, সোমবার বা বুধবার নির্বাচন করুন।`;
+            dateWarning.textContent = `আজ "${dayName}"—চেম্বার বন্ধ রয়েছে। শনিবার, রবিবার, সোমবার বা বুধবার এসে বুকিং করুন।`;
         }
-        console.log('❌ Day not active:', dayName);
-        
-        // আজ যদি সক্রিয় দিন না হয়, পরের সক্রিয় দিন খুঁজুন
-        if (dateInput) {
-            findAndSetNextActiveDate();
-        }
-        return;
+        console.log('❌ Today is not active:', dayName);
+        return; // অটো-রিডাইরেক্ট বন্ধ করতে এখানেই থামানো হলো
     }
 
-    // ✅ ৩. Firebase থেকে ডেটা আছে কি না চেক
+    // ✅ ৩. Firebase থেকে আজকের ডেটা আছে কি না চেক
     const dayData = serialRanges[englishDay];
 
     if (!dayData) {
         if (dateWarning) {
             dateWarning.style.display = 'block';
-            dateWarning.textContent = `"${dayName}" দিনে এখনো কোনো সিরিয়াল সেট করা হয়নি। অনুগ্রহ করে চেম্বারে যোগাযোগ করুন।`;
+            dateWarning.textContent = `আজকের (${dayName}) জন্য এখনো কোনো সিরিয়াল সেট করা হয়নি। অনুগ্রহ করে চেম্বারে যোগাযোগ করুন।`;
         }
-        console.log('❌ No data for day:', englishDay);
-        
-        // পরের সক্রিয় দিন খুঁজুন যেখানে ডেটা আছে
-        findAndSetNextAvailableDate();
-        return;
+        console.log('❌ No data for today:', englishDay);
+        return; // অটো-রিডাইরেক্ট বন্ধ করতে এখানেই থামানো হলো
+    }
+
+    // ওয়ার্নিং মুছে ফেলুন যদি সব ঠিক থাকে
+    if (dateWarning) {
+        dateWarning.style.display = 'none';
     }
 
     // ✅ ৪. সার্ভিসগুলো লোড করুন
@@ -1641,7 +1628,6 @@ function findAndSetNextAvailableDate() {
 }
 
 // ==================== UPDATE DATE INPUT SETUP ====================
-// আগের setupDateInput ফাংশন আপডেট করুন
 function setupDateInput() {
     const today = new Date();
     const todayFormatted = formatDate(today);
@@ -1654,13 +1640,10 @@ function setupDateInput() {
         englishDay: todayEnglishDay
     });
     
-    // শুধুমাত্র আজকের তারিখ min/max/value হিসেবে সেট করুন
+    // শুধুমাত্র আজকের তারিখ নির্দিষ্ট করে দেওয়া হলো
     dateInput.min = todayFormatted;
     dateInput.max = todayFormatted;
     dateInput.value = todayFormatted;
-    
-    // নিষিদ্ধ তারিখগুলো disable করুন
-    disableNonActiveDates();
     
     console.log('📅 Date input configured:', {
         min: dateInput.min,
@@ -1668,10 +1651,8 @@ function setupDateInput() {
         value: dateInput.value
     });
     
-    // নির্বাচিত তারিখ চেক করুন
-    if (typeof checkSelectedDate === 'function') {
-        checkSelectedDate();
-    }
+    // প্রথমবার চেক কল করা
+    checkSelectedDate();
 }
 
 // ==================== UPDATE DISABLE DATES FUNCTION ====================
@@ -2292,22 +2273,51 @@ document.getElementById('appointmentForm').addEventListener('submit', async func
         submitBtn.classList.add('loading');
         submitBtn.textContent = 'সাবমিট করা হচ্ছে...';
 
-        if (currentUserPendingId) {
-            if (gridSystem) {
-                await gridSystem.removePendingSelection(currentUserPendingId);
-            }
+        // ১. তারিখ থেকে YYMMDD ফরম্যাট তৈরি (যেমন: 2026-08-06 -> 260806)
+        const dateObj = new Date(selectedDateStr);
+        const yy = String(dateObj.getFullYear()).slice(-2);
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        const yymmdd = `${yy}${mm}${dd}`;
+
+        // ২. টাইপ অনুযায়ী সাব-কালেকশন ফোল্ডার নাম ('new' অথবা 'old')
+        const typeFolder = (typeSelect.value === 'new' || typeSelect.value === 'নতুন') ? 'new' : 'old';
+
+        // ৩. কাস্টম ডকুমেন্ট আইডি (যেমন: 260806-05)
+        const formattedSerial = String(selectedSerial).padStart(2, '0'); // সিরিয়াল ২ ডিজিট করতে (01, 02...)
+        const customDocId = `${yymmdd}-${formattedSerial}`;
+
+        // ৪. ফায়ারবেস রেফারেন্স
+        // Path: appointments -> [yymmdd] -> [new/old] -> [yymmdd-serial]
+        const docRef = db.collection('appointments')
+                         .doc(yymmdd)
+                         .collection(typeFolder)
+                         .doc(customDocId);
+
+        // ৫. সিরিয়ালটি আগেই বুকড কি না তা চেক করা
+        const docSnap = await docRef.get();
+        if (docSnap.exists) {
+            submitBtn.classList.remove('loading');
+            submitBtn.textContent = 'সাবমিট করুন';
+            showPopup('error', 'সিরিয়াল বুকড', 
+                `সিরিয়াল #${selectedSerial} ইতিমধ্যে বুক করা হয়েছে! অনুগ্রহ করে অন্য সিরিয়াল বা টাইপ নির্বাচন করুন।`);
+            return false;
+        }
+
+        // ৬. প্যান্ডিং ডাটা রিমুভ (যদি থাকে)
+        if (currentUserPendingId && gridSystem) {
+            await gridSystem.removePendingSelection(currentUserPendingId);
             currentUserPendingId = null;
         }
 
-        console.log('💾 Saving appointment:', appointmentData);
+        // ৭. ডাটা সেভ
+        await docRef.set(appointmentData);
 
-        await db.collection('appointments').add(appointmentData);
+        console.log(`✅ Saved at path: appointments/${yymmdd}/${typeFolder}/${customDocId}`);
 
         showPopup('success', 'অ্যাপয়েন্টমেন্ট সফল হয়েছে!',
             'আপনার অ্যাপয়েন্টমেন্ট সফলভাবে বুক করা হয়েছে!<br><br>আপনি চাইলে নিচের থেকে কনফার্মেশন স্লিপ ডাউনলোড করতে পারেন।',
             { showSlip: true });
-
-        console.log('✅ Appointment saved successfully');
 
     } catch (error) {
         console.error('❌ Error saving appointment:', error);
