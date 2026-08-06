@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>প্রোফাইল আপডেট</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="components-inline.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Noto Sans Bengali', sans-serif; background: #f0f4f8; }
+    
+    .profile-page {
+      max-width: 600px;
+      margin: 80px auto 40px;
+      padding: 0 20px;
+    }
+    
+    .profile-card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+    
+    .profile-card h2 {
+      font-size: 24px;
+      color: #0f172a;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .profile-card h2 i {
+      color: #3b82f6;
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 4px;
+      font-size: 14px;
+      color: #334155;
+    }
+    
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+      transition: 0.15s;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    }
+    
+    .form-group input:disabled {
+      background: #f1f5f9;
+      cursor: not-allowed;
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    .btn-save {
+      padding: 12px 32px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex: 1;
+    }
+    
+    .btn-save:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 16px rgba(34,197,94,0.3);
+    }
+    
+    .btn-cancel {
+      padding: 12px 32px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      background: white;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-cancel:hover {
+      background: #f1f5f9;
+    }
+    
+    #profileMsg {
+      display: none;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      background: #dcfce7;
+      color: #16a34a;
+      border: 1px solid #bbf7d0;
+    }
+  </style>
+</head>
+<body data-auto-load-components>
+  <div id="header-container"></div>
+  
+  <div style="display: flex; min-height: calc(100vh - 64px); margin-top: 64px;">
+    <div id="sidebar-container"></div>
+    
+    <main style="flex: 1; padding: 24px; background: #f0f4f8;">
+      <div class="profile-page">
+        <div class="profile-card">
+          <h2><i class="fas fa-id-card"></i> প্রোফাইল আপডেট</h2>
+          
+          <div id="profileMsg"></div>
+          
+          <div class="form-group">
+            <label>পূর্ণ নাম</label>
+            <input type="text" id="profileName" placeholder="আপনার নাম লিখুন">
+          </div>
+          
+          <div class="form-group">
+            <label>মোবাইল</label>
+            <input type="tel" id="profilePhone" disabled>
+          </div>
+          
+          <div class="form-group">
+            <label>বয়স</label>
+            <input type="number" id="profileAge" placeholder="বয়স লিখুন">
+          </div>
+          
+          <div class="form-group">
+            <label>লিঙ্গ</label>
+            <select id="profileGender">
+              <option value="Male">পুরুষ</option>
+              <option value="Female">মহিলা</option>
+              <option value="Other">অন্যান্য</option>
+            </select>
+          </div>
+          
+          <div class="btn-group">
+            <button class="btn-save" id="saveProfileBtn">
+              <i class="fas fa-save"></i> আপডেট করুন
+            </button>
+            <button class="btn-cancel" id="cancelProfileBtn">বাতিল</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <div id="footer-container"></div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const phone = sessionStorage.getItem('userPhone') || sessionStorage.getItem('loggedInUser') || '';
+      const name = sessionStorage.getItem('userName') || '';
+      
+      document.getElementById('profilePhone').value = phone;
+      document.getElementById('profileName').value = name;
+      
+      // Firebase থেকে ডেটা লোড
+      if (typeof db !== 'undefined' && db && phone) {
+        db.collection('users').doc(phone).get()
+          .then((doc) => {
+            if (doc.exists) {
+              const data = doc.data();
+              document.getElementById('profileName').value = data.name || '';
+              document.getElementById('profileAge').value = data.age || '';
+              document.getElementById('profileGender').value = data.gender || 'Male';
+            }
+          })
+          .catch((err) => console.error('Profile load error:', err));
+      }
+      
+      // সেভ বাটন
+      document.getElementById('saveProfileBtn').addEventListener('click', function() {
+        const name = document.getElementById('profileName').value.trim();
+        const phone = document.getElementById('profilePhone').value;
+        const age = document.getElementById('profileAge').value;
+        const gender = document.getElementById('profileGender').value;
+        
+        if (!name) {
+          Swal.fire('সতর্কতা!', 'নাম লিখুন', 'warning');
+          return;
+        }
+        
+        // ComponentLoader এর updateProfile ফাংশন কল
+        ComponentLoader.updateProfile(name, phone, age, gender)
+          .then((result) => {
+            const msg = document.getElementById('profileMsg');
+            msg.textContent = result.message;
+            msg.style.display = 'block';
+            msg.style.background = '#dcfce7';
+            msg.style.color = '#16a34a';
+            msg.style.border = '1px solid #bbf7d0';
+            
+            Swal.fire('✅ সফল!', result.message, 'success');
+            
+            setTimeout(() => {
+              msg.style.display = 'none';
+            }, 3000);
+          })
+          .catch((error) => {
+            const msg = document.getElementById('profileMsg');
+            msg.textContent = error.message || 'আপডেট করতে সমস্যা হয়েছে';
+            msg.style.display = 'block';
+            msg.style.background = '#fee2e2';
+            msg.style.color = '#dc2626';
+            msg.style.border = '1px solid #fecaca';
+            
+            Swal.fire('❌ ত্রুটি!', error.message || 'আপডেট করতে সমস্যা হয়েছে', 'error');
+          });
+      });
+      
+      // বাতিল বাটন
+      document.getElementById('cancelProfileBtn').addEventListener('click', function() {
+        window.location.href = '/dashboard';
+      });
+    });
+  </script>
+</body>
+</html>

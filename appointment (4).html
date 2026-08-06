@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>অ্যাপয়েন্টমেন্ট ফর্ম</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+      --gray: #6b7280;
+      --light-gray: #f3f4f6;
+      --white: #ffffff;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Noto Sans Bengali', sans-serif;
+      background: linear-gradient(135deg, #f0f8ff, #e1f5fe);
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 640px;
+      margin: 20px auto;
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: var(--primary);
+      color: var(--white);
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+    
+    .header h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+    }
+    
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background: var(--white);
+      clip-path: ellipse(50% 50% at 50% 50%);
+    }
+    
+    form {
+      padding: 30px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+    
+    .input-field {
+      position: relative;
+    }
+
+    .age-multiple-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      align-items: stretch;
+    }
+
+    .age-single-field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .age-input-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 16px;
+      font-family: 'Noto Sans Bengali', sans-serif;
+      transition: all 0.2s ease;
+      background-color: var(--white);
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    
+    input::placeholder {
+      color: var(--gray);
+      opacity: 0.6;
+    }
+    
+    input[type="date"]:disabled {
+      background-color: #f3f4f6;
+      color: #9ca3af;
+      cursor: not-allowed;
+    }
+    
+    .error-msg {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    .info-text {
+      color: var(--gray);
+      font-size: 13px;
+      margin-top: 5px;
+      display: block;
+    }
+    
+    .no-slots-message {
+      background-color: #fef3c7;
+      color: var(--warning);
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      margin-top: 15px;
+      display: none;
+    }
+    
+    .loading-message {
+      background-color: #dbeafe;
+      color: var(--primary);
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      margin-top: 15px;
+      display: none;
+    }
+
+    /* Custom Popup Modal */
+    .popup-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .popup-content {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      animation: popupIn 0.3s ease-out;
+    }
+
+    @keyframes popupIn {
+      from {
+        opacity: 0;
+        transform: scale(0.8) translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .popup-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+
+    .popup-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #1f2937;
+    }
+
+    .popup-message {
+      font-size: 16px;
+      margin-bottom: 20px;
+      color: #6b7280;
+      line-height: 1.5;
+      text-align: left;
+    }
+
+    .popup-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .popup-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 120px;
+    }
+
+    .popup-btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+    }
+
+    .popup-btn.cancel {
+      background: var(--gray);
+    }
+
+    .popup-btn.cancel:hover {
+      background: #4b5563;
+    }
+
+    .popup-btn.success {
+      background: var(--success);
+    }
+
+    .popup-btn.success:hover {
+      background: #15803d;
+    }
+
+    .popup-btn.warning {
+      background: var(--warning);
+    }
+
+    .popup-btn.warning:hover {
+      background: #d97706;
+    }
+
+    /* Confirmation Slip */
+    .confirmation-slip {
+      background: white;
+      border: 2px solid #2563eb;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 15px auto;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+      max-width: 300px;
+      width: 100%;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .slip-header {
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+    }
+
+    .slip-header h3 {
+      color: #2563eb;
+      font-size: 14px;
+      margin-bottom: 3px;
+      font-weight: 700;
+    }
+
+    .slip-header p {
+      color: #6b7280;
+      font-size: 12px;
+      margin: 0;
+    }
+
+    .slip-details {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 3px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: #374151;
+      text-align: left;
+      flex: 1;
+      min-width: 60px;
+    }
+
+    .detail-value {
+      color: #1f2937;
+      text-align: right;
+      flex: 1;
+      font-weight: 500;
+      min-width: 100px;
+    }
+
+    .serial-number {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 10px 0;
+      font-size: 20px;
+      font-weight: 700;
+      border: 2px solid #3b82f6;
+    }
+
+    .slip-footer {
+      border-top: 1px solid #e5e7eb;
+      padding-top: 8px;
+      color: #6b7280;
+      font-size: 10px;
+      line-height: 1.3;
+      margin-top: 8px;
+    }
+
+    /* Download Buttons CSS */
+    .download-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .download-btn {
+      background: #16a34a;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 120px;
+      justify-content: center;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .download-btn:hover {
+      background: #15803d;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .download-btn.pdf {
+      background: #dc2626;
+    }
+
+    .download-btn.pdf:hover {
+      background: #b91c1c;
+    }
+
+    /* Serial Selection Section */
+    .serial-section {
+      margin-top: 30px;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 20px;
+    }
+    
+    .serial-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .serial-header h3 {
+      font-size: 18px;
+      color: #1f2937;
+    }
+    
+    .legend {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+    }
+    
+    .legend-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+    
+    .available-dot { background-color: var(--success); }
+    .booked-dot { background-color: var(--danger); }
+    .selected-dot { background-color: var(--warning); }
+    .pending-dot { background-color: var(--info); }
+    
+    /* Submit Button */
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background-color: var(--primary);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 30px;
+      transition: all 0.2s ease;
+      font-family: 'Noto Sans Bengali', sans-serif;
+    }
+    
+    .submit-btn:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
+    }
+    
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+    
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    
+    .success-message {
+      background-color: #dcfce7;
+      color: var(--success);
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .helpline {
+      text-align: center;
+      padding-top: 20px;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 600px) {
+      .container {
+        margin: 10px auto;
+        border-radius: 0;
+      }
+      
+      form {
+        padding: 20px;
+      }
+      
+      .legend {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .popup-content {
+        padding: 20px;
+        margin: 20px;
+      }
+
+      .slip-details {
+        grid-template-columns: 1fr;
+      }
+
+      .popup-buttons {
+        flex-direction: column;
+      }
+
+      .download-buttons {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Unified Popup Modal -->
+  <div class="popup-modal" id="universalPopup">
+    <div class="popup-content">
+      <div class="popup-icon" id="popupIcon">⚠️</div>
+      <div class="popup-title" id="popupTitle">শিরোনাম</div>
+      <div class="popup-message" id="popupMessage">
+        মেসেজ এখানে দেখানো হবে
+      </div>
+      <!-- Confirmation Slip for Download -->
+      <div class="confirmation-slip" id="confirmationSlip" style="display: none;">
+        <div class="slip-header">
+          <h3>🏥 ডাঃ মোঃ ওয়াহিদুজ্জামান মাসুম</h3>
+          <p>সিরিয়াল কনফার্মেশন স্লিপ</p>
+        </div>
+        <div class="slip-details">
+          <div class="detail-item">
+            <div class="detail-label">নাম:</div>
+            <div class="detail-value" id="slipName">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">বয়স:</div>
+            <div class="detail-value" id="slipAge">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">ফোন:</div>
+            <div class="detail-value" id="slipPhone">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">ধরন:</div>
+            <div class="detail-value" id="slipType">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">তারিখ:</div>
+            <div class="detail-value" id="slipDate">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">দিন:</div>
+            <div class="detail-value" id="slipDay">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">সময়:</div>
+            <div class="detail-value" id="slipTime">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">সেবা:</div>
+            <div class="detail-value" id="slipService">-</div>
+          </div>
+        </div>
+        <div class="serial-number" id="slipSerial">#০</div>
+        <div class="slip-footer">
+          বুকিং সময়: <span id="slipDateTime">-</span> | এই স্লিপটি সংরক্ষণ করুন এবং অ্যাপয়েন্টমেন্টের দিন সাথে নিয়ে আসুন
+        </div>
+      </div>
+      <div class="popup-buttons" id="popupButtons">
+        <button class="popup-btn cancel" onclick="closePopup()">বন্ধ করুন</button>
+      </div>
+      <!-- Download Buttons for Confirmation Slip -->
+      <div class="download-buttons" id="downloadButtons" style="display: none;">
+        <button class="download-btn" onclick="downloadPNG()">
+          📸 PNG ডাউনলোড
+        </button>
+        <button class="download-btn pdf" onclick="downloadPDF()">
+          📄 PDF ডাউনলোড
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appointment Form -->
+  <div class="container">
+    <div class="header">
+      <h2>অ্যাপয়েন্টমেন্ট ফর্ম</h2>
+    </div>
+    
+    <form id="appointmentForm" novalidate>
+      <div class="form-group">
+        <label for="name">রোগীর নাম</label>
+        <div class="input-field">
+          <input type="text" id="name" name="name" placeholder="আপনার পুরো নাম লিখুন" required
+            pattern="[a-zA-Z\u0980-\u09FF\.\s]{3,50}" 
+            title="শুধুমাত্র বাংলা/ইংরেজি অক্ষর, ডট (.) ও স্পেস ব্যবহার করুন (3-50 অক্ষর)">
+        </div>
+        <small id="nameError" class="error-msg">সঠিক নাম লিখুন (বিশেষ চিহ্ন বা সংখ্যা দেওয়া যাবে না)</small>
+      </div>
+
+      <div class="form-group">
+        <label for="age">রোগীর বয়স</label>
+        <div class="age-multiple-container">
+          <div class="age-single-field">
+            <div class="age-input-group">
+              <input type="number" 
+                     id="ageYears" 
+                     name="ageYears" 
+                     placeholder="বছর"
+                     min="0"
+                     max="120"
+                     oninput="normalizeAgeInputs()">
+            </div>
+          </div>
+          <div class="age-single-field">
+            <div class="age-input-group">
+              <input type="number" 
+                     id="ageMonths" 
+                     name="ageMonths" 
+                     placeholder="মাস"
+                     min="0"
+                     oninput="normalizeAgeInputs()">
+            </div>
+          </div>
+          <div class="age-single-field">
+            <div class="age-input-group">
+              <input type="number" 
+                     id="ageDays" 
+                     name="ageDays" 
+                     placeholder="দিন"
+                     min="0"
+                     oninput="normalizeAgeInputs()">
+            </div>
+          </div>
+        </div>
+        <small id="ageError" class="error-msg">অনুগ্রহ করে সঠিক বয়স লিখুন</small>
+        <small class="info-text">কমপক্ষে একটি ফিল্ড পূরণ করুন (বছর/মাস/দিন)</small>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">ফোন নম্বর</label>
+        <div class="input-field">
+          <input type="tel" id="phone" name="phone" placeholder="01XXXXXXXXX" required pattern="01[0-9]{9}"
+            title="বাংলাদেশের ১১ ডিজিটের মোবাইল নম্বর লিখুন">
+        </div>
+        <small id="phoneError" class="error-msg">অনুগ্রহ করে সঠিক ফোন নম্বর লিখুন (01XXXXXXXXX)</small>
+        <small class="info-text">প্রয়োজনে আমরা আপনার সাথে এই নম্বরে যোগাযোগ করব</small>
+      </div>
+
+      <div class="form-group">
+        <label for="patientType">রোগীর ধরন</label>
+        <div class="input-field">
+          <select id="patientType" name="patientType" required>
+            <option value="">-- ধরন নির্বাচন করুন --</option>
+            <option value="new">নতুন রোগী</option>
+            <option value="old">পুরাতন রোগী</option>
+          </select>
+          <small class="info-text">০-৯০ দিন পর্যন্ত পুরাতন রোগী হিসেবে গণ্য হবে</small>
+        </div>
+      </div>
+
+       <div class="form-group">
+        <label for="date">অ্যাপয়েন্টমেন্টের তারিখ</label>
+        <div class="input-field">
+          <input type="date" id="date" name="date" required>
+        </div>
+        <!-- dateWarning element যোগ করা হয়েছে -->
+        <small id="dateWarning" class="error-msg" style="display: none;"></small>
+        <small class="info-text">শনিবার, রবিবার, সোমবার বা বুধবার নির্বাচন করুন</small>
+      </div>
+
+      <div class="form-group">
+        <label for="serviceType">সেবার ধরন</label>
+        <div class="input-field">
+          <select id="serviceType" name="serviceType" required>
+            <option value="">-- সেবা নির্বাচন করুন --</option>
+            <option value="general">সাধারণ</option>
+            <option value="microneedling">মাইক্রোনিডলিং</option>
+            <option value="prp">পি আর পি</option>
+            <option value="electrocautery">ইলেক্ট্রোক্যাটারি</option>
+            <option value="cryosurgery">ক্রায়োসার্জারি</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="time">সময়</label>
+        <div class="input-field">
+          <select id="time" name="time" required disabled>
+            <option value="">-- সময় নির্বাচন করুন --</option>
+          </select>
+          <small class="info-text">চেম্বারে উপস্থিত থাকার সম্ভাব্য সময়</small>
+        </div>
+      </div>
+
+      <div class="serial-section">
+        <div class="serial-header">
+          <h3>সিরিয়াল নাম্বার নির্বাচন করুন</h3>
+          <div class="legend">
+            <div class="legend-item">
+              <span class="legend-dot available-dot"></span>
+              <span>খালি</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot pending-dot"></span>
+              <span>সিলেক্টেড (অন্য ইউজার)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot selected-dot"></span>
+              <span>আপনার নির্বাচিত</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot booked-dot"></span>
+              <span>বুকড</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="loading-message" id="loadingMessage">
+          🔄 সিরিয়াল লোড হচ্ছে...
+        </div>
+        
+        <div class="serial-grid" id="serialGrid">
+          <!-- সিরিয়ালগুলো এখানে লোড হবে -->
+        </div>
+        
+        <div class="no-slots-message" id="noSlotsMessage" style="display: none;">
+          ⚠️ এই সময়ের জন্য কোনো সিরিয়াল উপলব্ধ নেই। অনুগ্রহ করে সঠিক সময় করুন।
+        </div>
+        
+        <input type="hidden" name="serial" id="serialInput" required>
+        <small id="serialError" class="error-msg">অনুগ্রহ করে একটি সিরিয়াল নাম্বার নির্বাচন করুন</small>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">সাবমিট করুন</button>
+      
+      <div class="success-message" id="successMessage" style="display: none;">
+        ✅ আপনার অ্যাপয়েন্টমেন্ট সফলভাবে বুক করা হয়েছে!
+      </div>
+      <div class="helpline">
+        <label for="day">হেল্প লাইন ০১৭৫৫৯০২৭৩৮</label>
+      </div>
+    </form>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+  <!-- grid.js লাইব্রেরি -->
+  <script src="grid.js"></script>
+
+  <script>
+    // ==================== FIREBASE CONFIGURATION ====================
+    const firebaseConfig = {
+        apiKey: "AIzaSyDAdGUtNVgs5UspQeH8hL0i-L0WvPpOWnE",
+        authDomain: "appointment-e2050.firebaseapp.com",
+        projectId: "appointment-e2050",
+        storageBucket: "appointment-e2050.firebasestorage.app",
+        messagingSenderId: "367447068370",
+        appId: "1:367447068370:web:8e111bb010a19d21eda70b",
+        measurementId: "G-CRLSV1JJMQ"
+    };
+
+    let db;
+    let gridSystem = null;
+    let serialRanges = {};
+    let appointments = [];
+    let realtimeListeners = [];
+    let currentUserPendingId = null;
+    let currentAppointmentData = null;
+
+    // DOM Elements
+    const dateInput = document.getElementById('date');
+    const dateWarning = document.getElementById('dateWarning');
+    const typeSelect = document.getElementById('patientType');
+    const serviceTypeSelect = document.getElementById('serviceType');
+    const timeSelect = document.getElementById('time');
+    const serialGrid = document.getElementById('serialGrid');
+    const serialInput = document.getElementById('serialInput');
+    const nameInput = document.getElementById('name');
+    const nameError = document.getElementById('nameError');
+    const ageYearsInput = document.getElementById('ageYears');
+    const ageMonthsInput = document.getElementById('ageMonths');
+    const ageDaysInput = document.getElementById('ageDays');
+    const ageError = document.getElementById('ageError');
+    const phoneInput = document.getElementById('phone');
+    const phoneError = document.getElementById('phoneError');
+    const serialError = document.getElementById('serialError');
+    const submitBtn = document.getElementById('submitBtn');
+    const loadingMessage = document.getElementById('loadingMessage');
+    const noSlotsMessage = document.getElementById('noSlotsMessage');
+
+    // Popup Elements
+    const universalPopup = document.getElementById('universalPopup');
+    const popupIcon = document.getElementById('popupIcon');
+    const popupTitle = document.getElementById('popupTitle');
+    const popupMessage = document.getElementById('popupMessage');
+    const popupButtons = document.getElementById('popupButtons');
+    const confirmationSlip = document.getElementById('confirmationSlip');
+    const downloadButtons = document.getElementById('downloadButtons');
+    const slipName = document.getElementById('slipName');
+    const slipAge = document.getElementById('slipAge');
+    const slipPhone = document.getElementById('slipPhone');
+    const slipType = document.getElementById('slipType');
+    const slipDate = document.getElementById('slipDate');
+    const slipDay = document.getElementById('slipDay');
+    const slipTime = document.getElementById('slipTime');
+    const slipService = document.getElementById('slipService');
+    const slipSerial = document.getElementById('slipSerial');
+    const slipDateTime = document.getElementById('slipDateTime');
+
+    // সার্ভিসের বাংলা নাম
+    const serviceBanglaNames = {
+        'general': 'সাধারণ',
+        'microneedling': 'মাইক্রোনিডলিং',
+        'prp': 'পি আর পি',
+        'electrocautery': 'ইলেক্ট্রোক্যাটারি',
+        'cryosurgery': 'ক্রায়োসার্জারি'
+    };
+
+    // ইংরেজি দিন থেকে বাংলা দিন ম্যাপিং
+    const dayNameMapping = {
+        'Saturday': 'শনিবার',
+        'Sunday': 'রবিবার',
+        'Monday': 'সোমবার',
+        'Tuesday': 'মঙ্গলবার',
+        'Wednesday': 'বুধবার',
+        'Thursday': 'বৃহস্পতিবার',
+        'Friday': 'শুক্রবার'
+    };
+
+    // বাংলা দিন থেকে ইংরেজি দিন ম্যাপিং
+    const banglaToEnglishDay = {
+        'শনিবার': 'Saturday',
+        'রবিবার': 'Sunday',
+        'সোমবার': 'Monday',
+        'মঙ্গলবার': 'Tuesday',
+        'বুধবার': 'Wednesday',
+        'বৃহস্পতিবার': 'Thursday',
+        'শুক্রবার': 'Friday'
+    };
+
+    // সক্রিয় দিনগুলো (শুধুমাত্র এই ৪ দিন)
+    const activeEnglishDays = ['Saturday', 'Sunday', 'Monday', 'Wednesday'];
+    const activeBanglaDays = ['শনিবার', 'রবিবার', 'সোমবার', 'বুধবার'];
+
+    // ==================== UTILITY FUNCTIONS ====================
+    // তারিখ ফর্মেটিং ফাংশন
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // ইংরেজি দিন থেকে বাংলা দিন
+    function getDayNameInBangla(date) {
+        const daysInEnglish = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayIndex = date.getDay();
+        const englishDay = daysInEnglish[dayIndex];
+        return dayNameMapping[englishDay] || englishDay;
+    }
+
+    // ইংরেজিতে দিনের নাম
+    function getDayNameInEnglish(date) {
+        const daysInEnglish = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        return daysInEnglish[date.getDay()];
+    }
+
+    // বাংলা দিন থেকে ইংরেজি দিন
+    function banglaDayToEnglish(banglaDay) {
+        return banglaToEnglishDay[banglaDay] || banglaDay;
+    }
+
+    // সময় নম্বর এক্সট্র্যাক্ট (সাজানোর জন্য)
+    function extractTimeNumber(timeStr) {
+        if (!timeStr) return 0;
+
+        const time = timeStr.toUpperCase().trim();
+        let [timePart, modifier] = time.split(' ');
+
+        if (!modifier) {
+            modifier = time.includes('PM') ? 'PM' : time.includes('AM') ? 'AM' : '';
+            if (modifier) {
+                timePart = time.replace(modifier, '').trim();
+            }
+        }
+
+        const [hours, minutes] = timePart.split(':').map(Number);
+
+        let hour24 = hours;
+
+        if (modifier === 'PM' && hours !== 12) {
+            hour24 = hours + 12;
+        } else if (modifier === 'AM' && hours === 12) {
+            hour24 = 0;
+        }
+
+        return hour24 * 100 + (minutes || 0);
+    }
+
+    // ==================== UNIFIED POPUP SYSTEM ====================
+    function showPopup(type, title, message, options = {}) {
+        confirmationSlip.style.display = 'none';
+        downloadButtons.style.display = 'none';
+        popupButtons.innerHTML = '';
+
+        const icons = {
+            warning: '⚠️',
+            error: '❌',
+            success: '✅',
+            info: 'ℹ️',
+            confirm: '❓'
+        };
+
+        popupIcon.textContent = icons[type] || '⚠️';
+        popupTitle.textContent = title;
+        popupMessage.innerHTML = message;
+
+        const buttonColors = {
+            warning: 'warning',
+            error: 'cancel',
+            success: 'success',
+            info: 'primary',
+            confirm: 'primary'
+        };
+
+        if (options.showConfirm) {
+            popupButtons.innerHTML = `
+                <button class="popup-btn ${buttonColors[type]}" id="confirmYes">হ্যাঁ</button>
+                <button class="popup-btn cancel" id="confirmNo">না</button>
+            `;
+
+            setTimeout(() => {
+                document.getElementById('confirmYes').onclick = function () {
+                    if (window.popupResolve) {
+                        window.popupResolve(true);
+                    }
+                    closePopup();
+                };
+
+                document.getElementById('confirmNo').onclick = function () {
+                    if (window.popupResolve) {
+                        window.popupResolve(false);
+                    }
+                    closePopup();
+                };
+            }, 0);
+
+        } else if (type === 'success' && options.showSlip) {
+            popupButtons.innerHTML = `
+                <button class="popup-btn success" onclick="resetFormAndClosePopup()">ঠিক আছে</button>
+            `;
+        } else if (type === 'success') {
+            popupButtons.innerHTML = `
+                <button class="popup-btn success" onclick="resetFormAndClosePopup()">ঠিক আছে</button>
+            `;
+        } else {
+            popupButtons.innerHTML = `
+                <button class="popup-btn ${buttonColors[type]}" onclick="closePopup()">ঠিক আছে</button>
+            `;
+        }
+
+        if (options.showSlip && currentAppointmentData) {
+            showConfirmationSlip(currentAppointmentData);
+        }
+
+        universalPopup.style.display = 'flex';
+
+        if (options.showConfirm) {
+            return new Promise((resolve) => {
+                window.popupResolve = resolve;
+            });
+        }
+    }
+
+    function closePopup() {
+        universalPopup.style.display = 'none';
+        if (window.popupResolve) {
+            window.popupResolve = null;
+        }
+    }
+
+    universalPopup.addEventListener('click', function (e) {
+        if (e.target === universalPopup) {
+            closePopup();
+        }
+    });
+
+    function resetFormAndClosePopup() {
+        document.getElementById('appointmentForm').reset();
+        serialGrid.innerHTML = '';
+        serialInput.value = '';
+        submitBtn.classList.remove('loading');
+        submitBtn.textContent = 'সাবমিট করুন';
+        timeSelect.disabled = true;
+        timeSelect.innerHTML = '<option value="">-- সময় নির্বাচন করুন --</option>';
+        serviceTypeSelect.disabled = true;
+        serviceTypeSelect.innerHTML = '<option value="">-- সেবা নির্বাচন করুন --</option>';
+        
+        // তারিখ ইনপুট রিসেট
+        setupDateInput();
+
+        if (gridSystem) {
+            gridSystem.currentSelection = null;
+            gridSystem.userPendingId = null;
+        }
+
+        closePopup();
+    }
+
+    function showConfirmationSlip(appointmentData) {
+        slipName.textContent = appointmentData.name;
+
+        if (appointmentData.ageDisplay) {
+            slipAge.textContent = appointmentData.ageDisplay;
+        } else if (appointmentData.ageYears || appointmentData.ageMonths || appointmentData.ageDays) {
+            const parts = [];
+            if (appointmentData.ageYears > 0) parts.push(`${appointmentData.ageYears} বছর`);
+            if (appointmentData.ageMonths > 0) parts.push(`${appointmentData.ageMonths} মাস`);
+            if (appointmentData.ageDays > 0) parts.push(`${appointmentData.ageDays} দিন`);
+            slipAge.textContent = parts.join(' ') || '০ বছর ০ মাস ০ দিন';
+        } else {
+            slipAge.textContent = appointmentData.age ? `${appointmentData.age} বছর` : '-';
+        }
+
+        slipPhone.textContent = appointmentData.phone;
+        slipType.textContent = appointmentData.patientType === 'new' ? 'নতুন রোগী' : 'পুরাতন রোগী';
+        slipDate.textContent = appointmentData.date;
+        slipDay.textContent = appointmentData.day;
+        slipTime.textContent = appointmentData.time + "\n" + "অনুগ্রহ করে নির্ধারিত সময়ে চেম্বারে উপস্থিত থাকবেন";
+        slipService.textContent = serviceBanglaNames[appointmentData.serviceType] || appointmentData.serviceType;
+        slipSerial.textContent = '#' + appointmentData.serial;
+
+        const now = new Date();
+        const dateTimeString = now.toLocaleDateString('bn-BD', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long'
+        }) + ' ' + now.toLocaleTimeString('bn-BD', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+
+        slipDateTime.textContent = dateTimeString;
+
+        confirmationSlip.style.display = 'block';
+        downloadButtons.style.display = 'flex';
+    }
+
+    // ==================== DOWNLOAD FUNCTIONS ====================
+    async function downloadPNG() {
+        try {
+            if (typeof html2canvas === 'undefined') {
+                throw new Error('html2canvas library not loaded');
+            }
+
+            const slipElement = document.getElementById('confirmationSlip');
+
+            if (!slipElement) {
+                throw new Error('Confirmation slip element not found');
+            }
+
+            const clone = slipElement.cloneNode(true);
+            clone.style.display = 'block';
+            clone.style.position = 'fixed';
+            clone.style.left = '0';
+            clone.style.top = '0';
+            clone.style.transform = 'none';
+            clone.style.zIndex = '9999';
+            clone.style.margin = '0';
+            clone.style.background = 'white';
+
+            document.body.appendChild(clone);
+
+            const canvas = await html2canvas(clone, {
+                scale: 3,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                width: clone.offsetWidth,
+                height: clone.offsetHeight,
+                x: 0,
+                y: 0,
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: clone.offsetWidth,
+                windowHeight: clone.offsetHeight
+            });
+
+            document.body.removeChild(clone);
+
+            const link = document.createElement('a');
+            link.download = `appointment-serial-${currentAppointmentData.serial}.png`;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showPopup('success', 'ডাউনলোড সফল', 'PNG ফাইলটি সফলভাবে ডাউনলোড হয়েছে!');
+        } catch (error) {
+            console.error('❌ PNG download error:', error);
+            showPopup('error', 'ত্রুটি', `PNG ডাউনলোড করতে সমস্যা হয়েছে: ${error.message}`);
+        }
+    }
+
+    async function downloadPDF() {
+        try {
+            if (typeof window.jspdf === 'undefined') {
+                throw new Error('jsPDF library not loaded');
+            }
+            if (typeof html2canvas === 'undefined') {
+                throw new Error('html2canvas library not loaded');
+            }
+
+            const jsPDF = window.jspdf.jsPDF;
+            const slipElement = document.getElementById('confirmationSlip');
+
+            if (!slipElement) {
+                throw new Error('Confirmation slip element not found');
+            }
+
+            const clone = slipElement.cloneNode(true);
+            clone.style.display = 'block';
+            clone.style.position = 'fixed';
+            clone.style.left = '0';
+            clone.style.top = '0';
+            clone.style.transform = 'none';
+            clone.style.zIndex = '9999';
+            clone.style.margin = '0';
+            clone.style.background = 'white';
+
+            document.body.appendChild(clone);
+
+            const canvas = await html2canvas(clone, {
+                scale: 3,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                width: clone.offsetWidth,
+                height: clone.offsetHeight,
+                x: 0,
+                y: 0,
+                scrollX: 0,
+                scrollY: 0
+            });
+
+            document.body.removeChild(clone);
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a6'
+            });
+
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`appointment-serial-${currentAppointmentData.serial}.pdf`);
+
+            showPopup('success', 'ডাউনলোড সফল', 'PDF ফাইলটি সফলভাবে ডাউনলোড হয়েছে!');
+        } catch (error) {
+            console.error('❌ PDF download error:', error);
+            showPopup('error', 'ত্রুটি', `PDF ডাউনলোড করতে সমস্যা হয়েছে: ${error.message}`);
+        }
+    }
+
+    // ==================== AGE HANDLING FUNCTIONS ====================
+    function normalizeAgeInputs() {
+        let years = parseInt(ageYearsInput.value) || 0;
+        let months = parseInt(ageMonthsInput.value) || 0;
+        let days = parseInt(ageDaysInput.value) || 0;
+
+        let dbYears = years;
+        let dbMonths = months;
+        let dbDays = days;
+
+        if (dbMonths >= 12) {
+            dbYears += Math.floor(dbMonths / 12);
+            dbMonths = dbMonths % 12;
+        }
+
+        if (dbDays >= 30) {
+            dbMonths += Math.floor(dbDays / 30);
+            dbDays = dbDays % 30;
+
+            if (dbMonths >= 12) {
+                dbYears += Math.floor(dbMonths / 12);
+                dbMonths = dbMonths % 12;
+            }
+        }
+
+        const MAX_YEARS = 120;
+        let isValid = true;
+        let errorMessage = '';
+
+        if (years < 0 || months < 0 || days < 0) {
+            isValid = false;
+            errorMessage = 'বয়স ঋণাত্মক হতে পারে না';
+        } else if (years === 0 && months === 0 && days === 0) {
+            isValid = false;
+            errorMessage = 'বয়স কমপক্ষে ১ দিন হতে হবে';
+        } else if (dbYears > MAX_YEARS) {
+            isValid = false;
+            errorMessage = 'বয়স ১২০ বছরের বেশি হতে পারে না';
+        }
+
+        if (!isValid) {
+            ageError.style.display = 'block';
+            ageError.textContent = errorMessage;
+        } else {
+            ageError.style.display = 'none';
+        }
+
+        return {
+            inputYears: years,
+            inputMonths: months,
+            inputDays: days,
+            dbYears: dbYears,
+            dbMonths: dbMonths,
+            dbDays: dbDays,
+            isValid: isValid
+        };
+    }
+
+    function getAgeData() {
+        const normalized = normalizeAgeInputs();
+
+        const inputParts = [];
+        if (normalized.inputYears > 0) inputParts.push(`${normalized.inputYears} বছর`);
+        if (normalized.inputMonths > 0) inputParts.push(`${normalized.inputMonths} মাস`);
+        if (normalized.inputDays > 0) inputParts.push(`${normalized.inputDays} দিন`);
+
+        const inputText = inputParts.join(' ') || '০ বছর ০ মাস ০ দিন';
+
+        const displayParts = [];
+        if (normalized.dbYears > 0) displayParts.push(`${normalized.dbYears} বছর`);
+        if (normalized.dbMonths > 0) displayParts.push(`${normalized.dbMonths} মাস`);
+        if (normalized.dbDays > 0) displayParts.push(`${normalized.dbDays} দিন`);
+
+        const displayText = displayParts.join(' ') || '০ বছর ০ মাস ০ দিন';
+
+        const totalMonths = (normalized.dbYears * 12) + normalized.dbMonths + (normalized.dbDays / 30);
+
+        return {
+            inputYears: normalized.inputYears,
+            inputMonths: normalized.inputMonths,
+            inputDays: normalized.inputDays,
+            ageInputText: inputText,
+            dbYears: normalized.dbYears,
+            dbMonths: normalized.dbMonths,
+            dbDays: normalized.dbDays,
+            ageDisplay: displayText,
+            isValid: normalized.isValid,
+            ageInMonths: parseFloat(totalMonths.toFixed(2))
+        };
+    }
+
+  // ==================== DATE INPUT SETUP ====================
+function setupDateInput() {
+    const today = new Date();
+    
+    // আগামী 30 দিনের মধ্যে শুধু 4 দিন (শনি, রবি, সোম, বুধ) দেখাবে
+    let availableDates = [];
+    
+    // আগামী 30 দিন চেক করুন
+    for (let i = 0; i < 30; i++) {
+        const checkDate = new Date(today);
+        checkDate.setDate(today.getDate() + i);
+        const dayName = getDayNameInBangla(checkDate);
+        const englishDay = getDayNameInEnglish(checkDate);
+        
+        // শুধু আমাদের একটিভ দিনগুলো (শনি, রবি, সোম, বুধ)
+        if (activeBanglaDays.includes(dayName)) {
+            // Firebase থেকে চেক করুন ডেটা আছে কিনা
+            const hasData = serialRanges[englishDay] && Object.keys(serialRanges[englishDay]).length > 0;
+            
+            if (hasData) {
+                availableDates.push({
+                    date: checkDate,
+                    banglaDay: dayName,
+                    englishDay: englishDay,
+                    formatted: formatDate(checkDate)
+                });
+            }
+            
+            // সর্বোচ্চ 14 দিন পর্যন্ত দেখাবে
+            if (availableDates.length >= 14) {
+                break;
+            }
+        }
+    }
+    
+    console.log('📅 Available dates for selection:', availableDates);
+    
+    // যদি কোনো ডেটা না থাকে, আজকের তারিখ সেট করুন (যদি আজ সক্রিয় দিন হয়)
+    if (availableDates.length === 0) {
+        const todayDayName = getDayNameInBangla(today);
+        
+        if (activeBanglaDays.includes(todayDayName)) {
+            dateInput.min = formatDate(today);
+            dateInput.max = formatDate(today);
+            dateInput.value = formatDate(today);
+        } else {
+            // আজ সক্রিয় দিন না হলে কালকের তারিখ চেক করুন
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+            const tomorrowDayName = getDayNameInBangla(tomorrow);
+            
+            if (activeBanglaDays.includes(tomorrowDayName)) {
+                dateInput.min = formatDate(tomorrow);
+                dateInput.max = formatDate(tomorrow);
+                dateInput.value = formatDate(tomorrow);
+            } else {
+                // কোনো সক্রিয় দিন না পাওয়া গেলে
+                dateInput.min = formatDate(today);
+                dateInput.max = formatDate(today);
+                dateInput.value = formatDate(today);
+            }
+        }
+    } else {
+        // প্রথম তারিখ min হিসেবে, শেষ তারিখ max হিসেবে
+        dateInput.min = formatDate(availableDates[0].date);
+        dateInput.max = formatDate(availableDates[availableDates.length - 1].date);
+        dateInput.value = formatDate(availableDates[0].date);
+    }
+    
+    // নিষিদ্ধ তারিখগুলো disable করুন
+    disableNonActiveDates();
+    
+    console.log('📅 Date input configured:', {
+        min: dateInput.min,
+        max: dateInput.max,
+        value: dateInput.value,
+        availableDates: availableDates.length
+    });
+    
+    // ফাংশন কল করার আগে চেক করুন
+    if (typeof checkSelectedDate === 'function') {
+        checkSelectedDate();
+    }
+}
+
+// নিষিদ্ধ তারিখ disable করার ফাংশন
+function disableNonActiveDates() {
+    const dateInput = document.getElementById('date');
+    
+    if (!dateInput) return;
+    
+    // পরের 365 দিনের জন্য (১ বছর)
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setDate(today.getDate() + 365);
+    
+    // তারিখ ইনপুটের onfocus ইভেন্টে
+    dateInput.addEventListener('focus', function() {
+        this.showPicker();
+    });
+    
+    // তারিখ সিলেক্ট হলে চেক
+    dateInput.addEventListener('input', function() {
+        const selectedDate = new Date(this.value);
+        const englishDay = getDayNameInEnglish(selectedDate);
+        const banglaDay = getDayNameInBangla(selectedDate);
+        
+        // ১. অতীতের তারিখ চেক
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        selectedDate.setHours(0, 0, 0, 0);
+        
+        if (selectedDate < today) {
+            showPopup('error', 'অতীতের তারিখ', 
+                'অতীতের তারিখ নির্বাচন করা যাবে না। অনুগ্রহ করে আজ বা ভবিষ্যতের তারিখ নির্বাচন করুন।');
+            this.value = dateInput.value; // আগের ভ্যালুতে ফিরিয়ে দিন
+            return;
+        }
+        
+        // ২. মঙ্গলবার, বৃহস্পতিবার, শুক্রবার চেক (এই ৩ দিন পার্মানেন্টলি ডিসেবল)
+        const permanentlyDisabledDays = ['Tuesday', 'Thursday', 'Friday'];
+        if (permanentlyDisabledDays.includes(englishDay)) {
+            showPopup('error', 'চেম্বার বন্ধ', 
+                `${banglaDay} দিনে চেম্বার খোলা নেই। শনিবার, রবিবার, সোমবার বা বুধবার নির্বাচন করুন।`);
+            this.value = dateInput.value; // আগের ভ্যালুতে ফিরিয়ে দিন
+            resetServiceAndTimeFields();
+            return;
+        }
+        
+        // ৩. সক্রিয় দিন চেক (শনি, রবি, সোম, বুধ)
+        if (!activeEnglishDays.includes(englishDay)) {
+            showPopup('error', 'অবৈধ দিন', 
+                'শনিবার, রবিবার, সোমবার বা বুধবার ছাড়া অন্য দিন নির্বাচন করা যাবে না।');
+            this.value = dateInput.value; // আগের ভ্যালুতে ফিরিয়ে দিন
+            resetServiceAndTimeFields();
+            return;
+        }
+        
+        // ৪. Firebase থেকে ডেটা আছে কিনা চেক
+        const hasData = serialRanges[englishDay] && Object.keys(serialRanges[englishDay]).length > 0;
+        
+        if (!hasData) {
+            showPopup('error', 'সিরিয়াল নেই', 
+                `"${banglaDay}" দিনে এখনো কোনো সিরিয়াল সেট করা হয়নি। অনুগ্রহ করে অন্য দিন নির্বাচন করুন।`);
+            this.value = dateInput.value; // আগের ভ্যালুতে ফিরিয়ে দিন
+            resetServiceAndTimeFields();
+        }
+    });
+}
+
+// ==================== RESET SERVICE AND TIME FIELDS ====================
+function resetServiceAndTimeFields() {
+    console.log('🔄 Resetting service and time fields...');
+    
+    // সার্ভিস সিলেক্ট রিসেট
+    if (serviceTypeSelect) {
+        serviceTypeSelect.disabled = true;
+        serviceTypeSelect.innerHTML = '<option value="">-- সেবা নির্বাচন করুন --</option>';
+        serviceTypeSelect.value = '';
+    }
+    
+    // টাইম সিলেক্ট রিসেট
+    if (timeSelect) {
+        timeSelect.disabled = true;
+        timeSelect.innerHTML = '<option value="">-- সময় নির্বাচন করুন --</option>';
+        timeSelect.value = '';
+    }
+    
+    // সিরিয়াল গ্রিড রিসেট
+    if (serialGrid) {
+        serialGrid.innerHTML = '';
+    }
+    
+    // সিরিয়াল ইনপুট রিসেট
+    if (serialInput) {
+        serialInput.value = '';
+    }
+    
+    // নো স্লটস মেসেজ লুকান
+    if (noSlotsMessage) {
+        noSlotsMessage.style.display = 'none';
+    }
+    
+    // লোডিং মেসেজ লুকান
+    if (loadingMessage) {
+        loadingMessage.style.display = 'none';
+    }
+    
+    // সিরিয়াল এরর লুকান
+    if (serialError) {
+        serialError.style.display = 'none';
+    }
+    
+    // ডেটা ওয়ার্নিং লুকান
+    if (dateWarning) {
+        dateWarning.style.display = 'none';
+    }
+    
+    console.log('✅ Service and time fields reset successfully');
+}
+
+// ==================== DATE AVAILABILITY CHECK ====================
+function checkSelectedDate() {
+    if (!dateInput || !dateInput.value) {
+        console.log('⚠️ No date input or value');
+        return;
+    }
+
+    const selectedDate = new Date(dateInput.value);
+    const dayName = getDayNameInBangla(selectedDate);
+    const englishDay = getDayNameInEnglish(selectedDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // শুধু তারিখের অংশ নিন
+    
+    const selected = new Date(selectedDate);
+    selected.setHours(0, 0, 0, 0); // শুধু তারিখের অংশ নিন
+
+    console.log('📅 Selected date check:', {
+        date: dateInput.value,
+        banglaDay: dayName,
+        englishDay: englishDay,
+        isToday: selected.getTime() === today.getTime(),
+        isPast: selected < today,
+        isFuture: selected > today
+    });
+
+    // রিসেট সবকিছু
+    resetServiceAndTimeFields();
+
+    // ✅ ১. শুধুমাত্র আজকের তারিখ চেক (অতীত এবং ভবিষ্যত ব্লক)
+    if (selected.getTime() !== today.getTime()) {
+        if (selected < today) {
+            // অতীতের তারিখ
+            if (dateWarning) {
+                dateWarning.style.display = 'block';
+                dateWarning.textContent = 'অতীতের তারিখ নির্বাচন করা যাবে না। শুধুমাত্র আজকের তারিখ নির্বাচন করুন।';
+            }
+            console.log('❌ Past date selected:', dateInput.value);
+        } else {
+            // ভবিষ্যতের তারিখ
+            if (dateWarning) {
+                dateWarning.style.display = 'block';
+                dateWarning.textContent = 'ভবিষ্যতের তারিখ নির্বাচন করা যাবে না। শুধুমাত্র আজকের তারিখ নির্বাচন করুন। কালকের জন্য আগামীকাল আসুন।';
+            }
+            console.log('❌ Future date selected:', dateInput.value);
+        }
+        
+        // তারিখ ইনপুটকে আজকের তারিখে ফিরিয়ে আনুন
+        const todayFormatted = formatDate(today);
+        dateInput.value = todayFormatted;
+        
+        // আবার চেক করুন
+        setTimeout(() => checkSelectedDate(), 100);
+        return;
+    }
+
+    // ✅ ২. চেক করুন ডেটটা আমাদের ৪ দিনের মধ্যে কি না
+    if (!activeBanglaDays.includes(dayName)) {
+        if (dateWarning) {
+            dateWarning.style.display = 'block';
+            dateWarning.textContent = `"${dayName}" দিনে চেম্বার খোলা নেই। শনিবার, রবিবার, সোমবার বা বুধবার নির্বাচন করুন।`;
+        }
+        console.log('❌ Day not active:', dayName);
+        
+        // আজ যদি সক্রিয় দিন না হয়, পরের সক্রিয় দিন খুঁজুন
+        if (dateInput) {
+            findAndSetNextActiveDate();
+        }
+        return;
+    }
+
+    // ✅ ৩. Firebase থেকে ডেটা আছে কি না চেক
+    const dayData = serialRanges[englishDay];
+
+    if (!dayData) {
+        if (dateWarning) {
+            dateWarning.style.display = 'block';
+            dateWarning.textContent = `"${dayName}" দিনে এখনো কোনো সিরিয়াল সেট করা হয়নি। অনুগ্রহ করে চেম্বারে যোগাযোগ করুন।`;
+        }
+        console.log('❌ No data for day:', englishDay);
+        
+        // পরের সক্রিয় দিন খুঁজুন যেখানে ডেটা আছে
+        findAndSetNextAvailableDate();
+        return;
+    }
+
+    // ✅ ৪. সার্ভিসগুলো লোড করুন
+    loadAvailableServices(englishDay, dayName);
+}
+
+// ==================== HELPER FUNCTIONS ====================
+// পরবর্তী সক্রিয় দিন খুঁজে তারিখ সেট করার ফাংশন
+function findAndSetNextActiveDate() {
+    const today = new Date();
+    let foundDate = null;
+    
+    // পরের 7 দিন চেক করুন
+    for (let i = 1; i <= 7; i++) {
+        const checkDate = new Date(today);
+        checkDate.setDate(today.getDate() + i);
+        const dayName = getDayNameInBangla(checkDate);
+        const englishDay = getDayNameInEnglish(checkDate);
+        
+        // সক্রিয় দিন হলে
+        if (activeBanglaDays.includes(dayName)) {
+            const hasData = serialRanges[englishDay] && Object.keys(serialRanges[englishDay]).length > 0;
+            
+            if (hasData) {
+                foundDate = {
+                    date: checkDate,
+                    banglaDay: dayName,
+                    englishDay: englishDay,
+                    formatted: formatDate(checkDate)
+                };
+                break;
+            }
+        }
+    }
+    
+    if (foundDate && dateInput) {
+        dateInput.value = foundDate.formatted;
+        // আবার চেক করুন
+        setTimeout(() => checkSelectedDate(), 100);
+    }
+}
+
+// পরবর্তী উপলব্ধ দিন খুঁজে তারিখ সেট করার ফাংশন (যেখানে ডেটা আছে)
+function findAndSetNextAvailableDate() {
+    const today = new Date();
+    const currentDayName = getDayNameInBangla(today);
+    let foundDate = null;
+    
+    // আগে পরের সক্রিয় দিনে ডেটা আছে কিনা চেক করুন
+    for (let i = 1; i <= 7; i++) {
+        const checkDate = new Date(today);
+        checkDate.setDate(today.getDate() + i);
+        const dayName = getDayNameInBangla(checkDate);
+        const englishDay = getDayNameInEnglish(checkDate);
+        
+        if (activeBanglaDays.includes(dayName)) {
+            const hasData = serialRanges[englishDay] && Object.keys(serialRanges[englishDay]).length > 0;
+            
+            if (hasData) {
+                foundDate = {
+                    date: checkDate,
+                    banglaDay: dayName,
+                    englishDay: englishDay,
+                    formatted: formatDate(checkDate)
+                };
+                break;
+            }
+        }
+    }
+    
+    if (foundDate && dateInput) {
+        dateInput.value = foundDate.formatted;
+        // আবার চেক করুন
+        setTimeout(() => checkSelectedDate(), 100);
+        
+        // ইউজারকে জানান
+        if (dateWarning) {
+            dateWarning.style.display = 'block';
+            dateWarning.textContent = `আজকের তারিখে সিরিয়াল নেই। পরবর্তী উপলব্ধ তারিখ: ${foundDate.banglaDay} (${foundDate.formatted})`;
+        }
+    }
+}
+
+// ==================== UPDATE DATE INPUT SETUP ====================
+// আগের setupDateInput ফাংশন আপডেট করুন
+function setupDateInput() {
+    const today = new Date();
+    const todayFormatted = formatDate(today);
+    const todayDayName = getDayNameInBangla(today);
+    const todayEnglishDay = getDayNameInEnglish(today);
+    
+    console.log('📅 Today:', {
+        date: todayFormatted,
+        day: todayDayName,
+        englishDay: todayEnglishDay
+    });
+    
+    // শুধুমাত্র আজকের তারিখ min/max/value হিসেবে সেট করুন
+    dateInput.min = todayFormatted;
+    dateInput.max = todayFormatted;
+    dateInput.value = todayFormatted;
+    
+    // নিষিদ্ধ তারিখগুলো disable করুন
+    disableNonActiveDates();
+    
+    console.log('📅 Date input configured:', {
+        min: dateInput.min,
+        max: dateInput.max,
+        value: dateInput.value
+    });
+    
+    // নির্বাচিত তারিখ চেক করুন
+    if (typeof checkSelectedDate === 'function') {
+        checkSelectedDate();
+    }
+}
+
+// ==================== UPDATE DISABLE DATES FUNCTION ====================
+function disableNonActiveDates() {
+    if (!dateInput) return;
+    
+    // তারিখ সিলেক্ট হলে চেক
+    dateInput.addEventListener('input', function() {
+        const selectedDate = new Date(this.value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const selected = new Date(selectedDate);
+        selected.setHours(0, 0, 0, 0);
+        
+        // আজকের তারিখ চেক
+        if (selected.getTime() !== today.getTime()) {
+            const todayFormatted = formatDate(today);
+            this.value = todayFormatted;
+            
+            if (selected < today) {
+                showPopup('error', 'অতীতের তারিখ', 
+                    'অতীতের তারিখ নির্বাচন করা যাবে না। শুধুমাত্র আজকের তারিখ নির্বাচন করুন।');
+            } else {
+                showPopup('error', 'ভবিষ্যতের তারিখ', 
+                    'ভবিষ্যতের তারিখ নির্বাচন করা যাবে না। শুধুমাত্র আজকের তারিখ নির্বাচন করুন। কালকের জন্য আগামীকাল আসুন।');
+            }
+            
+            resetServiceAndTimeFields();
+            checkSelectedDate();
+            return;
+        }
+        
+        // বাকি চেকগুলো (দিনের ভ্যালিডেশন)
+        checkSelectedDate();
+    });
+}  // ==================== LOAD AVAILABLE SERVICES ====================
+    function loadAvailableServices(englishDay, banglaDay) {
+        console.log('🔄 Loading available services for:', englishDay);
+
+        const dayData = serialRanges[englishDay];
+
+        if (!dayData) {
+            console.log('❌ No data found for day');
+            return;
+        }
+
+        // সব সার্ভিস খুঁজে বের করুন যেগুলোতে ডেটা আছে
+        const availableServices = new Set();
+
+        // সার্ভিসগুলো চেক করুন
+        for (const service in dayData) {
+            const serviceData = dayData[service];
+            
+            // Check both new and old types
+            const hasNewType = serviceData['new'] && Object.keys(serviceData['new']).length > 0;
+            const hasOldType = serviceData['old'] && Object.keys(serviceData['old']).length > 0;
+            
+            if (hasNewType || hasOldType) {
+                availableServices.add(service);
+            }
+        }
+
+        console.log('✅ Available services:', Array.from(availableServices));
+
+        // সার্ভিস সিলেক্ট আপডেট
+        serviceTypeSelect.innerHTML = '<option value="">-- সেবা নির্বাচন করুন --</option>';
+
+        if (availableServices.size === 0) {
+            dateWarning.style.display = 'block';
+            dateWarning.textContent = `"${banglaDay}" দিনে কোনো সেবার জন্য সিরিয়াল সেট করা হয়নি।`;
+            serviceTypeSelect.disabled = true;
+            return;
+        }
+
+        // সার্ভিস অপশন যোগ
+        availableServices.forEach(service => {
+            const option = document.createElement('option');
+            option.value = service;
+            option.textContent = serviceBanglaNames[service] || service;
+            serviceTypeSelect.appendChild(option);
+        });
+
+        serviceTypeSelect.disabled = false;
+        dateWarning.style.display = 'none';
+
+        console.log('✅ Services loaded successfully');
+    }
+
+    // ==================== UPDATE TIME OPTIONS ====================
+    function updateTimeOptions() {
+        const selectedDate = new Date(dateInput.value);
+        const dayName = getDayNameInEnglish(selectedDate);
+        const type = typeSelect.value;
+        const serviceType = serviceTypeSelect.value;
+
+        console.log('🕒 Updating time options for:', {
+            day: dayName,
+            type: type,
+            service: serviceType
+        });
+
+        // রিসেট
+        timeSelect.innerHTML = '<option value="">-- সময় নির্বাচন করুন --</option>';
+        timeSelect.disabled = true;
+        serialGrid.innerHTML = '';
+        serialInput.value = '';
+        noSlotsMessage.style.display = 'none';
+
+        // ভ্যালিডেশন
+        if (!serviceType) {
+            showPopup('warning', 'সেবা নির্বাচন করুন',
+                'অনুগ্রহ করে প্রথমে সেবার ধরন নির্বাচন করুন।');
+            return;
+        }
+
+        if (!type) {
+            showPopup('warning', 'ধরন নির্বাচন করুন',
+                'অনুগ্রহ করে রোগীর ধরন (নতুন/পুরাতন) নির্বাচন করুন।');
+            return;
+        }
+
+        // Firebase থেকে টাইম স্লটগুলো লোড করুন
+        const dayData = serialRanges[dayName];
+        if (!dayData) {
+            console.log('❌ No data for day:', dayName);
+            return;
+        }
+
+        const serviceData = dayData[serviceType];
+        if (!serviceData) {
+            console.log('❌ No service data for:', serviceType);
+            return;
+        }
+
+        const typeData = serviceData[type];
+        if (!typeData) {
+            const typeText = type === 'new' ? 'নতুন রোগী' : 'পুরাতন রোগী';
+            showPopup('warning', 'সেবা নেই',
+                `"${serviceBanglaNames[serviceType]}" সেবার জন্য "${typeText}" ধরনে কোনো টাইম স্লট নেই।`);
+            return;
+        }
+
+        const times = Object.keys(typeData);
+        if (times.length === 0) {
+            console.log('❌ No time slots available');
+            return;
+        }
+
+        console.log('✅ Available times from Firebase:', times);
+
+        // টাইমগুলো সাজান
+        const sortedTimes = times.sort((a, b) => {
+            const numA = extractTimeNumber(a);
+            const numB = extractTimeNumber(b);
+            return numA - numB;
+        });
+
+        // টাইম অপশনগুলো যোগ করুন
+        sortedTimes.forEach(time => {
+            const option = document.createElement('option');
+            option.value = time;
+            option.textContent = time;
+            timeSelect.appendChild(option);
+        });
+
+        timeSelect.disabled = false;
+        console.log('✅ Time options updated successfully');
+    }
+
+    // ==================== FIREBASE FUNCTIONS ====================
+    function initializeFirebase() {
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            db = firebase.firestore();
+            console.log("✅ Firebase initialized successfully");
+            return true;
+        } catch (error) {
+            console.error("❌ Firebase initialization error:", error);
+            return false;
+        }
+    }
+
+    // Initialize grid system
+    function initializeGridSystem() {
+        if (!db) {
+            console.error('Database not available for grid system');
+            return;
+        }
+
+        gridSystem = new RealTimeGridSystem({
+            db: db,
+            gridContainerId: 'serialGrid',
+            selectedSerialInputId: 'serialInput',
+            dateElementId: 'date',
+            timeElementId: 'time',
+            typeElementId: 'patientType',
+            serviceElementId: 'serviceType',
+            mode: 'user',
+            userPendingExpiry: 1 * 60 * 1000,
+
+            onSerialClick: function (data) {
+                console.log('Serial clicked:', data);
+
+                if (data.status === 'booked') {
+                    showPopup('error', 'সিরিয়াল বুকড', 'এই সিরিয়ালটি ইতিমধ্যে বুক করা হয়েছে');
+                } else if (data.status === 'pending') {
+                    serialInput.value = data.serial;
+                    serialError.style.display = 'none';
+                    currentUserPendingId = data.pendingId;
+                }
+            },
+
+            onGridUpdate: function (type, data) {
+                console.log('Grid updated:', type);
+
+                if (type === 'grid') {
+                    loadingMessage.style.display = 'none';
+
+                    const gridContainer = document.getElementById('serialGrid');
+                    let availableCount = 0;
+
+                    if (gridContainer) {
+                        const availableItems = gridContainer.querySelectorAll('.serial-item.available');
+                        availableCount = availableItems.length;
+                    }
+
+                    if (availableCount === 0) {
+                        noSlotsMessage.style.display = 'block';
+                    } else {
+                        noSlotsMessage.style.display = 'none';
+                    }
+                }
+            }
+        });
+
+        gridSystem.init().then(success => {
+            if (success) {
+                console.log('✅ Grid System initialized successfully');
+            }
+        });
+    }
+
+    async function loadSerialRanges() {
+        if (!db) {
+            console.error('❌ Database not initialized');
+            loadingMessage.style.display = 'none';
+            return;
+        }
+
+        try {
+            console.log('🔄 Loading serial ranges from Firebase...');
+            loadingMessage.style.display = 'block';
+            serialGrid.innerHTML = '';
+
+            // serialRanges থেকে লোড করুন (management.html-এর মতো একই collection)
+            const serialDoc = await db.collection('settings').doc('serialRanges').get();
+
+            if (serialDoc.exists) {
+                serialRanges = serialDoc.data();
+                console.log('✅ Loaded serial ranges from Firebase:', serialRanges);
+
+                // ডেটা স্ট্রাকচার ভ্যালিডেশন
+                validateSerialRangesStructure();
+
+            } else {
+                // যদি না থাকে, খালি ডেটা স্ট্রাকচার তৈরি করুন
+                console.log('ℹ️ No serial ranges found');
+                serialRanges = {};
+            }
+
+            // তারিখ সিস্টেম সেটআপ
+            setupDateInput();
+
+            loadingMessage.style.display = 'none';
+
+        } catch (error) {
+            console.error('❌ Error loading serial ranges:', error);
+            loadingMessage.style.display = 'none';
+            showPopup('error', 'ত্রুটি', 'ডেটাবেস লোড করতে সমস্যা হয়েছে। পৃষ্ঠাটি রিফ্রেশ করুন।');
+        }
+    }
+
+    // ডেটা স্ট্রাকচার ভ্যালিডেশন
+    function validateSerialRangesStructure() {
+        // যদি পুরানো ফরম্যাট থাকে, নতুন ফরম্যাটে কনভার্ট করুন
+        for (const day in serialRanges) {
+            // শুধু আমাদের 4 দিনের ডেটা রাখুন
+            if (!activeEnglishDays.includes(day)) {
+                delete serialRanges[day];
+                continue;
+            }
+
+            // ডেটা স্ট্রাকচার চেক
+            const dayData = serialRanges[day];
+            let needsFix = false;
+
+            // চেক করুন যদি পুরানো স্ট্রাকচার থাকে (service key না থাকলে)
+            for (const key in dayData) {
+                if (key === 'new' || key === 'old') {
+                    // পুরানো স্ট্রাকচার, সার্ভিস হিসেবে 'general' ধরে নিন
+                    needsFix = true;
+                    break;
+                }
+            }
+
+            if (needsFix) {
+                const oldData = dayData;
+                const newData = {};
+
+                // সব 'general' সার্ভিসের জন্য ধরে নিন
+                if (oldData['new']) {
+                    if (!newData['general']) newData['general'] = {};
+                    newData['general']['new'] = oldData['new'];
+                }
+
+                if (oldData['old']) {
+                    if (!newData['general']) newData['general'] = {};
+                    newData['general']['old'] = oldData['old'];
+                }
+
+                serialRanges[day] = newData;
+            }
+        }
+    }
+
+    function loadAppointmentsFromFirebase() {
+        if (!db) {
+            console.error('❌ Database not initialized');
+            return;
+        }
+
+        realtimeListeners.forEach(unsubscribe => unsubscribe());
+        realtimeListeners = [];
+
+        const appointmentsListener = db.collection('appointments')
+            .onSnapshot(snapshot => {
+                console.log('📅 Appointments snapshot received');
+                appointments = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    appointments.push({
+                        id: doc.id,
+                        ...data
+                    });
+                });
+                console.log('📅 Appointments loaded:', appointments.length);
+            }, error => {
+                console.error('❌ Error loading appointments:', error);
+            });
+
+        realtimeListeners.push(appointmentsListener);
+
+        const serialRangesListener = db.collection('settings').doc('serialRanges')
+            .onSnapshot(doc => {
+                console.log('🔄 Serial ranges snapshot received');
+                if (doc.exists) {
+                    serialRanges = doc.data();
+                    console.log('🔄 Serial ranges updated:', serialRanges);
+
+                    // ডেটা স্ট্রাকচার ভ্যালিডেশন
+                    validateSerialRangesStructure();
+
+                    // তারিখ সিস্টেম আপডেট
+                    setupDateInput();
+                } else {
+                    console.log('📭 No serial ranges document found');
+                }
+            }, error => {
+                console.error('❌ Error listening to serial ranges:', error);
+            });
+
+        realtimeListeners.push(serialRangesListener);
+    }
+
+    // ==================== EVENT LISTENERS ====================
+    dateInput.addEventListener('change', () => {
+        console.log('📅 Date changed to:', dateInput.value);
+        checkSelectedDate();
+        serialGrid.innerHTML = '';
+        serialInput.value = '';
+        timeSelect.value = '';
+        serviceTypeSelect.value = '';
+        noSlotsMessage.style.display = 'none';
+    });
+
+    typeSelect.addEventListener('change', () => {
+        console.log('👥 Type changed to:', typeSelect.value);
+
+        if (serviceTypeSelect.value) {
+            updateTimeOptions();
+        }
+
+        serialGrid.innerHTML = '';
+        serialInput.value = '';
+        timeSelect.value = '';
+        noSlotsMessage.display = 'none';
+    });
+
+    serviceTypeSelect.addEventListener('change', () => {
+        console.log('🔧 Service type changed to:', serviceTypeSelect.value);
+
+        if (typeSelect.value) {
+            updateTimeOptions();
+        }
+
+        serialGrid.innerHTML = '';
+        serialInput.value = '';
+        timeSelect.value = '';
+        noSlotsMessage.style.display = 'none';
+    });
+
+    timeSelect.addEventListener('change', () => {
+        console.log('⏰ Time changed to:', timeSelect.value);
+
+        if (gridSystem && timeSelect.value) {
+            loadingMessage.style.display = 'block';
+            setTimeout(() => {
+                gridSystem.updateGrid();
+            }, 100);
+        }
+    });
+
+    nameInput.addEventListener('input', () => {
+        const val = nameInput.value.trim();
+        const valid = /^[\p{L}\p{M}\. ]{3,50}$/u;
+        const invalidChars = /[-,;@#$%^&*]/;
+
+        if (!valid.test(val) || invalidChars.test(val)) {
+            nameError.style.display = 'block';
+            nameInput.setCustomValidity('invalid');
+        } else {
+            nameError.style.display = 'none';
+            nameInput.setCustomValidity('');
+        }
+    });
+
+    [ageYearsInput, ageMonthsInput, ageDaysInput].forEach(input => {
+        input.addEventListener('input', () => {
+            normalizeAgeInputs();
+        });
+    });
+
+    phoneInput.addEventListener('input', () => {
+        const val = phoneInput.value;
+        const valid = /^01[0-9]{9}$/.test(val);
+
+        if (!valid) {
+            phoneError.style.display = 'block';
+            phoneInput.setCustomValidity('invalid');
+        } else {
+            phoneError.style.display = 'none';
+            phoneInput.setCustomValidity('');
+        }
+    });
+
+    // ==================== FORM SUBMISSION ====================
+document.getElementById('appointmentForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    if (!db) {
+        showPopup('error', 'ত্রুটি', 'ডেটাবেস সংযোগ সমস্যা। পৃষ্ঠাটি রিফ্রেশ করুন।');
+        return;
+    }
+
+    let isValid = true;
+
+    // নাম ভ্যালিডেশন
+    if (!nameInput.value.trim()) {
+        nameError.style.display = 'block';
+        nameInput.setCustomValidity('invalid');
+        isValid = false;
+    } else {
+        nameError.style.display = 'none';
+        nameInput.setCustomValidity('');
+    }
+
+    // বয়স ভ্যালিডেশন
+    const ageValidationData = getAgeData();
+    if (!ageValidationData.isValid) {
+        isValid = false;
+    }
+
+    // ফোন ভ্যালিডেশন
+    if (!/^01[0-9]{9}$/.test(phoneInput.value)) {
+        phoneError.style.display = 'block';
+        phoneInput.setCustomValidity('invalid');
+        isValid = false;
+    } else {
+        phoneError.style.display = 'none';
+        phoneInput.setCustomValidity('');
+    }
+
+    // সিরিয়াল ভ্যালিডেশন
+    if (!serialInput.value) {
+        serialError.style.display = 'block';
+        serialInput.setCustomValidity('invalid');
+        isValid = false;
+    } else {
+        serialError.style.display = 'none';
+        serialInput.setCustomValidity('');
+    }
+
+    // তারিখ ভ্যালিডেশন
+    const selectedDate = new Date(dateInput.value);
+    const dayName = getDayNameInBangla(selectedDate);
+    const englishDay = getDayNameInEnglish(selectedDate);
+    const serviceType = serviceTypeSelect.value;
+
+    if (!serviceType) {
+        showPopup('error', 'সেবা নির্বাচন করুন', 'অনুগ্রহ করে সেবার ধরন নির্বাচন করুন।');
+        return false;
+    }
+
+    if (!typeSelect.value) {
+        showPopup('error', 'ধরন নির্বাচন করুন', 'অনুগ্রহ করে রোগীর ধরন নির্বাচন করুন।');
+        return false;
+    }
+
+    // Firebase ডেটা চেক করুন
+    const dayData = serialRanges[englishDay];
+    if (!dayData) {
+        showPopup('error', 'অবৈধ তারিখ', `"${dayName}" দিনে কোনো সিরিয়াল সেট করা নেই।`);
+        return false;
+    }
+
+    const type = typeSelect.value;
+    const serviceData = dayData[serviceType];
+    if (!serviceData || !serviceData[type] || !serviceData[type][timeSelect.value]) {
+        const serviceText = serviceBanglaNames[serviceType] || serviceType;
+        const typeText = type === 'new' ? 'নতুন রোগী' : 'পুরাতন রোগী';
+        showPopup('error', 'অবৈধ সময়', `"${dayName}" দিনে "${serviceText}" সেবার জন্য "${typeText}" ধরনে "${timeSelect.value}" সময়ে কোনো সিরিয়াল নেই।`);
+        return false;
+    }
+
+    if (!isValid) {
+        showPopup('error', 'ফর্ম ত্রুটি', 'অনুগ্রহ করে ফর্মের সকল আবশ্যক তথ্য সঠিকভাবে পূরণ করুন।');
+        return false;
+    }
+
+    const selectedPhone = phoneInput.value;
+    const selectedDateStr = dateInput.value;
+    const selectedSerial = parseInt(serialInput.value);
+    const selectedType = typeSelect.value;
+
+    const typeText = selectedType === 'new' ? 'নতুন রোগী' : 'পুরাতন রোগী';
+    const serviceText = serviceBanglaNames[serviceType] || serviceType;
+
+    // **নতুন চেক যোগ করুন: সেই দিন, সময়ে এবং রোগীর ধরনে সিরিয়ালটি ইতিমধ্যে বুক করা আছে কিনা**
+    try {
+        const existingQuery = await db.collection('appointments')
+            .where('date', '==', selectedDateStr)
+            .where('time', '==', timeSelect.value)
+            .where('type', '==', selectedType)  // রোগীর ধরন চেক করবে
+            .where('serial', '==', selectedSerial)
+            .get();
+        
+        if (!existingQuery.empty) {
+            showPopup('error', 'সিরিয়াল বুকড', 
+                `সিরিয়াল #${selectedSerial} ইতিমধ্যে এই দিনে, সময়ে এবং "${typeText}" ধরনের জন্য বুক করা আছে!<br>অনুগ্রহ করে অন্য সিরিয়াল নির্বাচন করুন।`);
+            return false;
+        }
+    } catch (error) {
+        console.error('Error checking existing appointments:', error);
+    }
+
+    const confirmed = await showPopup('confirm', 'কনফার্মেশন',
+        `আপনি কি নিশ্চিত যে আপনি সিরিয়াল বুক করতে চান?<br><br>
+        <strong>বিস্তারিত:</strong><br>
+        • তারিখ: ${selectedDateStr}<br>
+        • দিন: ${dayName}<br>
+        • সময়: ${timeSelect.value}<br>
+        • সিরিয়াল: ${selectedSerial} নং<br>
+        • ধরন: ${typeText}<br>
+        • সেবা: ${serviceText}<br>
+        • ফোন: ${selectedPhone}<br><br>
+        <strong>মনোযোগ:</strong> এই সময়ে এই সিরিয়াল অন্য কোনো "${typeText}" এর জন্য বুক করা যাবে না।`,
+        { showConfirm: true });
+
+    if (!confirmed) {
+        console.log('❌ User cancelled the appointment');
+        return false;
+    }
+
+    const finalAgeData = getAgeData();
+
+    if (!finalAgeData.isValid) {
+        showPopup('error', 'বয়স ত্রুটি', 'অনুগ্রহ করে সঠিক বয়স লিখুন।');
+        return false;
+    }
+
+    const appointmentData = {
+        name: nameInput.value.trim(),
+        phone: selectedPhone,
+        ageYears: finalAgeData.dbYears,
+        ageMonths: finalAgeData.dbMonths,
+        ageDays: finalAgeData.dbDays,
+        ageString: finalAgeData.ageDisplay,
+        ageDisplay: finalAgeData.ageDisplay,
+        originalInput: finalAgeData.ageInputText,
+        patientType: typeSelect.value,
+        serviceType: serviceType,
+        date: selectedDateStr,
+        day: dayName,
+        time: timeSelect.value,
+        serial: selectedSerial,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        status: 'confirmed',
+        age: finalAgeData.ageInMonths
+    };
+
+    console.log('💾 Firebase ডাটা প্রস্তুত:', appointmentData);
+    currentAppointmentData = appointmentData;
+
+    try {
+        submitBtn.classList.add('loading');
+        submitBtn.textContent = 'সাবমিট করা হচ্ছে...';
+
+        if (currentUserPendingId) {
+            if (gridSystem) {
+                await gridSystem.removePendingSelection(currentUserPendingId);
+            }
+            currentUserPendingId = null;
+        }
+
+        console.log('💾 Saving appointment:', appointmentData);
+
+        await db.collection('appointments').add(appointmentData);
+
+        showPopup('success', 'অ্যাপয়েন্টমেন্ট সফল হয়েছে!',
+            'আপনার অ্যাপয়েন্টমেন্ট সফলভাবে বুক করা হয়েছে!<br><br>আপনি চাইলে নিচের থেকে কনফার্মেশন স্লিপ ডাউনলোড করতে পারেন।',
+            { showSlip: true });
+
+        console.log('✅ Appointment saved successfully');
+
+    } catch (error) {
+        console.error('❌ Error saving appointment:', error);
+        showPopup('error', 'ত্রুটি', 'দুঃখিত, একটি ত্রুটি হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
+        submitBtn.classList.remove('loading');
+        submitBtn.textContent = 'সাবমিট করুন';
+    }
+});
+    // ==================== INITIALIZATION ====================
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('🏁 Appointment form DOM loaded');
+
+        setTimeout(() => {
+            if (initializeFirebase()) {
+                console.log('🚀 Starting data loading...');
+                loadSerialRanges();
+                loadAppointmentsFromFirebase();
+                initializeGridSystem();
+            } else {
+                console.error('❌ Firebase not initialized');
+            }
+        }, 1000);
+
+        // প্রতি ১ ঘন্টা পর পর তারিখ আপডেট চেক
+        setInterval(() => {
+            const now = new Date();
+            console.log('🕒 Checking for date update...', now.toLocaleTimeString());
+
+            // যদি রাত ১২টা হয়, তারিখ সিস্টেম আপডেট করবে
+            if (now.getHours() === 0 && now.getMinutes() < 5) {
+                console.log('🔄 Midnight detected, updating date system...');
+                setupDateInput();
+                checkSelectedDate();
+            }
+        }, 60 * 60 * 1000); // ১ ঘন্টা
+    });
+
+    window.addEventListener('beforeunload', function () {
+        if (currentUserPendingId && gridSystem) {
+            gridSystem.removePendingSelection(currentUserPendingId);
+        }
+    });
+</script>
+</body>
+</html>

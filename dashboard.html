@@ -1558,12 +1558,10 @@ async function updateDashboardCards(snapshot) {
         const data = doc.data();
         
         // তারিখ চেক
-        let appointmentDate = '';
-        if (data.timestamp && data.timestamp.toDate) {
-            appointmentDate = data.timestamp.toDate().toISOString().split('T')[0];
-        } else if (data.date) {
-            appointmentDate = data.date;
-        }
+let appointmentDate = data.date || data.appointmentDate || '';
+if (!appointmentDate && data.timestamp && data.timestamp.toDate) {
+    appointmentDate = data.timestamp.toDate().toISOString().split('T')[0];
+}
         
         const dateMatch = !selectedDate || appointmentDate === selectedDate;
         
@@ -1804,265 +1802,319 @@ async function updateDashboardCards(snapshot) {
         console.log('✅ Filter listeners setup complete');
     }
 
-    // =======================================================
-    // ৬. Table Manager কনফিগারেশন এবং সেটআপ - FIXED
-    // =======================================================
-    function setupTableManager() {
-        if (!db) {
-            showAlert('Firebase সংযোগ নেই', 'error');
-            return;
-        }
+// =======================================================
+// ০. তারিখ ফরম্যাট করার হেলপার ফাংশন (প্রয়োজনীয়)
+// =======================================================
+function getYYMMDD(dateString) {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '';
+    const yy = String(d.getFullYear()).slice(-2);
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yy}${mm}${dd}`;
+}
+
+// =======================================================
+// ৬. Table Manager কনফিগারেশন এবং সেটআপ - UPDATED
+// =======================================================
+function setupTableManager() {
+    if (!db) {
+        showAlert('Firebase সংযোগ নেই', 'error');
+        return;
+    }
+    
+    const tableConfig = {
+        db: db,
+        tableId: 'appointmentsTable',
+        tbodyId: 'appointmentsBody',
+        loadingMessageId: 'loadingMessage',
         
-        const tableConfig = {
-            db: db,
-            tableId: 'appointmentsTable',
-            tbodyId: 'appointmentsBody',
-            loadingMessageId: 'loadingMessage',
+        onStatusUpdate: async function(docId, field, newStatus, button) {
+            if (!db) return;
             
-            onStatusUpdate: async function(docId, field, newStatus, button) {
-                if (!db) return;
-                
-                const row = button.closest('tr');
-                const patientNameCell = row.querySelector('td:nth-child(4)');
-                const patientName = patientNameCell ? patientNameCell.textContent : '';
-                
-                try {
-                    await db.collection('appointments').doc(docId).update({
+            const row = button.closest('tr');
+            const patientNameCell = row.querySelector('td:nth-child(4)');
+            const patientName = patientNameCell ? patientNameCell.textContent : '';
+            
+            // রো (Row) থেকে ডাটা অবজেক্ট খুঁজে বের করা
+            const item = appointmentsData.find(app => app.id === docId);
+            if (!item) {
+                showAlert('অ্যাপয়েন্টমেন্ট পাওয়া যায়নি', 'error');
+                return;
+            }
+
+            const yymmdd = getYYMMDD(item.data.date);
+            const patientType = (item.data.patientType || item.data.type || 'new').toLowerCase();
+            
+            try {
+                // পরিবর্তন ১: নেস্টেড পাথে স্ট্যাটাস আপডেট
+                await db.collection('appointments')
+                    .doc(yymmdd)
+                    .collection(patientType)
+                    .doc(docId)
+                    .update({
                         [field]: newStatus,
                         [`${field}Timestamp`]: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    
-                    // সফল মেসেজ
-                    const messages = {
-                        called: {
-                            true: `${patientName} - কল করা হয়েছে`,
-                            false: `${patientName} - কল বাতিল করা হয়েছে`
-                        },
-                        tokenGiven: {
-                            true: `${patientName} - টোকেন দেওয়া হয়েছে`,
-                            false: `${patientName} - টোকেন বাতিল করা হয়েছে`
-                        }
-                    };
-                    
-                    showAlert(messages[field][newStatus] || 'স্ট্যাটাস আপডেট হয়েছে', 'success');
-                    
-                } catch (error) {
-                    console.error(`Error updating ${field}:`, error);
-                    showAlert('আপডেটে সমস্যা হয়েছে', 'error');
-                    
-                    // বাটন আগের অবস্থায় ফিরিয়ে দিন
-                    if (tableManager) {
-                        tableManager.updateButtonStatus(button, !newStatus, field);
-                    }
-                }
-            },
-            
-            onFilterChange: function(filters, count) {
-                // ফিল্টার আপডেট হলে স্ট্যাটাস বার্তা আপডেট
-                updateStatusMessage(count);
                 
-                // ড্যাশবোর্ড কার্ড আপডেট
-                if (allAppointmentsSnapshot) {
-                    updateDashboardCards(allAppointmentsSnapshot);
-                }
-            },
-            
-            onDataLoaded: function(data) {
-                // ডেটা লোড হওয়ার সাথে সাথে স্ট্যাটাস বার্তা আপডেট
-                if (data && data.length > 0) {
-                    const todayDate = setDefaultDate();
-                    const todayData = data.filter(item => {
-                        const itemDate = item.data.timestamp && item.data.timestamp.toDate 
-                            ? item.data.timestamp.toDate().toISOString().split('T')[0]
-                            : item.data.date || '';
-                        return itemDate === todayDate;
-                    });
-                    
-                    updateStatusMessage(todayData.length);
-                } else {
-                    updateStatusMessage(0);
-                }
-                
-                // ড্যাশবোর্ড কার্ড আপডেট
-                if (allAppointmentsSnapshot) {
-                    updateDashboardCards(allAppointmentsSnapshot);
-                }
-            },
-            
-            // নতুন কলব্যাক যোগ
-            onEdit: function(docId) {
-                openEditModal(docId);
-            },
-            
-            onDelete: async function(docId) {
-                try {
-                    if (!confirm('আপনি কি নিশ্চিত যে আপনি এই এন্ট্রি ডিলিট করতে চান?')) {
-                        return;
+                const messages = {
+                    called: {
+                        true: `${patientName} - কল করা হয়েছে`,
+                        false: `${patientName} - কল বাতিল করা হয়েছে`
+                    },
+                    tokenGiven: {
+                        true: `${patientName} - টোকেন দেওয়া হয়েছে`,
+                        false: `${patientName} - টোকেন বাতিল করা হয়েছে`
                     }
-                    
-                    await db.collection('appointments').doc(docId).delete();
-                    showAlert('সিরিয়াল সফলভাবে ডিলিট করা হয়েছে', 'success');
-                    
-                    // টেবিল রিফ্রেশ (TableManager স্বয়ংক্রিয়ভাবে আপডেট করবে)
-                } catch (error) {
-                    console.error('ডিলিট ত্রুটি:', error);
-                    showAlert('ডিলিট করতে সমস্যা হয়েছে', 'error');
+                };
+                
+                showAlert(messages[field][newStatus] || 'স্ট্যাটাস আপডেট হয়েছে', 'success');
+                
+            } catch (error) {
+                console.error(`Error updating ${field}:`, error);
+                showAlert('আপডেটে সমস্যা হয়েছে', 'error');
+                
+                if (tableManager) {
+                    tableManager.updateButtonStatus(button, !newStatus, field);
                 }
             }
-        };
+        },
         
-        // TableManager ইনিশিয়ালাইজ
-        tableManager = new TableManager(tableConfig);
-        
-        // শুরুতেই আজকের তারিখ সেট করে ফিল্টার প্রয়োগ
-        const todayDate = setDefaultDate();
-        if (tableManager) {
-            tableManager.setFilters({ date: todayDate });
-        }
-        
-        console.log('✅ Table Manager setup complete');
-    }
-
-    // =======================================================
-    // এডিট মোডাল ফাংশন
-    // =======================================================
-    async function openEditModal(docId) {
-        if (!db || !docId) {
-            showAlert('ডেটা লোড করতে সমস্যা হয়েছে', 'error');
-            return;
-        }
-        
-        try {
-            // ডেটা লোড করুন
-            const doc = await db.collection('appointments').doc(docId).get();
-            
-            if (!doc.exists) {
-                showAlert('সিরিয়াল পাওয়া যায়নি', 'error');
-                return;
+        onFilterChange: function(filters, count) {
+            updateStatusMessage(count);
+            if (allAppointmentsSnapshot) {
+                updateDashboardCards(allAppointmentsSnapshot);
             }
-            
-            const data = doc.data();
-            
-            // QuickModal এর এডিট মোড ব্যবহার করুন
-            if (window.quickModal && typeof window.quickModal.openEditModal === 'function') {
-                window.quickModal.openEditModal(docId, data);
+        },
+        
+        onDataLoaded: function(data) {
+            if (data && data.length > 0) {
+                const todayDate = setDefaultDate();
+                const todayData = data.filter(item => {
+                    const itemDate = item.data.date || item.data.appointmentDate || 
+    (item.data.timestamp && item.data.timestamp.toDate 
+        ? item.data.timestamp.toDate().toISOString().split('T')[0] 
+        : '');
+                    return itemDate === todayDate;
+                });
+                
+                updateStatusMessage(todayData.length);
             } else {
-                // Fallback: সরাসরি QuickModal ক্লাস ব্যবহার
-                const editModal = new QuickModal(db, adminSessionId, showAlert);
-                if (editModal.openEditModal) {
-                    editModal.openEditModal(docId, data);
-                } else {
-                    showAlert('এডিট মোডাল উপলব্ধ নেই', 'error');
-                }
+                updateStatusMessage(0);
             }
             
-        } catch (error) {
-            console.error('এডিট মোডাল ত্রুটি:', error);
-            showAlert('ডেটা লোড করতে সমস্যা হয়েছে', 'error');
-        }
-    }
+            if (allAppointmentsSnapshot) {
+                updateDashboardCards(allAppointmentsSnapshot);
+            }
+        },
+        
+        onEdit: function(docId) {
+            openEditModal(docId);
+        },
+        
+        onDelete: async function(docId) {
+            try {
+                if (!confirm('আপনি কি নিশ্চিত যে আপনি এই এন্ট্রি ডিলিট করতে চান?')) {
+                    return;
+                }
 
-    // =======================================================
-    // ৭. রিয়েল-টাইম লিসেনার - FIXED
-    // =======================================================
-    function setupRealtimeListener() {
-        if (!db) {
-            showAlert('Firebase সংযোগ নেই', 'error');
+                // রো (Row) থেকে ডাটা অবজেক্ট খুঁজে বের করা
+                const item = appointmentsData.find(app => app.id === docId);
+                if (!item) {
+                    showAlert('অ্যাপয়েন্টমেন্ট পাওয়া যায়নি', 'error');
+                    return;
+                }
+
+                const yymmdd = getYYMMDD(item.data.date);
+                const patientType = (item.data.patientType || item.data.type || 'new').toLowerCase();
+                
+                // পরিবর্তন ২: নেস্টেড পাথ থেকে ডিলিট
+                await db.collection('appointments')
+                    .doc(yymmdd)
+                    .collection(patientType)
+                    .doc(docId)
+                    .delete();
+
+                showAlert('সিরিয়াল সফলভাবে ডিলিট করা হয়েছে', 'success');
+                
+            } catch (error) {
+                console.error('ডিলিট ত্রুটি:', error);
+                showAlert('ডিলিট করতে সমস্যা হয়েছে', 'error');
+            }
+        }
+    };
+    
+    tableManager = new TableManager(tableConfig);
+    
+    const todayDate = setDefaultDate();
+    if (tableManager) {
+        tableManager.setFilters({ date: todayDate });
+    }
+    
+    console.log('✅ Table Manager setup complete');
+}
+
+// =======================================================
+// এডিট মোডাল ফাংশন - UPDATED
+// =======================================================
+async function openEditModal(docId) {
+    if (!db || !docId) {
+        showAlert('ডেটা লোড করতে সমস্যা হয়েছে', 'error');
+        return;
+    }
+    
+    try {
+        const item = appointmentsData.find(app => app.id === docId);
+        if (!item) {
+            showAlert('সিরিয়াল পাওয়া যায়নি', 'error');
+            return;
+        }
+
+        const yymmdd = getYYMMDD(item.data.date);
+        const patientType = (item.data.patientType || item.data.type || 'new').toLowerCase();
+
+        // পরিবর্তন ৩: নির্দিষ্ট Sub-collection থেকে ডেটা রিড
+        const doc = await db.collection('appointments')
+            .doc(yymmdd)
+            .collection(patientType)
+            .doc(docId)
+            .get();
+        
+        if (!doc.exists) {
+            showAlert('সিরিয়াল পাওয়া যায়নি', 'error');
             return;
         }
         
-        let cleanupAppointments = null;
-        let cleanupPending = null;
+        const data = doc.data();
         
-        // অ্যাপয়েন্টমেন্ট লিসেনার
-        cleanupAppointments = db.collection('appointments')
-            .orderBy('timestamp', 'desc')
-            .onSnapshot(snapshot => {
-                console.log('🔄 Appointments update:', snapshot.size, 'appointments');
-                allAppointmentsSnapshot = snapshot;
-                
-                // appointments array আপডেট
-                const appointments = [];
-                snapshot.forEach(doc => {
-                    appointments.push({
-                        id: doc.id,
-                        data: doc.data()
-                    });
-                });
-                
-                // গ্লোবাল ভেরিয়েবলে স্টোর করুন
-                appointmentsData = appointments;
-                
-                // TableManager কে ডেটা দিন
-                if (tableManager) {
-                    tableManager.setAppointments(appointments);
-                }
-                
-                // ড্যাশবোর্ড কার্ড অবশ্যই আপডেট করুন
-                updateDashboardCards(snapshot);
-                
-            }, error => {
-                console.error('❌ Appointments listener error:', error);
-                if (tableManager) {
-                    tableManager.showError('ডেটা লোডে সমস্যা হয়েছে');
-                }
-                showAlert('রিয়েল-টাইম ডেটা লোডে সমস্যা হয়েছে', 'error');
-            });
+        if (window.quickModal && typeof window.quickModal.openEditModal === 'function') {
+            window.quickModal.openEditModal(docId, data);
+        } else {
+            const editModal = new QuickModal(db, adminSessionId, showAlert);
+            if (editModal.openEditModal) {
+                editModal.openEditModal(docId, data);
+            } else {
+                showAlert('এডিট মোডাল উপলব্ধ নেই', 'error');
+            }
+        }
         
-        // পেন্ডিং সিলেকশন লিসেনার - নতুন আপডেট
-        cleanupPending = db.collection('pendingSelections')
-            .onSnapshot(snapshot => {
-                console.log('🔄 Pending selections update:', snapshot.size, 'pending items');
-                
-                // পেন্ডিং সিলেকশন প্রসেস
-                const now = new Date();
-                pendingSelections = {};
-                
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const expiresAt = data.expiresAt ? data.expiresAt.toDate() : null;
-                    
-                    if (expiresAt && expiresAt > now) {
-                        const key = `${data.date}_${data.service}_${data.type}`;
-                        
-                        if (!pendingSelections[key]) {
-                            pendingSelections[key] = {
-                                user: [],
-                                admin: []
-                            };
-                        }
-                        
-                        if (data.bookedBy === 'user') {
-                            pendingSelections[key].user.push({
-                                serial: data.serial,
-                                id: doc.id,
-                                expiresAt: expiresAt
-                            });
-                        } else if (data.bookedBy === 'admin') {
-                            pendingSelections[key].admin.push({
-                                serial: data.serial,
-                                id: doc.id,
-                                expiresAt: expiresAt
-                            });
-                        }
-                    }
-                });
-                
-                // পেন্ডিং আপডেট হলে ড্যাশবোর্ড কার্ড আপডেট
-                if (allAppointmentsSnapshot) {
-                    updateDashboardCards(allAppointmentsSnapshot);
-                }
-                
-            }, error => {
-                console.error('❌ Pending selections listener error:', error);
-            });
-        
-        // ক্লিনআপ ফাংশন
-        return () => {
-            if (cleanupAppointments) cleanupAppointments();
-            if (cleanupPending) cleanupPending();
-        };
+    } catch (error) {
+        console.error('এডিট মোডাল ত্রুটি:', error);
+        showAlert('ডেটা লোড করতে সমস্যা হয়েছে', 'error');
     }
+}
+
+// =======================================================
+// ৭. রিয়েল-টাইম লিসেনার - UPDATED (CollectionGroup)
+// =======================================================
+function setupRealtimeListener() {
+    if (!db) {
+        showAlert('Firebase সংযোগ নেই', 'error');
+        return;
+    }
+    
+    let newDocs = [];
+    let oldDocs = [];
+
+    const updateCombinedData = () => {
+        // দুটি সাব-কালেকশন থেকে পাওয়া ডাটা একত্র করা
+        const combined = [...newDocs, ...oldDocs];
+        
+        // timestamp অনুসারে সর্ট
+        combined.sort((a, b) => {
+            const tA = a.data.timestamp ? (a.data.timestamp.toMillis ? a.data.timestamp.toMillis() : new Date(a.data.timestamp).getTime()) : 0;
+            const tB = b.data.timestamp ? (b.data.timestamp.toMillis ? b.data.timestamp.toMillis() : new Date(b.data.timestamp).getTime()) : 0;
+            return tB - tA;
+        });
+
+        console.log('🔄 Total Combined Appointments:', combined.length);
+        appointmentsData = combined;
+
+        if (tableManager) {
+            tableManager.setAppointments(combined);
+        }
+
+        allAppointmentsSnapshot = {
+            size: combined.length,
+            docs: combined.map(app => ({ id: app.id, data: () => app.data })),
+            forEach: function(cb) {
+                combined.forEach(app => cb({ id: app.id, data: () => app.data }));
+            }
+        };
+
+        updateDashboardCards(allAppointmentsSnapshot);
+    };
+
+    // 'new' সাব-কালেকশন লিসেনার
+    const unsubscribeNew = db.collectionGroup('new')
+        .onSnapshot(snapshot => {
+            newDocs = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
+            updateCombinedData();
+        }, error => {
+            console.error('❌ New subcollection error:', error);
+        });
+
+    // 'old' সাব-কালেকশন লিসেনার
+    const unsubscribeOld = db.collectionGroup('old')
+        .onSnapshot(snapshot => {
+            oldDocs = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
+            updateCombinedData();
+        }, error => {
+            console.error('❌ Old subcollection error:', error);
+        });
+
+    return () => {
+        unsubscribeNew();
+        unsubscribeOld();
+    };
+    
+    // পেন্ডিং সিলেকশন লিসেনার (পূর্বের মতোই অপরিবর্তিত)
+    cleanupPending = db.collection('pendingSelections')
+        .onSnapshot(snapshot => {
+            console.log('🔄 Pending selections update:', snapshot.size, 'pending items');
+            const now = new Date();
+            pendingSelections = {};
+            
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const expiresAt = data.expiresAt ? data.expiresAt.toDate() : null;
+                
+                if (expiresAt && expiresAt > now) {
+                    const key = `${data.date}_${data.service}_${data.type}`;
+                    
+                    if (!pendingSelections[key]) {
+                        pendingSelections[key] = { user: [], admin: [] };
+                    }
+                    
+                    if (data.bookedBy === 'user') {
+                        pendingSelections[key].user.push({
+                            serial: data.serial,
+                            id: doc.id,
+                            expiresAt: expiresAt
+                        });
+                    } else if (data.bookedBy === 'admin') {
+                        pendingSelections[key].admin.push({
+                            serial: data.serial,
+                            id: doc.id,
+                            expiresAt: expiresAt
+                        });
+                    }
+                }
+            });
+            
+            if (allAppointmentsSnapshot) {
+                updateDashboardCards(allAppointmentsSnapshot);
+            }
+        }, error => {
+            console.error('❌ Pending selections listener error:', error);
+        });
+    
+    return () => {
+        if (cleanupAppointments) cleanupAppointments();
+        if (cleanupPending) cleanupPending();
+    };
+}
 
     // =======================================================
     // ৮. কুইক মোডাল বাটন সেটআপ

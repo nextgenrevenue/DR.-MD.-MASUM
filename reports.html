@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>রিপোর্টস</title>
+
+    <!-- ===== CDN RESOURCES ===== -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+
+    <!-- Firebase SDK (v8/v9 compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        /* ===== GLOBAL RESET ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', system-ui, -apple-system, sans-serif;
+            background: #f1f5f9;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== LAYOUT WRAPPER ===== */
+        .app-wrapper {
+            display: flex;
+            flex: 1;
+            margin-top: 64px;
+            min-height: calc(100dvh - 64px);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 24px 28px 40px;
+            max-width: 100%;
+            overflow-x: hidden;
+            background: #f1f5f9;
+            transition: all 0.3s ease;
+        }
+
+        /* ===== PAGE TITLE ===== */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .page-header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-header h1 i {
+            color: #3b82f6;
+        }
+
+        .page-header .subtitle {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 400;
+            margin-top: 4px;
+        }
+
+        /* ===== STATS CARDS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 18px 20px;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            border-color: #3b82f6;
+        }
+
+        .stat-card .stat-label {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 4px;
+        }
+
+        .stat-card .stat-value .small {
+            font-size: 16px;
+            font-weight: 400;
+            color: #94a3b8;
+        }
+
+        .stat-card .stat-icon {
+            float: right;
+            font-size: 28px;
+            color: #3b82f6;
+            opacity: 0.3;
+        }
+
+        /* ===== FILTER SECTION ===== */
+        .filter-section {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 28px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px 20px;
+        }
+
+        .filter-section .filter-label {
+            font-weight: 600;
+            color: #0f172a;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-section .filter-label i {
+            color: #3b82f6;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .filter-group input[type="number"] {
+            padding: 10px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            width: 120px;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+            font-weight: 500;
+            outline: none;
+        }
+
+        .filter-group input[type="number"]:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+            background: white;
+        }
+
+        .filter-group .btn-search {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #3b82f6, #4f46e5);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-group .btn-search:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+        }
+
+        .filter-group .btn-search:active {
+            transform: scale(0.97);
+        }
+
+        .filter-group .btn-clear {
+            padding: 10px 18px;
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-group .btn-clear:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .preset-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .preset-badges .badge {
+            padding: 4px 14px;
+            border-radius: 20px;
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
+        }
+
+        .preset-badges .badge:hover {
+            background: #dbeafe;
+            color: #2563eb;
+            border-color: #3b82f6;
+        }
+
+        .preset-badges .badge.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        /* ===== RESULTS TABLE ===== */
+        .results-section {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 28px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+            display: none;
+        }
+
+        .results-section.visible {
+            display: block;
+        }
+
+        .results-section .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .results-section .results-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .results-section .results-header .count-badge {
+            background: #dbeafe;
+            color: #2563eb;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .results-table thead th {
+            background: #f8fafc;
+            padding: 12px 14px;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
+        }
+
+        .results-table tbody td {
+            padding: 11px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #0f172a;
+            vertical-align: middle;
+        }
+
+        .results-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .results-table .badge-serial {
+            display: inline-block;
+            background: #dbeafe;
+            color: #2563eb;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .results-table .badge-high {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .results-table .badge-very-high {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94a3b8;
+            font-size: 16px;
+        }
+
+        .no-results i {
+            font-size: 40px;
+            margin-bottom: 12px;
+            display: block;
+            opacity: 0.4;
+        }
+
+        /* ===== CHARTS GRID ===== */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 20px 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .chart-card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        }
+
+        .chart-card .chart-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-card .chart-title i {
+            color: #3b82f6;
+        }
+
+        .chart-card .chart-container {
+            position: relative;
+            width: 100%;
+            height: 280px;
+        }
+
+        .chart-card .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* ===== AGE LEGEND ===== */
+        .age-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 12px;
+            margin-top: 12px;
+            justify-content: center;
+        }
+
+        .age-legend .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #475569;
+        }
+
+        .age-legend .legend-item .color-box {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .chart-card .chart-container {
+                height: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 16px 14px 32px;
+                margin-top: 56px;
+            }
+
+            .app-wrapper {
+                margin-top: 56px;
+                min-height: calc(100dvh - 56px);
+            }
+
+            .page-header h1 {
+                font-size: 20px;
+            }
+
+            .page-header .subtitle {
+                font-size: 12px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 14px 16px;
+            }
+
+            .stat-card .stat-value {
+                font-size: 22px;
+            }
+
+            .stat-card .stat-icon {
+                font-size: 20px;
+            }
+
+            .filter-section {
+                padding: 16px 16px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .filter-section .filter-label {
+                font-size: 13px;
+            }
+
+            .filter-group {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .filter-group input[type="number"] {
+                width: 100%;
+                max-width: 100%;
+                padding: 10px 14px;
+                font-size: 14px;
+            }
+
+            .filter-group .btn-search,
+            .filter-group .btn-clear {
+                flex: 1;
+                justify-content: center;
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+
+            .preset-badges {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .preset-badges .badge {
+                font-size: 11px;
+                padding: 3px 12px;
+            }
+
+            .results-section {
+                padding: 16px 14px;
+            }
+
+            .results-section .results-header h3 {
+                font-size: 16px;
+            }
+
+            .results-table {
+                font-size: 13px;
+            }
+
+            .results-table thead th,
+            .results-table tbody td {
+                padding: 8px 10px;
+            }
+
+            .chart-card {
+                padding: 16px 14px 18px;
+            }
+
+            .chart-card .chart-title {
+                font-size: 14px;
+            }
+
+            .chart-card .chart-container {
+                height: 200px;
+            }
+
+            .age-legend .legend-item {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .stat-card .stat-value {
+                font-size: 18px;
+            }
+
+            .stat-card .stat-label {
+                font-size: 10px;
+            }
+
+            .filter-group input[type="number"] {
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+
+            .results-table {
+                font-size: 12px;
+            }
+
+            .results-table thead th,
+            .results-table tbody td {
+                padding: 6px 8px;
+            }
+
+            .chart-card .chart-container {
+                height: 170px;
+            }
+
+            .page-header h1 {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+
+            .stat-card {
+                padding: 10px 12px;
+            }
+
+            .stat-card .stat-value {
+                font-size: 16px;
+            }
+
+            .filter-section {
+                padding: 12px 12px;
+            }
+        }
+
+        /* ===== LOADING ===== */
+        .loading-overlay {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            color: #94a3b8;
+            font-size: 15px;
+            gap: 12px;
+        }
+
+        .loading-overlay .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ===== TOOLTIP ===== */
+        .chart-tooltip {
+            font-size: 12px;
+            background: rgba(15, 23, 42, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            pointer-events: none;
+        }
+
+        /* Scrollbar styling */
+        .table-responsive::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .table-responsive::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body data-auto-load-components>
+
+    <!-- ===== HEADER CONTAINER ===== -->
+    <div id="header-container"></div>
+
+    <!-- ===== APP WRAPPER ===== -->
+    <div class="app-wrapper">
+
+        <!-- ===== SIDEBAR CONTAINER ===== -->
+        <div id="sidebar-container"></div>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <main class="main-content" id="mainContent">
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1><i class="fas fa-chart-pie"></i> রিপোর্ট &amp; বিশ্লেষণ</h1>
+                    <div class="subtitle"><i class="far fa-calendar-alt"></i> রোগীর প্রবণতা, বয়সভিত্তিক বিশ্লেষণ &amp; সিরিয়াল কাউন্ট</div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <span class="stat-icon"><i class="fas fa-users"></i></span>
+                    <div class="stat-label">মোট রোগী</div>
+                    <div class="stat-value" id="totalPatients">0</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon"><i class="fas fa-calendar-check"></i></span>
+                    <div class="stat-label">মোট অ্যাপয়েন্টমেন্ট</div>
+                    <div class="stat-value" id="totalAppointments">0</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon"><i class="fas fa-clock"></i></span>
+                    <div class="stat-label">গড় বয়স</div>
+                    <div class="stat-value" id="avgAge">0 <span class="small">বছর</span></div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon"><i class="fas fa-ticket-alt"></i></span>
+                    <div class="stat-label">সর্বোচ্চ সিরিয়াল</div>
+                    <div class="stat-value" id="maxSerial">0</div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <div class="filter-label">
+                    <i class="fas fa-search"></i> সিরিয়াল কাউন্ট ফিল্টার
+                </div>
+                <div class="filter-group">
+                    <input type="number" id="serialFilterInput" placeholder="যেমন: ১০" min="1" />
+                    <button class="btn-search" id="searchSerialBtn">
+                        <i class="fas fa-filter"></i> ফিল্টার
+                    </button>
+                    <button class="btn-clear" id="clearSerialBtn">
+                        <i class="fas fa-times"></i> ক্লিয়ার
+                    </button>
+                    <div class="preset-badges">
+                        <span class="badge" data-value="3">৩+</span>
+                        <span class="badge active" data-value="5">৫+</span>
+                        <span class="badge" data-value="10">১০+</span>
+                        <span class="badge" data-value="15">১৫+</span>
+                        <span class="badge" data-value="20">২০+</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="results-section" id="resultsSection">
+                <div class="results-header">
+                    <h3><i class="fas fa-list-ul"></i> <span id="resultTitle">ফলাফল</span></h3>
+                    <span class="count-badge" id="resultCount">০ জন</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="results-table" id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>রোগীর নাম</th>
+                                <th>বয়স</th>
+                                <th>ফোন নম্বর</th>
+                                <th>সিরিয়াল সংখ্যা</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody">
+                            <tr>
+                                <td colspan="5" class="no-results">
+                                    <i class="fas fa-inbox"></i>
+                                    কোন ডেটা পাওয়া যায়নি
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <!-- Chart 1: Date-wise -->
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="fas fa-calendar-day"></i> তারিখভিত্তিক রোগী আগমন
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="dateChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Age Distribution -->
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="fas fa-child"></i> বয়সভিত্তিক শতাংশ
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="ageChart"></canvas>
+                    </div>
+                    <div class="age-legend" id="ageLegend"></div>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="spinner"></div>
+                <span>ডেটা লোড হচ্ছে...</span>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ===== FOOTER CONTAINER ===== -->
+    <div id="footer-container"></div>
+
+    <!-- ============================================================ -->
+    <!-- ===== COMPONENTS-INLINE.JS ===== -->
+    <script src="components-inline.js"></script>
+
+    <!-- ============================================================ -->
+    <!-- ===== REPORTS CUSTOM JS ===== -->
+    <script>
+        (function() {
+            'use strict';
+
+            // ============================================================
+            // ==================== AUTHENTICATION CHECK ====================
+            // ============================================================
+            function checkAuthentication() {
+                const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
+                const loginTime = sessionStorage.getItem('loginTime');
+
+                if (!isLoggedIn) {
+                    Swal.fire({
+                        title: 'প্রবেশ প্রয়োজন!',
+                        text: 'দয়া করে প্রথমে লগইন করুন।',
+                        icon: 'warning',
+                        confirmButtonText: 'লগইন পেজে যান',
+                        confirmButtonColor: '#3b82f6'
+                    }).then(() => {
+                        window.location.href = 'login.html';
+                    });
+                    return false;
+                }
+
+                const currentTime = new Date().getTime();
+                const sessionDuration = 2 * 60 * 60 * 1000; // 2 hours
+
+                if (currentTime - parseInt(loginTime) > sessionDuration) {
+                    sessionStorage.clear();
+                    Swal.fire({
+                        title: 'সেশন শেষ!',
+                        text: 'আপনার সেশন শেষ হয়ে গেছে। আবার লগইন করুন।',
+                        icon: 'info',
+                        confirmButtonText: 'ঠিক আছে',
+                        confirmButtonColor: '#3b82f6'
+                    }).then(() => {
+                        window.location.href = 'login.html';
+                    });
+                    return false;
+                }
+
+                return true;
+            }
+
+            // ==================== FIREBASE CONFIG ====================
+    const firebaseConfig = {
+        apiKey: "AIzaSyDAdGUtNVgs5UspQeH8hL0i-L0WvPpOWnE",
+        authDomain: "appointment-e2050.firebaseapp.com",
+        projectId: "appointment-e2050",
+        storageBucket: "appointment-e2050.firebasestorage.app",
+        messagingSenderId: "367447068370",
+        appId: "1:367447068370:web:8e111bb010a19d21eda70b",
+        measurementId: "G-CRLSV1JJMQ"
+    };
+
+
+            // ==================== INIT FIREBASE & ANALYTICS ====================
+            let db, analytics;
+
+            function initFirebase() {
+                try {
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp(firebaseConfig);
+                    }
+                    db = firebase.firestore();
+
+                    if (firebase.analytics) {
+                        analytics = firebase.analytics();
+                        window.analytics = analytics;
+                    }
+
+                    window.db = db;
+                    console.log('✅ Firebase Single Database & Analytics connected');
+                } catch (e) {
+                    console.error('❌ Firebase init error:', e);
+                }
+            }
+
+            // ==================== LOAD APPOINTMENTS FROM NEW PATH ====================
+            async function loadAppointmentsFromNewPath() {
+                try {
+                    // সাব-কালেকশন 'new' এবং 'old' থেকে collectionGroup Query এর মাধ্যমে ডাটা লোড
+                    const [newSnap, oldSnap] = await Promise.all([
+                        db.collectionGroup('new').get(),
+                        db.collectionGroup('old').get()
+                    ]);
+
+                    const newData = newSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const oldData = oldSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                    const all = [...newData, ...oldData];
+                    console.log(`📊 Loaded: New (${newData.length}) + Old (${oldData.length}) = Total ${all.length}`);
+
+                    if (analytics) {
+                        analytics.logEvent('report_data_loaded', { count: all.length });
+                    }
+
+                    return all;
+                } catch (error) {
+                    console.error('❌ Load error from new path:', error);
+                    return [];
+                }
+            }
+
+            // ==================== AGE RANGES ====================
+            const AGE_RANGES = [
+                { label: '০-৫', min: 0, max: 5 },
+                { label: '৬-১০', min: 6, max: 10 },
+                { label: '১১-১৫', min: 11, max: 15 },
+                { label: '১৬-২০', min: 16, max: 20 },
+                { label: '২১-৩০', min: 21, max: 30 },
+                { label: '৩১-৪০', min: 31, max: 40 },
+                { label: '৪১-৫০', min: 41, max: 50 },
+                { label: '৫১-৬০', min: 51, max: 60 },
+                { label: '৬০+', min: 61, max: Infinity }
+            ];
+
+            const AGE_COLORS = [
+                '#3b82f6', '#4f46e5', '#7c3aed', '#9333ea',
+                '#a855f7', '#d946ef', '#ec4899', '#f472b6', '#f9a8d4'
+            ];
+
+            // ==================== STATE ====================
+            let allAppointments = [];
+            let dateChartInstance = null;
+            let ageChartInstance = null;
+            let currentFilter = 5;
+
+            // ==================== DOM REFS ====================
+            const $ = (id) => document.getElementById(id);
+            const totalPatientsEl = $('totalPatients');
+            const totalAppointmentsEl = $('totalAppointments');
+            const avgAgeEl = $('avgAge');
+            const maxSerialEl = $('maxSerial');
+            const loadingOverlay = $('loadingOverlay');
+            const filterInput = $('serialFilterInput');
+            const searchBtn = $('searchSerialBtn');
+            const clearBtn = $('clearSerialBtn');
+            const resultsSection = $('resultsSection');
+            const resultsBody = $('resultsBody');
+            const resultTitle = $('resultTitle');
+            const resultCount = $('resultCount');
+            const presetBadges = document.querySelectorAll('.preset-badges .badge');
+
+            // ==================== HELPERS ====================
+            function getAge(appt) {
+                if (!appt) return null;
+                // ageYears যদি অবজেক্টে থাকে সরাসরি ব্যবহার
+                if (appt.ageYears !== undefined && appt.ageYears !== null && !isNaN(appt.ageYears)) {
+                    return Number(appt.ageYears);
+                }
+                // স্ট্রিং বা অন্যান্য ফিল্ড ফরম্যাট চেক
+                const val = appt.age;
+                if (val === undefined || val === null || val === '') return null;
+                const num = Number(val);
+                if (!isNaN(num) && num >= 0 && num <= 120) return num;
+                
+                // যদি স্ট্রিং আকারে থাকে (যেমন: "25 বছর")
+                const parsed = parseInt(val);
+                if (!isNaN(parsed) && parsed >= 0 && parsed <= 120) return parsed;
+
+                return null;
+            }
+
+            function getAgeRange(appt) {
+                const a = getAge(appt);
+                if (a === null) return null;
+                for (const range of AGE_RANGES) {
+                    if (a >= range.min && a <= range.max) {
+                        return range.label;
+                    }
+                }
+                return null;
+            }
+
+            function getPatientName(appt) {
+                return appt.patientName || appt.name || appt.fullName || 'অজানা';
+            }
+
+            function getPhone(appt) {
+                return appt.phone || appt.mobile || appt.contact || '';
+            }
+
+            function getDate(appt) {
+                return appt.appointmentDate || appt.visitingDate || appt.date || '';
+            }
+
+            // ==================== RENDER CHARTS ====================
+            function renderDateChart(data) {
+                const ctx = document.getElementById('dateChart').getContext('2d');
+
+                const dateMap = new Map();
+                data.forEach(appt => {
+                    const d = getDate(appt);
+                    if (!d) return;
+                    dateMap.set(d, (dateMap.get(d) || 0) + 1);
+                });
+
+                const sorted = Array.from(dateMap.entries())
+                    .sort((a, b) => new Date(a[0]) - new Date(b[0]));
+
+                const labels = sorted.map(item => {
+                    const d = new Date(item[0]);
+                    return isNaN(d) ? item[0] : d.toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' });
+                });
+                const values = sorted.map(item => item[1]);
+
+                if (dateChartInstance) {
+                    dateChartInstance.destroy();
+                }
+
+                const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+                gradient.addColorStop(0, 'rgba(59, 130, 246, 0.8)');
+                gradient.addColorStop(1, 'rgba(59, 130, 246, 0.1)');
+
+                dateChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels.length ? labels : ['কোন ডেটা নেই'],
+                        datasets: [{
+                            label: 'রোগী সংখ্যা',
+                            data: values.length ? values : [0],
+                            backgroundColor: gradient,
+                            borderColor: '#3b82f6',
+                            borderWidth: 2,
+                            borderRadius: 6,
+                            barPercentage: 0.6,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(15,23,42,0.9)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                cornerRadius: 8,
+                                padding: 10,
+                                callbacks: {
+                                    label: function(context) {
+                                        return `রোগী: ${context.parsed.y} জন`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { stepSize: 1, font: { size: 11 } },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            x: {
+                                ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 0 },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function renderAgeChart(data) {
+                const ctx = document.getElementById('ageChart').getContext('2d');
+
+                const rangeCount = {};
+                AGE_RANGES.forEach(r => rangeCount[r.label] = 0);
+
+                let validAges = 0;
+                data.forEach(appt => {
+                    const range = getAgeRange(appt);
+                    if (range && rangeCount.hasOwnProperty(range)) {
+                        rangeCount[range]++;
+                        validAges++;
+                    }
+                });
+
+                const labels = AGE_RANGES.map(r => r.label);
+                const counts = AGE_RANGES.map(r => rangeCount[r.label]);
+                const total = counts.reduce((a, b) => a + b, 0);
+                const percentages = counts.map(c => total > 0 ? (c / total) * 100 : 0);
+
+                if (ageChartInstance) {
+                    ageChartInstance.destroy();
+                }
+
+                const hasData = total > 0;
+
+                ageChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: hasData ? labels : ['কোন ডেটা নেই'],
+                        datasets: [{
+                            data: hasData ? counts : [1],
+                            backgroundColor: hasData ? AGE_COLORS : ['#e2e8f0'],
+                            borderWidth: 2,
+                            borderColor: '#fff',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(15,23,42,0.9)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                cornerRadius: 8,
+                                padding: 10,
+                                callbacks: {
+                                    label: function(context) {
+                                        const idx = context.dataIndex;
+                                        const label = context.chart.data.labels[idx] || '';
+                                        const count = context.parsed;
+                                        const pct = percentages[idx] || 0;
+                                        return `${label}: ${count} জন (${pct.toFixed(1)}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '55%',
+                    }
+                });
+
+                const legendEl = document.getElementById('ageLegend');
+                legendEl.innerHTML = '';
+                if (hasData) {
+                    AGE_RANGES.forEach((range, idx) => {
+                        const count = rangeCount[range.label];
+                        if (count === 0) return;
+                        const pct = ((count / total) * 100).toFixed(1);
+                        const div = document.createElement('span');
+                        div.className = 'legend-item';
+                        div.innerHTML = `
+                            <span class="color-box" style="background:${AGE_COLORS[idx]}"></span>
+                            ${range.label}: ${count} জন (${pct}%)
+                        `;
+                        legendEl.appendChild(div);
+                    });
+                } else {
+                    legendEl.innerHTML = '<span class="legend-item" style="color:#94a3b8;">বয়স সংক্রান্ত কোনো ডেটা নেই</span>';
+                }
+            }
+
+            // ==================== UPDATE STATS ====================
+            function updateStats(data) {
+                const uniqueMap = new Map();
+                data.forEach(appt => {
+                    const phone = getPhone(appt);
+                    const key = phone || appt.id;
+                    if (!uniqueMap.has(key)) {
+                        uniqueMap.set(key, appt);
+                    }
+                });
+                const totalPatients = uniqueMap.size;
+                const totalAppointments = data.length;
+
+                let ageSum = 0;
+                let ageCount = 0;
+                data.forEach(appt => {
+                    const a = getAge(appt);
+                    if (a !== null) {
+                        ageSum += a;
+                        ageCount++;
+                    }
+                });
+                const avgAge = ageCount > 0 ? (ageSum / ageCount) : 0;
+
+                const phoneCount = new Map();
+                data.forEach(appt => {
+                    const phone = getPhone(appt);
+                    if (phone) {
+                        phoneCount.set(phone, (phoneCount.get(phone) || 0) + 1);
+                    }
+                });
+                let maxSerial = 0;
+                for (const count of phoneCount.values()) {
+                    if (count > maxSerial) maxSerial = count;
+                }
+
+                totalPatientsEl.textContent = totalPatients;
+                totalAppointmentsEl.textContent = totalAppointments;
+                avgAgeEl.innerHTML = `${avgAge.toFixed(1)} <span class="small">বছর</span>`;
+                maxSerialEl.textContent = maxSerial;
+            }
+
+            // ==================== FILTER RESULTS ====================
+            function applySerialFilter(threshold) {
+                currentFilter = threshold;
+
+                if (analytics) {
+                    analytics.logEvent('filter_serial_applied', { threshold: threshold });
+                }
+
+                const phoneMap = new Map();
+                allAppointments.forEach(appt => {
+                    const phone = getPhone(appt);
+                    if (!phone) return;
+                    if (!phoneMap.has(phone)) {
+                        phoneMap.set(phone, {
+                            phone: phone,
+                            name: '',
+                            age: null,
+                            count: 0,
+                            appointments: []
+                        });
+                    }
+                    const entry = phoneMap.get(phone);
+                    entry.count++;
+                    entry.appointments.push(appt);
+                    if (!entry.name) entry.name = getPatientName(appt);
+                    if (entry.age === null) {
+                        const ageVal = getAge(appt);
+                        if (ageVal !== null) entry.age = ageVal;
+                    }
+                });
+
+                const filtered = Array.from(phoneMap.values())
+                    .filter(entry => entry.count >= threshold)
+                    .sort((a, b) => b.count - a.count);
+
+                if (filtered.length === 0) {
+                    resultsSection.classList.remove('visible');
+                    return;
+                }
+
+                resultsSection.classList.add('visible');
+                resultTitle.textContent = `সিরিয়াল ≥ ${threshold}`;
+                resultCount.textContent = `${filtered.length} জন`;
+
+                let html = '';
+                filtered.forEach((entry, idx) => {
+                    let badgeClass = 'badge-serial';
+                    if (entry.count >= 20) badgeClass += ' badge-very-high';
+                    else if (entry.count >= 10) badgeClass += ' badge-high';
+
+                    const ageDisplay = entry.age !== null ? entry.age + ' বছর' : '—';
+
+                    html += `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td><strong>${entry.name || 'অজানা'}</strong></td>
+                            <td>${ageDisplay}</td>
+                            <td>${entry.phone}</td>
+                            <td><span class="${badgeClass}">${entry.count}</span></td>
+                        </tr>
+                    `;
+                });
+
+                resultsBody.innerHTML = html;
+            }
+
+            // ==================== LOAD ALL DATA ====================
+            async function loadAllData() {
+                loadingOverlay.style.display = 'flex';
+
+                try {
+                    allAppointments = await loadAppointmentsFromNewPath();
+
+                    if (allAppointments.length === 0) {
+                        loadingOverlay.style.display = 'none';
+                        return;
+                    }
+
+                    updateStats(allAppointments);
+                    renderDateChart(allAppointments);
+                    renderAgeChart(allAppointments);
+
+                } catch (error) {
+                    console.error('❌ Load error:', error);
+                } finally {
+                    loadingOverlay.style.display = 'none';
+                }
+            }
+
+            // ==================== EVENT BINDING ====================
+            function bindEvents() {
+                searchBtn.addEventListener('click', function() {
+                    const val = parseInt(filterInput.value);
+                    if (val && val > 0) {
+                        applySerialFilter(val);
+                        document.querySelectorAll('.preset-badges .badge').forEach(b => {
+                            b.classList.toggle('active', parseInt(b.dataset.value) === val);
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'ভুল ইনপুট!',
+                            text: 'দয়া করে একটি বৈধ সংখ্যা দিন (যেমন: ৫, ১০, ১৫)',
+                            confirmButtonText: 'ঠিক আছে',
+                            confirmButtonColor: '#3b82f6'
+                        });
+                    }
+                });
+
+                filterInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        searchBtn.click();
+                    }
+                });
+
+                clearBtn.addEventListener('click', function() {
+                    filterInput.value = '';
+                    resultsSection.classList.remove('visible');
+                    document.querySelectorAll('.preset-badges .badge').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                });
+
+                presetBadges.forEach(badge => {
+                    badge.addEventListener('click', function() {
+                        const val = parseInt(this.dataset.value);
+                        filterInput.value = val;
+                        applySerialFilter(val);
+                        document.querySelectorAll('.preset-badges .badge').forEach(b => {
+                            b.classList.toggle('active', b === this);
+                        });
+                    });
+                });
+            }
+
+            // ==================== INIT ====================
+            function init() {
+                if (!checkAuthentication()) return;
+                initFirebase();
+
+                if (db) {
+                    loadAllData();
+                } else {
+                    setTimeout(() => {
+                        if (db) {
+                            loadAllData();
+                        } else {
+                            console.warn('Firebase not ready, retrying...');
+                            setTimeout(() => {
+                                if (db) {
+                                    loadAllData();
+                                } else {
+                                    loadingOverlay.innerHTML = `
+                                        <i class="fas fa-exclamation-triangle" style="font-size:28px;color:#f59e0b;"></i>
+                                        <span>ডেটাবেস সংযোগ করতে সমস্যা হচ্ছে। অনুগ্রহ করে পৃষ্ঠা রিফ্রেশ করুন।</span>
+                                    `;
+                                }
+                            }, 1000);
+                        }
+                    }, 500);
+                }
+
+                bindEvents();
+
+                let resizeTimer;
+                window.addEventListener('resize', function() {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(() => {
+                        if (dateChartInstance) dateChartInstance.resize();
+                        if (ageChartInstance) ageChartInstance.resize();
+                    }, 300);
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>

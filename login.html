@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Login</title>
+  <title>লগইন ও রেজিস্ট্রেশন প্যানেল</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
   <style>
     * {
       margin: 0;
@@ -14,32 +15,18 @@
     }
 
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Inter', 'Noto Sans Bengali', sans-serif;
       background: linear-gradient(135deg, #8ecae6 0%, #7ab8d4 100%);
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 20px;
-      transition: background 0.5s ease;
-      color-scheme: light only !important; /* ✅ Dark mode off */
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle at 20% 50%, rgba(142, 202, 230, 0.1) 0%, transparent 50%),
-                  radial-gradient(circle at 80% 20%, rgba(122, 184, 212, 0.1) 0%, transparent 50%);
-      z-index: -1;
     }
 
     .login-container {
       background: white;
-      padding: 50px 40px;
+      padding: 40px 30px;
       border-radius: 20px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
       width: 100%;
@@ -47,12 +34,6 @@
       text-align: center;
       position: relative;
       overflow: hidden;
-      animation: fadeIn 0.8s ease-out;
-      transition: transform 0.3s ease;
-    }
-
-    .login-container:hover {
-      transform: translateY(-5px);
     }
 
     .login-container::before {
@@ -60,518 +41,407 @@
       position: absolute;
       top: 0;
       left: 0;
-      right: 0;
-      height: 4px;
+      width: 100%;
+      height: 5px;
       background: linear-gradient(90deg, #8ecae6, #7ab8d4);
-      animation: slideIn 0.5s ease-out;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes slideIn {
-      from { width: 0; }
-      to { width: 100%; }
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-      20%, 40%, 60%, 80% { transform: translateX(5px); }
-    }
-
-    .logo {
-      margin-bottom: 40px;
-      animation: fadeIn 0.8s ease-out 0.2s both;
-    }
-
-    .logo h1 {
+    h2 {
       color: #1f2937;
-      font-size: 28px;
+      font-size: 26px;
       font-weight: 700;
-      margin-bottom: 8px;
-      letter-spacing: -0.5px;
-      min-height: 36px;
+      margin-bottom: 10px;
     }
 
-    .logo p {
+    p.subtitle {
       color: #6b7280;
-      font-size: 16px;
-      font-weight: 400;
-      margin-bottom: 8px;
-    }
-
-    .logo-info {
-      font-size: 12px;
-      color: #9ca3af;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      cursor: help;
-      position: relative;
-    }
-
-    .logo-info .tooltip {
-      visibility: hidden;
-      width: 200px;
-      background-color: #1f2937;
-      color: white;
-      text-align: center;
-      border-radius: 6px;
-      padding: 8px;
-      position: absolute;
-      z-index: 100;
-      bottom: 125%;
-      left: 50%;
-      transform: translateX(-50%);
-      opacity: 0;
-      transition: opacity 0.3s;
-      font-size: 12px;
-      font-weight: normal;
-      text-transform: none;
-      letter-spacing: normal;
-      line-height: 1.4;
-    }
-
-    .logo-info:hover .tooltip {
-      visibility: visible;
-      opacity: 1;
-    }
-
-    .login-form {
-      text-align: left;
-      animation: fadeIn 0.8s ease-out 0.4s both;
+      font-size: 14px;
+      margin-bottom: 30px;
     }
 
     .form-group {
-      margin-bottom: 24px;
-      position: relative;
+      margin-bottom: 20px;
+      text-align: left;
     }
 
-    .form-group label {
+    .form-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    label {
       display: block;
-      margin-bottom: 10px;
-      font-weight: 600;
       color: #374151;
       font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      font-weight: 500;
+      margin-bottom: 8px;
     }
 
-    .label-info {
-      font-size: 12px;
-      color: #9ca3af;
-      font-weight: normal;
-      text-transform: none;
-      letter-spacing: normal;
-      cursor: help;
-      position: relative;
-    }
-
-    .label-info .tooltip {
-      visibility: hidden;
-      width: 180px;
-      background-color: #1f2937;
-      color: white;
-      text-align: center;
-      border-radius: 6px;
-      padding: 8px;
-      position: absolute;
-      z-index: 100;
-      bottom: 125%;
-      right: 0;
-      opacity: 0;
-      transition: opacity 0.3s;
-      font-size: 12px;
-      font-weight: normal;
-      text-transform: none;
-      letter-spacing: normal;
-      line-height: 1.4;
-    }
-
-    .label-info:hover .tooltip {
-      visibility: visible;
-      opacity: 1;
-    }
-
-    .form-group input {
+    input, select {
       width: 100%;
-      padding: 14px 16px;
+      padding: 12px 16px;
       border: 2px solid #e5e7eb;
       border-radius: 10px;
-      font-size: 16px;
-      font-family: 'Inter', sans-serif;
-      transition: all 0.3s ease;
-      background: #fafafa;
-    }
-
-    .form-group input:focus {
+      font-size: 15px;
+      color: #1f2937;
       outline: none;
-      border-color: #8ecae6;
-      background: white;
-      box-shadow: 0 0 0 3px rgba(142, 202, 230, 0.1);
-      transform: translateY(-2px);
-    }
-
-    .form-group input:not(:placeholder-shown) {
-      background: white !important;
-      border-color: #8ecae6 !important;
-    }
-
-    .form-group input::placeholder {
-      color: #9ca3af;
-    }
-
-    .password-wrapper {
-      position: relative;
-    }
-
-    .password-toggle {
-      position: absolute;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 18px;
-      opacity: 0.6;
-      transition: opacity 0.3s;
-      z-index: 10;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .password-toggle:hover {
-      opacity: 1;
-    }
-
-    .caps-warning {
-      display: none;
-      color: #f59e0b;
-      font-size: 12px;
-      margin-top: 8px;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
-      background-color: #fffbeb;
-      border-radius: 6px;
-      border-left: 3px solid #f59e0b;
-    }
-
-    .password-strength {
-      height: 4px;
-      background: #e5e7eb;
-      border-radius: 2px;
-      margin-top: 8px;
-      overflow: hidden;
       transition: all 0.3s ease;
     }
 
-    .strength-bar {
-      height: 100%;
-      width: 0%;
-      transition: width 0.3s, background 0.3s;
-      border-radius: 2px;
+    input:focus, select:focus {
+      border-color: #7ab8d4;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(122, 184, 212, 0.3);
+    }
+
+    select {
+      height: 48px;
+      background-color: white;
+      cursor: pointer;
     }
 
     .login-btn {
       width: 100%;
-      padding: 15px;
-      background: linear-gradient(135deg, #8ecae6 0%, #8ecae6 100%);
-      color: white;
+      padding: 14px;
+      background: linear-gradient(135deg, #8ecae6 0%, #7ab8d4 100%);
       border: none;
       border-radius: 10px;
+      color: white;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
-      font-family: 'Inter', sans-serif;
+      box-shadow: 0 5px 15px rgba(122, 184, 212, 0.4);
       margin-top: 10px;
-      position: relative;
-      overflow: hidden;
-      animation: fadeIn 0.8s ease-out 0.6s both;
     }
 
     .login-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(142, 202, 230, 0.4);
-    }
-
-    .login-btn:active {
-      transform: translateY(0);
-    }
-
-    .login-btn::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
-      transition: all 0.5s ease;
-      transform: translate(-50%, -50%);
-    }
-
-    .login-btn:hover::after {
-      width: 300px;
-      height: 300px;
+      box-shadow: 0 8px 20px rgba(122, 184, 212, 0.6);
     }
 
     .login-btn:disabled {
-      opacity: 0.7;
+      background: #cbd5e1;
+      box-shadow: none;
       cursor: not-allowed;
-      transform: none !important;
+      transform: none;
     }
 
-    .admin-notice {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 24px;
-      padding: 15px;
-      background: #f0f9ff;
-      border-radius: 10px;
-      color: #8ecae6;
+    .switch-text {
+      margin-top: 20px;
       font-size: 14px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      animation: fadeIn 0.8s ease-out 0.7s both;
+      color: #4b5563;
     }
 
-    .admin-notice i {
+    .switch-text a {
+      color: #7ab8d4;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .switch-text a:hover {
+      color: #ff6f91;
+    }
+
+    /* 📱 ফোন ইনপুট গ্রুপ */
+    .phone-input-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .phone-input-group .country-code {
+      width: 90px;
+      flex-shrink: 0;
+      text-align: center;
+      background: #f3f4f6;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px 8px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #374151;
+      cursor: default;
+      user-select: none;
+    }
+
+    .phone-input-group .phone-number {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 15px;
+      color: #1f2937;
+      outline: none;
+      transition: all 0.3s ease;
+      min-width: 0;
+    }
+
+    .phone-input-group .phone-number:focus {
+      border-color: #7ab8d4;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(122, 184, 212, 0.3);
+    }
+
+    /* ⚠️ এরর মেসেজ */
+    .error-text {
+      color: #dc2626;
+      font-size: 13px;
+      margin-top: 5px;
+      display: none;
+      text-align: left;
+      width: 100%;
+    }
+
+    /* 🔥 OTP সেকশন */
+    #otpSection {
+      border-top: 2px dashed #e2e8f0;
+      margin-top: 20px;
+      padding-top: 15px;
+      display: none;
+    }
+
+    #otpSection .form-group label {
+      color: #16a34a;
+      font-weight: 600;
+    }
+
+    #otpSection input {
+      border: 2px solid #16a34a;
+      text-align: center;
+      letter-spacing: 5px;
       font-size: 18px;
     }
 
-    .error-message {
-      color: #dc2626;
-      font-size: 14px;
-      font-weight: 500;
-      margin-top: 12px;
-      padding: 12px 16px;
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      border-radius: 8px;
-      display: none;
-      align-items: center;
-      gap: 10px;
-      animation: fadeIn 0.3s ease-out;
+    #verifyOtpBtn {
+      background-color: #16a34a;
     }
 
-    .error-message::before {
-      content: '⚠️';
-      font-size: 16px;
+    #verifyOtpBtn:hover {
+      background-color: #15803d;
     }
 
-    .success-message {
-      color: #059669;
-      font-size: 14px;
-      font-weight: 500;
-      margin-top: 12px;
-      padding: 12px 16px;
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
-      border-radius: 8px;
-      display: none;
-      align-items: center;
-      gap: 10px;
-      animation: fadeIn 0.3s ease-out;
+    /* ===== ফেইড ইন অ্যানিমেশন ===== */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(15px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
-    .success-message::before {
-      content: '✅';
-      font-size: 16px;
+    #forgetOtpGroup, #newPasswordGroup {
+      animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
 
-    .attempts-counter {
-      font-size: 13px;
-      color: #6b7280;
-      text-align: center;
-      margin-top: 12px;
+    /* ===== টোস্ট ===== */
+    .toast-container {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 6px;
-      opacity: 0.8;
+      gap: 8px;
+      max-width: 90%;
+      pointer-events: none;
     }
 
-    .loading {
+    .toast {
+      padding: 14px 28px;
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 14px;
+      text-align: center;
+      pointer-events: auto;
+      animation: toastSlideUp 0.4s ease forwards;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      min-width: 200px;
+      max-width: 100%;
+    }
+
+    .toast.hide {
+      animation: toastSlideDown 0.3s ease forwards;
+    }
+
+    @keyframes toastSlideUp {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes toastSlideDown {
+      from { opacity: 1; transform: translateY(0) scale(1); }
+      to { opacity: 0; transform: translateY(20px) scale(0.95); }
+    }
+
+    .toast-success { background: #16a34a; }
+    .toast-error { background: #dc2626; }
+    .toast-warning { background: #f59e0b; }
+
+    /* ===== স্পিনার ===== */
+    .spinner {
       display: inline-block;
       width: 20px;
       height: 20px;
-      border: 3px solid rgba(255, 255, 255, 0.3);
+      border: 3px solid rgba(255,255,255,0.2);
       border-radius: 50%;
       border-top-color: #fff;
-      animation: spin 1s ease-in-out infinite;
-      margin-right: 10px;
+      animation: spin 0.6s linear infinite;
       vertical-align: middle;
+      margin-right: 8px;
     }
 
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-
-    /* Dark mode REMOVED - always show light mode */
-    /* @media (prefers-color-scheme: dark) {
-      ... removed ...
-    } */
-
-    /* Reduced motion support */
-    @media (prefers-reduced-motion: reduce) {
-      * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .login-container {
-        padding: 40px 24px;
-        border-radius: 16px;
-      }
-      
-      .logo h1 {
-        font-size: 24px;
-      }
-      
-      .logo p {
-        font-size: 14px;
-      }
-      
-      .admin-notice {
-        font-size: 12px;
-        padding: 12px;
-      }
-
-      .logo-info .tooltip {
-        width: 160px;
-        font-size: 11px;
-      }
-
-      .label-info .tooltip {
-        width: 150px;
-        font-size: 11px;
-      }
-    }
-
-    /* Print styles */
-    @media print {
-      .login-container {
-        box-shadow: none;
-        border: 1px solid #ddd;
-      }
-      
-      .login-btn,
-      .admin-notice,
-      .password-toggle {
-        display: none;
-      }
-    }
   </style>
 </head>
 <body>
-  <div class="login-container">
-    <div class="logo">
-      <h1 id="pageTitle"></h1>
-      <p>Doctor Appointment System</p>
-      <div class="logo-info">
-        <i class="fas fa-info-circle"></i>
-        <span>Admin Access Only</span>
-        <div class="tooltip">
-          Default credentials: admin / admin123<br>
-          Change via Firebase after first login
-        </div>
-      </div>
-    </div>
 
-    <form class="login-form" id="loginForm">
+<!-- ===== টোস্ট ===== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="login-container">
+  
+  <!-- ===== লগইন বক্স ===== -->
+  <div id="loginBox">
+    <h2>স্বাগতম</h2>
+    <p class="subtitle">আপনার অ্যাকাউন্ট এ লগইন করুন</p>
+    
+    <form id="loginForm">
       <div class="form-group">
-        <label for="username">
-          Username
-          <span class="label-info">
-            <i class="fas fa-question-circle"></i>
-            <div class="tooltip">
-              Case-sensitive username. Contact system administrator for access.
-            </div>
-          </span>
-        </label>
-        <input type="text" id="username" placeholder="Enter your username" required autocomplete="username">
-      </div>
-
-      <div class="form-group">
-        <label for="password">
-          Password
-          <span class="label-info">
-            <i class="fas fa-question-circle"></i>
-            <div class="tooltip">
-              Case-sensitive password. Minimum 8 characters. Contact admin if forgotten.
-            </div>
-          </span>
-        </label>
-        <div class="password-wrapper">
-          <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
-          <button type="button" class="password-toggle" id="passwordToggle">
-            <i class="fas fa-eye"></i>
-          </button>
+        <label for="username">মোবাইল নম্বর</label>
+        <div class="phone-input-group">
+          <!-- <span class="country-code">+৮৮০</span> -->
+          <input type="text" id="username" class="phone-number" required placeholder="০১৭XXXXXXXX">
         </div>
-        <div class="caps-warning" id="capsWarning">
-          <i class="fas fa-exclamation-triangle"></i>
-          Caps Lock is ON
-        </div>
-        <div class="password-strength">
-          <div class="strength-bar" id="passwordStrength"></div>
-        </div>
-      </div>
-
-      <div class="error-message" id="errorMessage">
-        Invalid username or password
-      </div>
-
-      <div class="success-message" id="successMessage">
-        Login successful! Redirecting...
-      </div>
-
-      <button type="submit" class="login-btn" id="loginButton">
-        <span id="buttonText">Sign In to Dashboard</span>
-      </button>
-
-      <div class="attempts-counter" id="attemptsCounter">
-        <i class="fas fa-shield-alt"></i>
-        <span>Attempts: <span id="attemptsCount">0</span>/3</span>
       </div>
       
-      <div class="admin-notice">
-        <i class="fas fa-lock"></i>
-        <span>SECURED ADMIN PORTAL</span>
+      <div class="form-group">
+        <label for="password">পাসওয়ার্ড</label>
+        <input type="password" id="password" placeholder="••••••••">
       </div>
+      
+      <button type="submit" id="mainLoginBtn" class="login-btn">লগইন করুন</button>
     </form>
+    
+    <p class="switch-text" style="margin-top: 15px;">
+      <a href="#" id="forgetPasswordLink" style="color: #ef4444; font-size: 13px;">পাসওয়ার্ড ভুলে গেছেন?</a>
+    </p>
+    <p class="switch-text">নতুন ইউজার? <a href="#" id="showRegisterLink">নতুন অ্যাকাউন্ট তৈরি করুন</a></p>
   </div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <!-- ===== রেজিস্ট্রেশন বক্স ===== -->
+  <div id="registerBox" style="display: none;">
+    <h2>নতুন অ্যাকাউন্ট</h2>
+    <p class="subtitle">সহজ সিরিয়ালের জন্য আপনার তথ্য দিন</p>
+    
+    <form id="registerForm">
+      <div class="form-group">
+        <label for="regName">সম্পূর্ণ নাম</label>
+        <input type="text" id="regName" required placeholder="নাম"
+               pattern="[a-zA-Z\u0980-\u09FF\.\s]{3,50}"
+               title="শুধুমাত্র বাংলা/ইংরেজি অক্ষর, ডট (.) ও স্পেস ব্যবহার করুন (3-50 অক্ষর)">
+        <small id="regNameError" class="error-text">সঠিক নাম লিখুন (বিশেষ চিহ্ন বা সংখ্যা দেওয়া যাবে না)</small>
+      </div>
+      
+      <div class="form-group">
+        <label for="regPhone">মোবাইল নম্বর</label>
+        <div class="phone-input-group">
+          <!-- <span class="country-code">+৮৮০</span> -->
+          <input type="tel" id="regPhone" class="phone-number" required placeholder="০১৭XXXXXXXX"
+                 pattern="01[3-9][0-9]{8}">
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="regAge">বয়স</label>
+          <input type="number" id="regAge" required placeholder="বয়স" min="1" max="120">
+        </div>
+        <div class="form-group">
+          <label for="regGender">লিঙ্গ</label>
+          <select id="regGender" required>
+            <option value="Male">পুরুষ</option>
+            <option value="Female">মহিলা</option>
+            <option value="Other">অন্যান্য</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="regPassword">একটি পাসওয়ার্ড সেট করুন</label>
+        <input type="password" id="regPassword" required minlength="6" placeholder="কমপক্ষে ৬ ডিজিটের পাসওয়ার্ড">
+      </div>
+      
+      <button type="submit" id="regSubmitBtn" class="login-btn">অ্যাকাউন্ট তৈরি করুন</button>
 
-  <script>
-    // ==================== CONFIGURATION ====================
-    const ADMIN_CREDENTIALS = {
-      username: "admin",
-      password: "admin123"
-    };
+      <div id="otpSection">
+        <div class="form-group">
+          <label for="verificationCode">মোবাইলে পাঠানো ওটিপি (OTP) কোড দিন</label>
+          <input type="text" id="verificationCode" placeholder="XXXXXX" maxlength="6">
+        </div>
+        <button type="button" id="verifyOtpBtn" class="login-btn">কোড ভেরিফাই ও রেজিস্ট্রেশন সম্পন্ন করুন</button>
+      </div>
+    </form>
+    
+    <p class="switch-text">অলরেডি অ্যাকাউন্ট আছে? <a href="#" id="showLoginLink">লগইন করুন</a></p>
+  </div>
 
+  <!-- ===== ফরগেট পাসওয়ার্ড বক্স ===== -->
+  <div id="forgetBox" style="display: none;">
+    <h2>পাসওয়ার্ড রিসেট</h2>
+    <p class="subtitle">OTP দিয়ে নতুন পাসওয়ার্ড সেট করুন</p>
+    
+    <form id="forgetForm">
+      <div class="form-group">
+        <label for="forgetPhone">আপনার মোবাইল নম্বর</label>
+        <div class="phone-input-group">
+          <!-- <span class="country-code">+৮৮০</span> -->
+          <input type="text" id="forgetPhone" class="phone-number" required placeholder="০১৭XXXXXXXX">
+        </div>
+      </div>
+
+      <div class="form-group" id="forgetOtpGroup" style="display: none;">
+        <label for="forgetOtp">ফোনে আসা ওটিপি কোড</label>
+        <input type="text" id="forgetOtp" autocomplete="one-time-code" inputmode="numeric" placeholder="XXXXXX">
+      </div>
+
+      <div class="form-group" id="newPasswordGroup" style="display: none;">
+        <label for="newPassword">নতুন পাসওয়ার্ড দিন</label>
+        <input type="password" id="newPassword" minlength="6" placeholder="কমপক্ষে ৬ ডিজিটের নতুন পাসওয়ার্ড">
+      </div>
+
+      <button type="button" id="sendForgetOtpBtn" class="login-btn" style="background: #3a86c8;">OTP পাঠান</button>
+      <button type="submit" id="mainForgetBtn" class="login-btn" style="display: none;">পাসওয়ার্ড পরিবর্তন করুন</button>
+    </form>
+    
+    <p class="switch-text"><a href="#" id="backToLoginLink">লগইন পেজে ফিরে যান</a></p>
+  </div>
+
+</div>
+
+<!-- ===== Firebase (শুধু Firestore) ===== -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+<script>
+// ============================================================
+// FIREBASE কনফিগ (শুধু Firestore)
+// ============================================================
     const firebaseConfig = {
         apiKey: "AIzaSyDAdGUtNVgs5UspQeH8hL0i-L0WvPpOWnE",
         authDomain: "appointment-e2050.firebaseapp.com",
@@ -582,489 +452,472 @@
         measurementId: "G-CRLSV1JJMQ"
     };
 
-    // ==================== GLOBAL VARIABLES ====================
-    let loginAttempts = 0;
-    const MAX_ATTEMPTS = 3;
-    const LOCKOUT_TIME = 30000; // 30 seconds
-    let isLockedOut = false;
-    let lockoutTimer = null;
-    let db = null; // Firebase Firestore instance
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.firestore();
 
-    // ==================== DOM ELEMENTS ====================
-    const elements = {
-      loginForm: document.getElementById('loginForm'),
-      username: document.getElementById('username'),
-      password: document.getElementById('password'),
-      passwordToggle: document.getElementById('passwordToggle'),
-      capsWarning: document.getElementById('capsWarning'),
-      passwordStrength: document.getElementById('passwordStrength'),
-      errorMessage: document.getElementById('errorMessage'),
-      successMessage: document.getElementById('successMessage'),
-      loginButton: document.getElementById('loginButton'),
-      buttonText: document.getElementById('buttonText'),
-      attemptsCounter: document.getElementById('attemptsCounter'),
-      attemptsCount: document.getElementById('attemptsCount'),
-      pageTitle: document.getElementById('pageTitle')
-    };
+// ============================================================
+// SMS Gateway (CORS-Free - automas.com.bd)
+// ============================================================
+const SMS_CONFIG = {
+  apiKey: '74a82f2a949057f0e67fa4b672f75275',
+  sender: '8809617635159',
+  apiUrl: 'https://api.automas.com.bd/smsapiv3'
+};
 
-    // ==================== UTILITY FUNCTIONS ====================
-    function showMessage(element, message, type = 'error') {
-      element.textContent = message;
-      element.style.display = 'flex';
-      
-      if (type === 'error') {
-        elements.successMessage.style.display = 'none';
+// ============================================================
+// 📱 SMS পাঠান (no-cors)
+// ============================================================
+async function sendSMS(phone, message) {
+  try {
+    const url = `${SMS_CONFIG.apiUrl}?apikey=${SMS_CONFIG.apiKey}&sender=${SMS_CONFIG.sender}&msisdn=${phone}&smstext=${encodeURIComponent(message)}`;
+    
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+    
+    return { success: true };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+}
+
+// ============================================================
+// 🔔 টোস্ট
+// ============================================================
+function showToast(message, type = 'success', duration = 4000) {
+  const container = document.getElementById('toastContainer');
+  
+  const oldToasts = container.querySelectorAll('.toast');
+  oldToasts.forEach(t => {
+    t.classList.add('hide');
+    setTimeout(() => t.remove(), 400);
+  });
+  
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.classList.add('hide');
+    setTimeout(() => toast.remove(), 400);
+  }, duration);
+}
+
+// ============================================================
+// 📞 ফোন ক্লিন
+// ============================================================
+function cleanAndFormatPhone(phoneRaw) {
+  let input = phoneRaw.trim();
+  
+  const banglaDigits = {'০':'0','১':'1','২':'2','৩':'3','৪':'4','৫':'5','৬':'6','৭':'7','৮':'8','৯':'9'};
+  let converted = input.replace(/[০-৯]/g, function(w) { return banglaDigits[w]; });
+  converted = converted.replace(/\D/g, '');
+  
+  if (converted.startsWith('880')) converted = converted.substring(3);
+  if (converted.length === 10) converted = '0' + converted;
+  
+  if (!/^01[3-9]\d{8}$/.test(converted)) return null;
+  return converted;
+}
+
+// ============================================================
+// 🔢 OTP
+// ============================================================
+const otpStore = {};
+
+function generateOTP() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function storeOTP(phone, otp, type) {
+  otpStore[phone] = { otp, type, expires: Date.now() + 300000 };
+}
+
+function verifyOTP(phone, otp) {
+  const stored = otpStore[phone];
+  if (!stored) return { success: false, message: 'কোনো OTP পাওয়া যায়নি' };
+  if (Date.now() > stored.expires) {
+    delete otpStore[phone];
+    return { success: false, message: 'OTP এর মেয়াদ শেষ হয়েছে' };
+  }
+  if (stored.otp === otp) {
+    delete otpStore[phone];
+    return { success: true, message: 'OTP ভেরিফাইড' };
+  }
+  return { success: false, message: 'ভুল OTP কোড' };
+}
+
+// ============================================================
+// 📨 OTP পাঠান
+// ============================================================
+async function sendOTP(phone, type) {
+  const otp = generateOTP();
+  storeOTP(phone, otp, type);
+  console.log(`📱 OTP for ${phone}: ${otp}`);
+  
+  const messages = {
+    'register': `আপনার অ্যাকাউন্ট ভেরিফিকেশন OTP: ${otp}. এটি ৫ মিনিট পর্যন্ত বৈধ।`,
+    'forget': `আপনার পাসওয়ার্ড রিসেট OTP: ${otp}. এটি ৫ মিনিট পর্যন্ত বৈধ।`
+  };
+  
+  const result = await sendSMS(phone, messages[type]);
+  if (result.success) {
+    showToast(`✅ OTP পাঠানো হয়েছে!`, 'success');
+    return { success: true, otp };
+  } else {
+    showToast(`❌ OTP পাঠাতে ব্যর্থ`, 'error');
+    return { success: false };
+  }
+}
+
+// ============================================================
+// 📦 বক্স টগল
+// ============================================================
+function switchBox(boxId) {
+  document.getElementById('loginBox').style.display = boxId === 'loginBox' ? 'block' : 'none';
+  document.getElementById('registerBox').style.display = boxId === 'registerBox' ? 'block' : 'none';
+  document.getElementById('forgetBox').style.display = boxId === 'forgetBox' ? 'block' : 'none';
+}
+
+// ============================================================
+// 🔐 লগইন (শুধু পাসওয়ার্ড)
+// ============================================================
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const phoneInput = cleanAndFormatPhone(document.getElementById('username').value);
+  const passwordInput = document.getElementById('password').value;
+  const loginButton = document.getElementById('mainLoginBtn');
+  const originalText = loginButton.innerHTML;
+
+  if (!phoneInput) {
+    showToast('সঠিক মোবাইল নম্বর দিন!', 'error');
+    return;
+  }
+
+  if (!passwordInput) {
+    showToast('পাসওয়ার্ড দিন!', 'error');
+    return;
+  }
+
+  loginButton.innerHTML = '<span class="spinner"></span> লগইন হচ্ছে...';
+  loginButton.disabled = true;
+
+  db.collection('users').doc(phoneInput).get().then((doc) => {
+    if (doc.exists) {
+      const userData = doc.data();
+      if (userData.password === passwordInput) {
+        fetchUserDataAndRedirect(phoneInput, loginButton, originalText);
       } else {
-        elements.errorMessage.style.display = 'none';
+        showToast('ভুল পাসওয়ার্ড!', 'error');
+        resetButton(loginButton, originalText);
       }
-    }
-
-    function hideMessages() {
-      elements.errorMessage.style.display = 'none';
-      elements.successMessage.style.display = 'none';
-    }
-
-    function updateButtonState(isLoading, isDisabled = false, text = '') {
-      if (isLoading) {
-        elements.buttonText.innerHTML = '<div class="loading"></div> Authenticating...';
-      } else {
-        elements.buttonText.textContent = text || 'Sign In to Dashboard';
-      }
-      
-      elements.loginButton.disabled = isDisabled;
-    }
-
-    function updateAttemptsCounter() {
-      elements.attemptsCount.textContent = loginAttempts;
-      
-      if (loginAttempts >= 2) {
-        elements.attemptsCounter.style.color = '#dc2626';
-        elements.attemptsCounter.style.fontWeight = 'bold';
-      } else if (loginAttempts >= 1) {
-        elements.attemptsCounter.style.color = '#f59e0b';
-      } else {
-        elements.attemptsCounter.style.color = '#6b7280';
-      }
-    }
-
-    function checkLockout() {
-      const lockoutUntil = localStorage.getItem('loginLockoutUntil');
-      if (lockoutUntil && Date.now() < parseInt(lockoutUntil)) {
-        isLockedOut = true;
-        const remaining = Math.ceil((parseInt(lockoutUntil) - Date.now()) / 1000);
-        
-        updateButtonState(false, true, `Locked (${remaining}s)`);
-        elements.loginButton.style.background = 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)';
-        
-        showMessage(elements.errorMessage, `Too many attempts. Please wait ${remaining} seconds.`);
-        
-        // Update timer every second
-        clearInterval(lockoutTimer);
-        lockoutTimer = setInterval(() => {
-          const now = Date.now();
-          if (now >= parseInt(lockoutUntil)) {
-            clearInterval(lockoutTimer);
-            isLockedOut = false;
-            localStorage.removeItem('loginLockoutUntil');
-            updateButtonState(false, false, 'Sign In to Dashboard');
-            elements.loginButton.style.background = 'linear-gradient(135deg, #8ecae6 0%, #8ecae6 100%)';
-            hideMessages();
-            updateAttemptsCounter();
-          } else {
-            const rem = Math.ceil((parseInt(lockoutUntil) - now) / 1000);
-            updateButtonState(false, true, `Locked (${rem}s)`);
-          }
-        }, 1000);
-        
-        return true;
-      }
-      return false;
-    }
-
-    function applyLockout() {
-      loginAttempts = MAX_ATTEMPTS;
-      const lockoutTime = Date.now() + LOCKOUT_TIME;
-      localStorage.setItem('loginLockoutUntil', lockoutTime.toString());
-      checkLockout();
-    }
-
-    function clearCache() {
-      sessionStorage.removeItem('cachedAdminCreds');
-      sessionStorage.removeItem('credsCacheTime');
-      console.log('✅ Cache cleared');
-    }
-
-    // ==================== ANIMATION FUNCTIONS ====================
-    function typeWriter(element, text, speed = 50) {
-      element.innerHTML = '';
-      let i = 0;
-      
-      function typing() {
-        if (i < text.length) {
-          element.innerHTML += text.charAt(i);
-          i++;
-          setTimeout(typing, speed);
-        }
-      }
-      typing();
-    }
-
-    function shakeForm() {
-      elements.loginForm.style.animation = 'shake 0.5s';
-      setTimeout(() => {
-        elements.loginForm.style.animation = '';
-      }, 500);
-    }
-
-    // ==================== PASSWORD FUNCTIONS ====================
-    function setupPasswordToggle() {
-      elements.passwordToggle.addEventListener('click', function() {
-        const type = elements.password.getAttribute('type') === 'password' ? 'text' : 'password';
-        elements.password.setAttribute('type', type);
-        this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
-        
-        // Visual feedback
-        this.style.opacity = '1';
-        setTimeout(() => this.style.opacity = '0.6', 300);
-      });
-    }
-
-    function setupCapsLockDetection() {
-      elements.password.addEventListener('keyup', function(e) {
-        const capsOn = e.getModifierState && e.getModifierState('CapsLock');
-        elements.capsWarning.style.display = capsOn ? 'flex' : 'none';
-      });
-      
-      elements.password.addEventListener('keydown', function(e) {
-        const capsOn = e.getModifierState && e.getModifierState('CapsLock');
-        elements.capsWarning.style.display = capsOn ? 'flex' : 'none';
-      });
-    }
-
-    function updatePasswordStrength(password) {
-      let strength = 0;
-      
-      if (password.length >= 8) strength += 25;
-      if (/[A-Z]/.test(password)) strength += 25;
-      if (/[0-9]/.test(password)) strength += 25;
-      if (/[^A-Za-z0-9]/.test(password)) strength += 25;
-      
-      elements.passwordStrength.style.width = strength + '%';
-      
-      if (strength < 50) {
-        elements.passwordStrength.style.background = '#dc2626';
-      } else if (strength < 75) {
-        elements.passwordStrength.style.background = '#f59e0b';
-      } else {
-        elements.passwordStrength.style.background = '#10b981';
-      }
-    }
-
-    // ==================== CREDENTIALS MANAGEMENT ====================
-    async function loadAdminCredentials() {
-      try {
-        console.log('🔄 Loading admin credentials...');
-        
-        // ✅ FIXED: Check URL parameter for force refresh
-        const urlParams = new URLSearchParams(window.location.search);
-        const forceRefresh = urlParams.get('forceRefresh') === 'true';
-        
-        if (forceRefresh) {
-          console.log('🔄 Force refresh requested, clearing cache');
-          clearCache();
-        }
-        
-        // Check cache (5 minutes) - but skip if force refresh
-        if (!forceRefresh) {
-          const cachedCreds = sessionStorage.getItem('cachedAdminCreds');
-          const cacheTime = sessionStorage.getItem('credsCacheTime');
-          const now = Date.now();
-          
-          if (cachedCreds && cacheTime && (now - cacheTime) < 300000) { // 5 minutes
-            console.log('✅ Using cached credentials (less than 5 minutes old)');
-            const creds = JSON.parse(cachedCreds);
-            console.log('Cached credentials:', creds.username);
-            return creds;
-          }
-        }
-        
-        console.log('🔄 Cache expired or force refresh, loading from Firebase...');
-        
-        // Initialize Firebase if not already initialized
-        if (!firebase.apps.length) {
-          firebase.initializeApp(firebaseConfig); // ✅ FIXED: Use firebaseConfig (not FIREBASE_CONFIG)
-          console.log('✅ Firebase initialized');
-        }
-        
-        // Get Firestore instance
-        if (!db) {
-          db = firebase.firestore();
-        }
-        
-        // Try to load from Firebase
-        const doc = await db.collection('settings').doc('adminCredentials').get();
-        
-        if (doc.exists) {
-          const firebaseCredentials = doc.data();
-          console.log('✅ Credentials loaded from Firebase:', {
-            username: firebaseCredentials.username,
-            hasPassword: !!firebaseCredentials.password,
-            lastUpdated: firebaseCredentials.lastUpdated
-          });
-          
-          // Cache the credentials
-          sessionStorage.setItem('cachedAdminCreds', JSON.stringify(firebaseCredentials));
-          sessionStorage.setItem('credsCacheTime', Date.now().toString());
-          
-          return firebaseCredentials;
-        } else {
-          console.log('ℹ️ No credentials found in Firebase, using defaults');
-          // Cache defaults too
-          sessionStorage.setItem('cachedAdminCreds', JSON.stringify(ADMIN_CREDENTIALS));
-          sessionStorage.setItem('credsCacheTime', Date.now().toString());
-          return ADMIN_CREDENTIALS;
-        }
-      } catch (error) {
-        console.error('❌ Error loading credentials:', error);
-        
-        // Fallback to cached or default credentials
-        const cachedCreds = sessionStorage.getItem('cachedAdminCreds');
-        if (cachedCreds) {
-          console.log('🔄 Using cached credentials due to error');
-          return JSON.parse(cachedCreds);
-        }
-        
-        console.log('🔄 Using default credentials due to error');
-        return ADMIN_CREDENTIALS;
-      }
-    }
-
-    // ==================== LOGIN FUNCTION ====================
-    async function handleLogin(username, password) {
-      hideMessages();
-      
-      // Basic validation
-      if (!username.trim() || !password.trim()) {
-        showMessage(elements.errorMessage, 'Please fill in all fields');
-        return false;
-      }
-      
-      updateButtonState(true, true);
-      
-      try {
-        // Add slight delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 600));
-        
-        const currentCredentials = await loadAdminCredentials();
-        
-        console.log('🔑 Checking credentials...', {
-          expectedUser: currentCredentials.username,
-          enteredUser: username,
-          passwordMatch: password === currentCredentials.password ? 'Yes' : 'No'
-        });
-        
-        if (username === currentCredentials.username && password === currentCredentials.password) {
-          // SUCCESS
-          loginAttempts = 0;
-          localStorage.removeItem('loginLockoutUntil');
-          clearInterval(lockoutTimer);
-          
-          // Store session data
-          sessionStorage.setItem('adminLoggedIn', 'true');
-          sessionStorage.setItem('loginTime', Date.now().toString());
-          sessionStorage.setItem('adminUser', username);
-          
-          // Visual success feedback
-          updateButtonState(false, true, '✓ Access Granted');
-          elements.loginButton.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-          showMessage(elements.successMessage, 'Login successful! Redirecting to dashboard...', 'success');
-          
-          // Determine redirect URL
-          const urlParams = new URLSearchParams(window.location.search);
-          const returnUrl = urlParams.get('return');
-          let redirectUrl = '/dashboard/';
-          
-          if (window.location.protocol === 'file:') {
-            redirectUrl = 'dashboard.html';
-          }
-          
-          if (returnUrl && returnUrl.startsWith('/')) {
-            redirectUrl = returnUrl;
-          }
-          
-          // Smooth redirect with fade out
-          setTimeout(() => {
-            document.body.style.opacity = '0.7';
-            document.body.style.transition = 'opacity 0.5s';
-            
-            setTimeout(() => {
-              window.location.href = redirectUrl;
-            }, 500);
-          }, 1500);
-          
-          return true;
-        } else {
-          // FAILURE
-          loginAttempts++;
-          updateAttemptsCounter();
-          
-          if (loginAttempts >= MAX_ATTEMPTS) {
-            applyLockout();
-            shakeForm();
-          } else {
-            const remaining = MAX_ATTEMPTS - loginAttempts;
-            showMessage(elements.errorMessage, `Invalid credentials. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`);
-            shakeForm();
-            elements.password.value = '';
-            elements.password.focus();
-          }
-          
-          updateButtonState(false, false);
-          return false;
-        }
-      } catch (error) {
-        console.error('❌ Login error:', error);
-        showMessage(elements.errorMessage, 'System error. Please try again or contact support.');
-        updateButtonState(false, false);
-        return false;
-      }
-    }
-
-    // ==================== SESSION MANAGEMENT ====================
-    function checkExistingSession() {
-      if (sessionStorage.getItem('adminLoggedIn')) {
-        const loginTime = parseInt(sessionStorage.getItem('loginTime'));
-        const currentTime = Date.now();
-        const sessionDuration = 2 * 60 * 60 * 1000; // 2 hours
-        
-        if (loginTime && (currentTime - loginTime) < sessionDuration) {
-          // Redirect based on environment
-          let redirectUrl = '/dashboard/';
-          if (window.location.protocol === 'file:') {
-            redirectUrl = 'dashboard.html';
-          }
-          
-          // Brief delay then redirect
-          setTimeout(() => {
-            window.location.href = redirectUrl;
-          }, 500);
-        } else {
-          // Clear expired session
-          sessionStorage.clear();
-          localStorage.removeItem('loginLockoutUntil');
-        }
-      }
-    }
-
-    // ==================== KEYBOARD SHORTCUTS ====================
-    function setupKeyboardShortcuts() {
-      document.addEventListener('keydown', function(e) {
-        // Ctrl/Cmd + Enter to submit
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-          e.preventDefault();
-          elements.loginForm.requestSubmit();
-        }
-        
-        // Escape to clear form
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          elements.loginForm.reset();
-          elements.username.focus();
-          hideMessages();
-        }
-        
-        // Ctrl/Cmd + R to force refresh credentials
-        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-          e.preventDefault();
-          clearCache();
-          showMessage(elements.successMessage, 'Cache cleared. Try login again.', 'success');
-          setTimeout(() => hideMessages(), 3000);
-        }
-      });
-    }
-
-    // ==================== INITIALIZATION ====================
-    function init() {
-      console.log('🚀 Initializing Admin Login System...');
-      console.log('📱 User Agent:', navigator.userAgent);
-      
-      // Check for existing session
-      checkExistingSession();
-      
-      // Typewriter effect for title
-      setTimeout(() => {
-        typeWriter(elements.pageTitle, 'Admin Portal');
-      }, 500);
-      
-      // Setup password features
-      setupPasswordToggle();
-      setupCapsLockDetection();
-      
-      // Setup keyboard shortcuts
-      setupKeyboardShortcuts();
-      
-      // Check lockout status
-      checkLockout();
-      
-      // Update attempts counter
-      updateAttemptsCounter();
-      
-      // Auto-focus username with animation
-      setTimeout(() => {
-        elements.username.focus();
-        elements.username.style.transform = 'scale(1.02)';
-        setTimeout(() => elements.username.style.transform = 'scale(1)', 200);
-      }, 800);
-      
-      // Password strength indicator
-      elements.password.addEventListener('input', function() {
-        updatePasswordStrength(this.value);
-      });
-      
-      // Form submission
-      elements.loginForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        if (isLockedOut) {
-          showMessage(elements.errorMessage, 'Account is temporarily locked. Please wait.');
-          return;
-        }
-        
-        const username = elements.username.value.trim();
-        const password = elements.password.value;
-        
-        await handleLogin(username, password);
-      });
-      
-      // Input animations
-      [elements.username, elements.password].forEach(input => {
-        input.addEventListener('focus', function() {
-          this.style.transform = 'translateY(-2px)';
-          this.style.boxShadow = '0 5px 15px rgba(142, 202, 230, 0.3)';
-        });
-        
-        input.addEventListener('blur', function() {
-          this.style.transform = 'translateY(0)';
-          this.style.boxShadow = 'none';
-        });
-      });
-      
-      // Clear cache button (hidden but accessible via console)
-      window.clearLoginCache = function() {
-        clearCache();
-        alert('Login cache cleared!');
-      };
-      
-      console.log('✅ Admin Login System initialized');
-    }
-
-    // ==================== START APPLICATION ====================
-    // Wait for DOM and Firebase to be ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', init);
     } else {
-      init();
+      showToast('এই নম্বরে কোনো অ্যাকাউন্ট নেই!', 'error');
+      resetButton(loginButton, originalText);
     }
-  </script>
+  }).catch(err => {
+    showToast('ডাটাবেজ কানেকশনে সমস্যা!', 'error');
+    resetButton(loginButton, originalText);
+  });
+});
+
+// ============================================================
+// 📝 রেজিস্ট্রেশন (OTP দিয়ে)
+// ============================================================
+let regPhone = null;
+let regData = null;
+
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const name = document.getElementById('regName').value.trim();
+  const phoneInput = cleanAndFormatPhone(document.getElementById('regPhone').value);
+  const password = document.getElementById('regPassword').value;
+  const regButton = document.getElementById('regSubmitBtn');
+  const originalText = regButton.innerHTML;
+
+  if (!document.getElementById('regName').checkValidity()) {
+    document.getElementById('regNameError').style.display = 'block';
+    return;
+  }
+  document.getElementById('regNameError').style.display = 'none';
+
+  if (!phoneInput) {
+    showToast('সঠিক মোবাইল নম্বর দিন!', 'error');
+    return;
+  }
+
+  if (password.length < 6) {
+    showToast('পাসওয়ার্ড কমপক্ষে ৬ ডিজিটের হতে হবে!', 'error');
+    return;
+  }
+
+  if (!name) {
+    showToast('আপনার নাম লিখুন!', 'error');
+    return;
+  }
+
+  regButton.innerHTML = '<span class="spinner"></span> চেক করা হচ্ছে...';
+  regButton.disabled = true;
+
+  db.collection('users').doc(phoneInput).get().then((doc) => {
+    if (doc.exists) {
+      showToast('এই নম্বরে ইতিমধ্যে অ্যাকাউন্ট আছে!', 'error');
+      resetButton(regButton, originalText);
+    } else {
+      regButton.innerHTML = 'ওটিপি পাঠানো হচ্ছে...';
+      
+      sendOTP(phoneInput, 'register').then((result) => {
+        if (result.success) {
+          regPhone = phoneInput;
+          regData = { name, phone: phoneInput, password };
+          document.getElementById('otpSection').style.display = 'block';
+          regButton.style.display = 'none';
+          document.getElementById('verificationCode').focus();
+          showToast('ওটিপি পাঠানো হয়েছে!', 'success');
+        } else {
+          showToast('ওটিপি পাঠাতে সমস্যা!', 'error');
+          resetButton(regButton, originalText);
+        }
+      });
+    }
+  }).catch((err) => {
+    showToast('ডাটাবেজ চেক করতে সমস্যা!', 'error');
+    resetButton(regButton, originalText);
+  });
+});
+
+// OTP ভেরিফাই (রেজিস্ট্রেশন)
+document.getElementById('verifyOtpBtn').addEventListener('click', function() {
+  const code = document.getElementById('verificationCode').value.trim();
+  const verifyBtn = document.getElementById('verifyOtpBtn');
+  
+  if (code.length !== 6) {
+    showToast('৬ ডিজিটের ওটিপি দিন!', 'error');
+    return;
+  }
+
+  verifyBtn.innerHTML = '<span class="spinner"></span> ভেরিফাই হচ্ছে...';
+  verifyBtn.disabled = true;
+
+  const result = verifyOTP(regPhone, code);
+  if (result.success) {
+    const { name, phone, password } = regData;
+    db.collection('users').doc(phone).set({
+      username: phone,
+      password: password,
+      name: name,
+      phone: phone,
+      age: document.getElementById('regAge').value,
+      gender: document.getElementById('regGender').value,
+      role: "user",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      showToast('✅ অ্যাকাউন্ট তৈরি হয়েছে!', 'success');
+      document.getElementById('registerForm').reset();
+      document.getElementById('otpSection').style.display = 'none';
+      const regBtn = document.getElementById('regSubmitBtn');
+      regBtn.style.display = 'block';
+      resetButton(regBtn, 'অ্যাকাউন্ট তৈরি করুন');
+      resetButton(verifyBtn, 'কোড ভেরিফাই ও রেজিস্ট্রেশন সম্পন্ন করুন');
+      document.getElementById('showLoginLink').click();
+    });
+  } else {
+    showToast('❌ ' + result.message, 'error');
+    resetButton(verifyBtn, 'কোড ভেরিফাই ও রেজিস্ট্রেশন সম্পন্ন করুন');
+  }
+});
+
+// ============================================================
+// 🔄 ফরগেট পাসওয়ার্ড (OTP দিয়ে)
+// ============================================================
+let forgetPhone = null;
+
+document.getElementById('sendForgetOtpBtn').addEventListener('click', function() {
+  const phoneInput = cleanAndFormatPhone(document.getElementById('forgetPhone').value);
+  const sendForgetBtn = this;
+
+  if (!phoneInput) {
+    showToast('সঠিক মোবাইল নম্বর দিন!', 'error');
+    return;
+  }
+
+  sendForgetBtn.innerHTML = '<span class="spinner"></span> OTP পাঠানো হচ্ছে...';
+  sendForgetBtn.disabled = true;
+
+  db.collection('users').doc(phoneInput).get().then((doc) => {
+    if (!doc.exists) {
+      showToast('এই নম্বরে কোনো অ্যাকাউন্ট নেই!', 'error');
+      resetButton(sendForgetBtn, 'OTP পাঠান');
+    } else {
+      sendOTP(phoneInput, 'forget').then((result) => {
+        if (result.success) {
+          forgetPhone = phoneInput;
+          document.getElementById('forgetOtpGroup').style.display = 'block';
+          document.getElementById('newPasswordGroup').style.display = 'block';
+          document.getElementById('mainForgetBtn').style.display = 'block';
+          sendForgetBtn.style.display = 'none';
+          showToast('OTP পাঠানো হয়েছে!', 'success');
+        } else {
+          showToast('OTP পাঠাতে সমস্যা!', 'error');
+          resetButton(sendForgetBtn, 'OTP পাঠান');
+        }
+      });
+    }
+  });
+});
+
+document.getElementById('forgetForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const otpCode = document.getElementById('forgetOtp').value.trim();
+  const newPassword = document.getElementById('newPassword').value;
+  const forgetSubmitBtn = document.getElementById('mainForgetBtn');
+
+  if (otpCode.length !== 6 || newPassword.length < 6) {
+    showToast('সঠিক OTP এবং ৬ ডিজিটের পাসওয়ার্ড দিন!', 'error');
+    return;
+  }
+
+  forgetSubmitBtn.innerHTML = '<span class="spinner"></span> আপডেট হচ্ছে...';
+  forgetSubmitBtn.disabled = true;
+
+  const result = verifyOTP(forgetPhone, otpCode);
+  if (result.success) {
+    db.collection('users').doc(forgetPhone).update({
+      password: newPassword
+    }).then(() => {
+      showToast('✅ পাসওয়ার্ড পরিবর্তিত হয়েছে!', 'success');
+      location.reload();
+    });
+  } else {
+    showToast('❌ ' + result.message, 'error');
+    resetButton(forgetSubmitBtn, 'পাসওয়ার্ড পরিবর্তন করুন');
+  }
+});
+
+// ============================================================
+// 🚀 রিডাইরেকশন ও সেশন
+// ============================================================
+function fetchUserDataAndRedirect(phoneInput, btn, originalText) {
+  db.collection('users').doc(phoneInput).get().then((doc) => {
+    const userData = doc.data();
+    sessionStorage.setItem('adminLoggedIn', 'true');
+    sessionStorage.setItem('loggedInUser', userData.username);
+    sessionStorage.setItem('userRole', userData.role || 'user');
+    sessionStorage.setItem('loginTime', new Date().getTime().toString());
+    sessionStorage.setItem('adminName', userData.name || userData.username || 'অ্যাডমিন');
+    
+    if (userData.role === 'staff') {
+      sessionStorage.setItem('can_management', userData.can_management ? 'true' : 'false');
+      sessionStorage.setItem('can_notice', userData.can_notice ? 'true' : 'false');
+      sessionStorage.setItem('can_allserial', userData.can_allserial ? 'true' : 'false');
+    }
+
+    const nextDashboard = (userData.role === 'admin' || userData.role === 'staff' || userData.role === 'owner') ? 'dashboard.html' : 'userdashboard.html';
+    window.location.href = nextDashboard;
+  }).catch(err => {
+    showToast('ইউজার ডেটা লোড করতে সমস্যা!', 'error');
+    resetButton(btn, originalText);
+  });
+}
+
+function resetButton(btn, text) {
+  btn.innerHTML = text;
+  btn.disabled = false;
+}
+
+// ============================================================
+// 🔗 লিংক টগল
+// ============================================================
+document.getElementById('showRegisterLink').addEventListener('click', function(e) {
+  e.preventDefault();
+  switchBox('registerBox');
+  document.getElementById('regName').focus();
+});
+
+document.getElementById('showLoginLink').addEventListener('click', function(e) {
+  e.preventDefault();
+  switchBox('loginBox');
+  document.getElementById('username').focus();
+});
+
+document.getElementById('forgetPasswordLink').addEventListener('click', function(e) {
+  e.preventDefault();
+  switchBox('forgetBox');
+  document.getElementById('forgetPhone').focus();
+});
+
+document.getElementById('backToLoginLink').addEventListener('click', function(e) {
+  e.preventDefault();
+  switchBox('loginBox');
+});
+
+// ============================================================
+// 👤 নাম ভ্যালিডেশন
+// ============================================================
+const regNameInput = document.getElementById('regName');
+const regNameError = document.getElementById('regNameError');
+
+if (regNameInput && regNameError) {
+  regNameInput.addEventListener('input', function() {
+    const val = this.value.trim();
+    const lowerVal = val.toLowerCase();
+    
+    const baseValid = /^[\p{L}\p{M}\. ]{3,50}$/u.test(val);
+    const hasVowelOrCar = /[aeiouAEIOU\u0985-\u0994\u09BE-\u09CC]/.test(val);
+    const hasConsecutiveConsonants = /[bcdfghjklmnpqrstvwxyz]{4,}/.test(lowerVal);
+    const hasRepeatedChars = /(.)\1\1/.test(lowerVal);
+
+    if (!baseValid || !hasVowelOrCar || hasConsecutiveConsonants || hasRepeatedChars) {
+      regNameError.style.display = 'block';
+      regNameInput.setCustomValidity('invalid');
+    } else {
+      regNameError.style.display = 'none';
+      regNameInput.setCustomValidity('');
+    }
+  });
+}
+
+// ============================================================
+// ⌨️ Enter Key
+// ============================================================
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    const activeBox = document.querySelector('#loginBox[style*="display: block"], #registerBox[style*="display: block"], #forgetBox[style*="display: block"]');
+    if (activeBox) {
+      const submitBtn = activeBox.querySelector('.login-btn:not(:disabled)');
+      if (submitBtn) submitBtn.click();
+    }
+  }
+});
+
+// ============================================================
+// 🔍 সেশন চেক
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('username')) document.getElementById('username').focus();
+
+  if (sessionStorage.getItem('adminLoggedIn')) {
+    const loginTime = sessionStorage.getItem('loginTime');
+    const currentTime = new Date().getTime();
+    
+    if (loginTime && (currentTime - parseInt(loginTime)) < (2 * 60 * 60 * 1000)) {
+      const savedRole = sessionStorage.getItem('userRole') || 'user';
+      const nextDashboard = (savedRole === 'admin' || savedRole === 'staff') ? 'dashboard.html' : 'userdashboard.html';
+      window.location.href = nextDashboard;
+    } else {
+      sessionStorage.clear();
+    }
+  }
+});
+
+console.log('✅ লগইন সিস্টেম রেডি (OTP লগইন বাদ, automas API)');
+</script>
+
 </body>
 </html>

@@ -390,84 +390,89 @@ class TableManager {
         }
     }
     
-    applyFilters() {
-        if (this.appointments.length === 0) {
-            this.filteredAppointments = [];
-            this.renderTable([]);
-            return;
+applyFilters() {
+    if (this.appointments.length === 0) {
+        this.filteredAppointments = [];
+        this.renderTable([]);
+        return;
+    }
+    
+    this.filteredAppointments = this.appointments.filter(item => {
+        const data = item.data;
+        let isMatch = true;
+        
+        // ১. সঠিক লোকাল ফরম্যাটে তারিখ ফিল্টার (UTC ইস্যু সমাধানের জন্য)
+        if (this.currentFilters.date) {
+            let appointmentDate = '';
+            if (data.timestamp && data.timestamp.toDate) {
+                const d = data.timestamp.toDate();
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                appointmentDate = `${year}-${month}-${day}`; // YYYY-MM-DD
+            }
+            
+            if (appointmentDate !== this.currentFilters.date) {
+                isMatch = false;
+            }
         }
         
-        this.filteredAppointments = this.appointments.filter(item => {
-            const data = item.data;
-            let isMatch = true;
-            
-            // তারিখ ফিল্টার
-            if (this.currentFilters.date) {
-                const appointmentDate = data.timestamp && data.timestamp.toDate 
-                    ? data.timestamp.toDate().toISOString().split('T')[0]
-                    : '';
-                
-                if (appointmentDate !== this.currentFilters.date) {
-                    isMatch = false;
-                }
+        // সার্ভিস ফিল্টার
+        if (isMatch && this.currentFilters.service !== 'all') {
+            const serviceType = data.serviceType || 'general';
+            if (serviceType !== this.currentFilters.service) {
+                isMatch = false;
             }
-            
-            // সার্ভিস ফিল্টার
-            if (isMatch && this.currentFilters.service !== 'all') {
-                const serviceType = data.serviceType || 'general';
-                if (serviceType !== this.currentFilters.service) {
-                    isMatch = false;
-                }
-            }
-            
-            // রোগীর ধরন ফিল্টার
-            if (isMatch && this.currentFilters.type !== 'all') {
-                const type = data.patientType || data.type || 'new';
-                if (type !== this.currentFilters.type) {
-                    isMatch = false;
-                }
-            }
-            
-            // কল স্ট্যাটাস ফিল্টার
-            if (isMatch && this.currentFilters.callStatus !== 'all') {
-                const isCalled = data.called === true;
-                if ((this.currentFilters.callStatus === 'called' && !isCalled) ||
-                    (this.currentFilters.callStatus === 'not_called' && isCalled)) {
-                    isMatch = false;
-                }
-            }
-            
-            // টোকেন স্ট্যাটাস ফিল্টার
-            if (isMatch && this.currentFilters.tokenStatus !== 'all') {
-                const isTokenGiven = data.tokenGiven === true;
-                if ((this.currentFilters.tokenStatus === 'given' && !isTokenGiven) ||
-                    (this.currentFilters.tokenStatus === 'not_given' && isTokenGiven)) {
-                    isMatch = false;
-                }
-            }
-            
-            // সার্চ ফিল্টার
-            if (isMatch && this.currentFilters.search) {
-                const name = (data.name || '').toLowerCase();
-                const phone = String(data.phone || '');
-                const serial = String(data.serial || '');
-                
-                if (!name.includes(this.currentFilters.search) && 
-                    !phone.includes(this.currentFilters.search) && 
-                    !serial.includes(this.currentFilters.search)) {
-                    isMatch = false;
-                }
-            }
-            
-            return isMatch;
-        });
+        }
         
-        // কারেন্ট পেজ রিসেট
-        this.currentPage = 1;
+        // রোগীর ধরন ফিল্টার
+        if (isMatch && this.currentFilters.type !== 'all') {
+            const type = data.patientType || data.type || 'new';
+            if (type !== this.currentFilters.type) {
+                isMatch = false;
+            }
+        }
         
-        // টেবিল রেন্ডার
-        this.renderCurrentPage();
-    }
+        // কল স্ট্যাটাস ফিল্টার
+        if (isMatch && this.currentFilters.callStatus !== 'all') {
+            const isCalled = data.called === true;
+            if ((this.currentFilters.callStatus === 'called' && !isCalled) ||
+                (this.currentFilters.callStatus === 'not_called' && isCalled)) {
+                isMatch = false;
+            }
+        }
+        
+        // টোকেন স্ট্যাটাস ফিল্টার
+        if (isMatch && this.currentFilters.tokenStatus !== 'all') {
+            const isTokenGiven = data.tokenGiven === true;
+            if ((this.currentFilters.tokenStatus === 'given' && !isTokenGiven) ||
+                (this.currentFilters.tokenStatus === 'not_given' && isTokenGiven)) {
+                isMatch = false;
+            }
+        }
+        
+        // সার্চ ফিল্টার
+        if (isMatch && this.currentFilters.search) {
+            const name = (data.name || '').toLowerCase();
+            const phone = String(data.phone || '');
+            const serial = String(data.serial || '');
+            
+            if (!name.includes(this.currentFilters.search) && 
+                !phone.includes(this.currentFilters.search) && 
+                !serial.includes(this.currentFilters.search)) {
+                isMatch = false;
+            }
+        }
+        
+        return isMatch;
+    });
+    
+    // ২. ফিল্টার করার সাথে সাথে সবসময় পেজ ১ এ রিসেট করুন
+    this.currentPage = 1;
+    
+    // ৩. টেবিল রেন্ডার করুন
+    this.renderCurrentPage();
+}
     
     getCurrentPageItems() {
         const startIndex = (this.currentPage - 1) * this.itemsPerPage;
