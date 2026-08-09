@@ -1,5 +1,5 @@
-// grid.js - DATE BASED VERSION WITH MULTI-SELECT FOR ADMIN (FIXED SUBCOLLECTION LISTENERS)
-console.log("📅 তারিখ-ভিত্তিক Grid System লোড হচ্ছে...");
+// grid.js - DATE & SERVICE BASED REALTIME GRID SYSTEM
+console.log("📅 তারিখ ও সেভাবিশিষ্ট Grid System লোড হচ্ছে...");
 
 class RealTimeGridSystem {
   constructor(config) {
@@ -10,9 +10,11 @@ class RealTimeGridSystem {
       db: null,
       gridContainerId: 'serialGrid',
       selectedSerialInputId: 'serialInput',
+      dateElementId: 'date',
       dayElementId: 'day',
       timeElementId: 'time',
       typeElementId: 'patientType',
+      serviceElementId: 'serviceType',
       pendingSelectionsCollection: 'pendingSelections',
       appointmentsCollection: 'appointments',
       settingsCollection: 'settings',
@@ -31,7 +33,7 @@ class RealTimeGridSystem {
     this.config = { ...defaultConfig, ...config };
     
     this.serialRanges = {};
-    this.appointments = {};
+    this.appointmentsList = [];
     this.pendingSelections = {};
     this.userPendingId = null;
     this.currentSelection = null;
@@ -43,18 +45,24 @@ class RealTimeGridSystem {
     this.selectedSerials = [];
     this.currentPatientIndex = 0;
     
-    // কনফিগারেশন পরিবর্তন ট্র্যাকিং
-    this._lastDay = null;
-    this._lastTime = null;
-    this._lastType = null;
-    
     // গ্রিড রি-রেন্ডার ঠেকানোর জন্য ফ্ল্যাগ
     this._skipNextGridRender = false;
-    
     this.isProcessing = false;
-    this.scrollPosition = 0;
     
     console.log(`✅ Grid System তৈরি হয়েছে (${this.config.mode} মোড, multiSelect: ${this.multiSelect})`);
+  }
+
+  getYYMMDD(dateString) {
+    if (!dateString) return '';
+    if (typeof dateString === 'string' && dateString.includes('-')) {
+      const parts = dateString.split('T')[0].split('-');
+      if (parts.length === 3) {
+        return `${parts[0].slice(-2)}${parts[1].padStart(2, '0')}${parts[2].padStart(2, '0')}`;
+      }
+    }
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '';
+    return `${String(d.getFullYear()).slice(-2)}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
   }
 
   getNextDateByDay(targetDay) {
@@ -148,7 +156,7 @@ class RealTimeGridSystem {
       if (doc.exists) {
         this.serialRanges = doc.data();
       } else {
-        this.serialRanges = { Thursday: { new: {}, old: {} }, Friday: { new: {}, old: {} } };
+        this.serialRanges = {};
       }
     } catch (error) {
       console.error("❌ সিরিয়াল রেঞ্জ লোড করতে সমস্যা:", error);
@@ -158,10 +166,6 @@ class RealTimeGridSystem {
   setupRealtimeListeners() {
     if (!this.config.db) return;
     
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-    const dateLimitString = this.formatDate(threeDaysAgo);
-    
     if (this.realtimeListeners.length) {
       this.realtimeListeners.forEach(unsub => { if (typeof unsub === 'function') unsub(); });
       this.realtimeListeners = [];
@@ -170,58 +174,40 @@ class RealTimeGridSystem {
     let allAppointments = {};
 
     const updateAppointments = () => {
-      this.appointments = {};
-      Object.values(allAppointments).forEach(doc => {
-        const data = doc.data;
-        const dateString = data.appointmentDate;
-        const day = data.day;
-        // ✅ টাইপ বের করা হচ্ছে
-        const type = data.patientType || data.type || '';
-        if (dateString && day && type) {
-          // ✅ কী-তে টাইপ যোগ করা হলো
-          const key = `${dateString}_${day}_${type}`;
-          if (!this.appointments[key]) this.appointments[key] = [];
-          this.appointments[key].push({ id: doc.id, ...data });
-          console.log(`📌 অ্যাপয়েন্টমেন্ট যুক্ত: ${key} -> সিরিয়াল ${data.serial}`);
-        }
-      });
-      console.log('🔍 বর্তমান appointments:', this.appointments);
+      this.appointmentsList = Object.values(allAppointments).map(item => item.data);
       this.safeUpdateGrid();
-      if (this.config.onGridUpdate) this.config.onGridUpdate('appointments', this.appointments);
+      if (this.config.onGridUpdate) this.config.onGridUpdate('appointments', this.appointmentsList);
     };
 
-// 'new' সাব-কালেকশন লিসেনার
-const unsubscribeNew = this.config.db.collectionGroup('new')
-  .where('appointmentDate', '>=', dateLimitString)
-  .onSnapshot(snapshot => {
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      data.patientType = 'new';
-      data.type = 'new';
-      allAppointments[`${doc.id}_new`] = { id: doc.id, data: data };
-    });
-    updateAppointments();
-  }, error => console.error("❌ 'new' লিসেনার ত্রুটি:", error));
+    // 'new' সাব-কালেকশন লিসেনার
+    const unsubscribeNew = this.config.db.collectionGroup('new')
+      .onSnapshot(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (!data.patientType) data.patientType = 'new';
+          if (!data.type) data.type = 'new';
+          allAppointments[`${doc.id}_new`] = { id: doc.id, data: data };
+        });
+        updateAppointments();
+      }, error => console.error("❌ 'new' লিসেনার ত্রুটি:", error));
 
-// 'old' সাব-কালেকশন লিসেনার
-const unsubscribeOld = this.config.db.collectionGroup('old')
-  .where('appointmentDate', '>=', dateLimitString)
-  .onSnapshot(snapshot => {
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      data.patientType = 'old';
-      data.type = 'old';
-      allAppointments[`${doc.id}_old`] = { id: doc.id, data: data };
-    });
-    updateAppointments();
-  }, error => console.error("❌ 'old' লিসেনার ত্রুটি:", error));
+    // 'old' সাব-কালেকশন লিসেনার
+    const unsubscribeOld = this.config.db.collectionGroup('old')
+      .onSnapshot(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (!data.patientType) data.patientType = 'old';
+          if (!data.type) data.type = 'old';
+          allAppointments[`${doc.id}_old`] = { id: doc.id, data: data };
+        });
+        updateAppointments();
+      }, error => console.error("❌ 'old' লিসেনার ত্রুটি:", error));
 
     this.realtimeListeners.push(unsubscribeNew);
     this.realtimeListeners.push(unsubscribeOld);
 
-    // পেন্ডিং সিলেকশন (আগের মতো)
+    // পেন্ডিং সিলেকশন লিসেনার
     const unsubscribePending = this.config.db.collection(this.config.pendingSelectionsCollection)
-      .where('expiresAt', '>', new Date())
       .onSnapshot(snapshot => {
         this.processPendingSelections(snapshot);
         this.safeUpdateGrid();
@@ -236,14 +222,22 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
     const now = new Date();
     snapshot.forEach(doc => {
       const data = doc.data();
-      if (data.expiresAt && data.expiresAt.toDate() > now) {
-        const key = `${data.appointmentDate}_${data.day}_${data.time}_${data.type}`;
+      const expires = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
+      if (expires && expires > now) {
+        const dateStr = data.date || data.appointmentDate;
+        const timeStr = data.time;
+        const typeStr = (data.type || data.patientType || '').toLowerCase();
+        const serviceStr = data.service || data.serviceType || '';
+        
+        const key = `${dateStr}_${timeStr}_${typeStr}` + (serviceStr ? `_${serviceStr}` : '');
         if (!this.pendingSelections[key]) this.pendingSelections[key] = { user: [], admin: [] };
+        
+        const serialNum = parseInt(data.serial);
         if (data.bookedBy === 'user') {
-          this.pendingSelections[key].user.push({ serial: data.serial, id: doc.id, expiresAt: data.expiresAt });
-          if (doc.id === this.userPendingId) this.currentUserPendingSerial = data.serial;
+          this.pendingSelections[key].user.push({ serial: serialNum, id: doc.id, expiresAt: expires });
+          if (doc.id === this.userPendingId) this.currentUserPendingSerial = serialNum;
         } else if (data.bookedBy === 'admin') {
-          this.pendingSelections[key].admin.push({ serial: data.serial, id: doc.id, adminId: data.adminId, expiresAt: data.expiresAt });
+          this.pendingSelections[key].admin.push({ serial: serialNum, id: doc.id, adminId: data.adminId, expiresAt: expires });
         }
       }
     });
@@ -274,6 +268,7 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
   }
 
   getElementValue(elementId) {
+    if (!elementId) return null;
     const element = document.getElementById(elementId);
     return element ? element.value : null;
   }
@@ -292,21 +287,30 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
     const day = this.getElementValue(this.config.dayElementId);
     const time = this.getElementValue(this.config.timeElementId);
     const type = this.getElementValue(this.config.typeElementId);
+    const service = this.config.serviceElementId ? this.getElementValue(this.config.serviceElementId) : null;
     
-    if (!day || !time || !type) {
+    if (!time || !type) {
         this._skipNextGridRender = false;
         return false;
     }
     
-    const nextDateInfo = this.getNextDateByDay(day);
-    const dateString = nextDateInfo.dateString;
+    let dateString = null;
+    if (this.config.dateElementId) {
+      dateString = this.getElementValue(this.config.dateElementId);
+    }
+    if (!dateString && day) {
+      const nextDateInfo = this.getNextDateByDay(day);
+      dateString = nextDateInfo.dateString;
+    }
+    if (!dateString) {
+      this._skipNextGridRender = false;
+      return false;
+    }
     
-    // ✅ টাইপ-সহ কী ব্যবহার করা হচ্ছে
-    const key = `${dateString}_${day}_${type}`;
-    const dayAppointments = this.appointments[key] || [];
-    const appointment = dayAppointments.find(app => app.time === time && app.serial === serial);
+    const pendingData = this.getPendingDataForKey(dateString, day, time, type, service);
+    const status = this.getSerialStatus(serial, day, time, type, dateString, pendingData, service);
     
-    if (appointment) {
+    if (status.isBooked) {
         if (this.config.onSerialClick) {
             this.config.onSerialClick({ serial, status: 'booked', date: dateString });
         }
@@ -314,12 +318,7 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
         return false;
     }
     
-    const pendingKey = `${dateString}_${day}_${time}_${type}`;
-    const pendingData = this.pendingSelections[pendingKey] || { user: [], admin: [] };
-    const isPendingByOther = pendingData.user.some(p => p.serial === serial) || 
-                              pendingData.admin.some(p => p.serial === serial && p.adminId !== this.config.adminSessionId);
-    
-    if (isPendingByOther) {
+    if (status.isOtherUserPending || (status.isAdminPending && !status.isCurrentAdminPending)) {
         if (this.config.onSerialClick) {
             this.config.onSerialClick({ serial, status: 'pending', date: dateString });
         }
@@ -329,13 +328,11 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
     
     // ========== মাল্টি সিলেক্ট মোড ==========
     if (this.multiSelect === true) {
-        
         const alreadySelectedForCurrentPatient = this.selectedSerials.some(
             s => s.serial === serial && s.patientIndex === this.currentPatientIndex
         );
         
         if (alreadySelectedForCurrentPatient) {
-            console.log(`⏭️ সিরিয়াল ${serial} ইতিমধ্যে সিলেক্টেড, কিছু করা হচ্ছে না`);
             this._skipNextGridRender = false;
             return true; 
         }
@@ -343,7 +340,6 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
         const existingForOtherPatient = this.selectedSerials.find(s => s.serial === serial && s.patientIndex !== this.currentPatientIndex);
         
         if (existingForOtherPatient) {
-            console.log(`🔄 সিরিয়াল ${serial} অন্য রোগীর (${existingForOtherPatient.patientIndex}) থেকে রি-অ্যাসাইন করা হচ্ছে`);
             const otherElement = document.querySelector(`.serial-item[data-serial="${serial}"]`);
             if (otherElement) {
                 otherElement.classList.remove('selected');
@@ -358,14 +354,10 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
             }
         }
         
-        const patientCount = document.querySelectorAll('.patient-card').length;
         const currentPatientSelections = this.getSerialsForPatient(this.currentPatientIndex);
-        let oldSerialElement = null;
-        let oldSerial = null;
-        
         if (currentPatientSelections.length >= 1) {
-            oldSerial = currentPatientSelections[0];
-            oldSerialElement = document.querySelector(`.serial-item[data-serial="${oldSerial}"]`);
+            const oldSerial = currentPatientSelections[0];
+            const oldSerialElement = document.querySelector(`.serial-item[data-serial="${oldSerial}"]`);
             
             if (oldSerialElement && oldSerialElement !== newSerialElement) {
                 oldSerialElement.classList.remove('selected');
@@ -382,25 +374,7 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
             }
         }
         
-        const totalSelected = this.getAllSelectedSerials().length;
-        if (totalSelected >= patientCount && !currentPatientSelections.length) {
-            if (this.selectedSerials.length > 0) {
-                const oldest = this.selectedSerials[0];
-                const oldestElement = document.querySelector(`.serial-item[data-serial="${oldest.serial}"]`);
-                
-                if (oldestElement) {
-                    oldestElement.classList.remove('selected');
-                    oldestElement.classList.add('available');
-                }
-                
-                if (oldest.pendingId) {
-                    await this.removePendingSelection(oldest.pendingId);
-                }
-                this.selectedSerials.shift();
-            }
-        }
-        
-        const pendingId = await this.addPendingSelection(serial, day, time, type, dateString);
+        const pendingId = await this.addPendingSelection(serial, day, time, type, dateString, service);
         if (pendingId) {
             this.selectedSerials.push({ 
                 serial, pendingId, date: dateString, 
@@ -422,12 +396,6 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
                     patientIndex: this.currentPatientIndex
                 });
             }
-            
-            console.log(`✅ সিরিয়াল ${serial} সিলেক্ট হয়েছে`);
-        }
-        
-        if (typeof updateAllSerialDisplays === 'function') {
-            updateAllSerialDisplays();
         }
         
         this._skipNextGridRender = false;
@@ -444,7 +412,7 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
         await this.removePendingSelection(this.userPendingId);
     }
     
-    const pendingId = await this.addPendingSelection(serial, day, time, type, dateString);
+    const pendingId = await this.addPendingSelection(serial, day, time, type, dateString, service);
     if (pendingId) {
         this.userPendingId = pendingId;
         this.currentSelection = serial;
@@ -467,32 +435,30 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
     return true;
   }
 
+  getPendingDataForKey(dateString, day, time, type, service) {
+    const typeStr = (type || '').toLowerCase();
+    const serviceStr = service || '';
+    
+    const key1 = `${dateString}_${time}_${typeStr}`;
+    const key2 = serviceStr ? `${dateString}_${time}_${typeStr}_${serviceStr}` : null;
+    
+    const p1 = this.pendingSelections[key1] || { user: [], admin: [] };
+    const p2 = key2 ? (this.pendingSelections[key2] || { user: [], admin: [] }) : { user: [], admin: [] };
+    
+    return {
+      user: [...p1.user, ...p2.user],
+      admin: [...p1.admin, ...p2.admin]
+    };
+  }
+
   async updateGrid() {
     if (this._skipNextGridRender) {
-      console.log("⏭️ গ্রিড রি-রেন্ডার স্কিপ করা হয়েছে (UI আপডেট ইতিমধ্যে হয়েছে)");
+      console.log("⏭️ গ্রিড রি-রেন্ডার স্কিপ করা হয়েছে");
       this._skipNextGridRender = false;
       return;
     }
     
     if (this.isProcessing) return;
-    
-    if (this.multiSelect === true) {
-      const currentDay = this.getElementValue(this.config.dayElementId);
-      const currentTime = this.getElementValue(this.config.timeElementId);
-      const currentType = this.getElementValue(this.config.typeElementId);
-      
-      if (this._lastDay !== null && 
-          (this._lastDay !== currentDay || this._lastTime !== currentTime || this._lastType !== currentType)) {
-        console.log("🔄 কনফিগারেশন পরিবর্তন detected, সিলেকশন ক্লিয়ার করা হচ্ছে...");
-        if (this.selectedSerials && this.selectedSerials.length > 0) {
-          await this.clearAllSelections();
-        }
-      }
-      
-      this._lastDay = currentDay;
-      this._lastTime = currentTime;
-      this._lastType = currentType;
-    }
     
     const gridContainer = document.getElementById(this.config.gridContainerId);
     if (!gridContainer) return;
@@ -500,25 +466,55 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
     const day = this.getElementValue(this.config.dayElementId);
     const time = this.getElementValue(this.config.timeElementId);
     const type = this.getElementValue(this.config.typeElementId);
+    const service = this.config.serviceElementId ? this.getElementValue(this.config.serviceElementId) : null;
     
-    if (!day || !time || !type) {
-      gridContainer.innerHTML = '<div class="grid-no-selection">দিন, সময় এবং ধরন নির্বাচন করুন</div>';
+    if (!time || !type) {
+      gridContainer.innerHTML = '<div class="grid-no-selection">সময় এবং ধরন নির্বাচন করুন</div>';
+      if (this.config.onGridUpdate) {
+        this.config.onGridUpdate('grid', { day, time, type, service, start: 0, end: 0 });
+      }
       return;
     }
     
-    const nextDateInfo = this.getNextDateByDay(day);
-    const dateString = nextDateInfo.dateString;
-    const displayDate = nextDateInfo.banglaDate;
+    let dateString = null;
+    let displayDate = null;
+    if (this.config.dateElementId) {
+      const dateVal = this.getElementValue(this.config.dateElementId);
+      if (dateVal) {
+        dateString = dateVal;
+        const parts = dateVal.split('-');
+        if (parts.length === 3) {
+          const dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+          displayDate = this.formatBanglaDate(dateObj);
+        }
+      }
+    }
+    if (!dateString && day) {
+      const nextDateInfo = this.getNextDateByDay(day);
+      dateString = nextDateInfo.dateString;
+      displayDate = nextDateInfo.banglaDate;
+    }
+    if (!dateString) {
+      gridContainer.innerHTML = '<div class="grid-no-selection">তারিখ নির্বাচন করুন</div>';
+      return;
+    }
     
-    const range = this.getSerialRange(day, type, time);
+    const range = this.getSerialRange(day, type, time, service);
     if (!range) {
       gridContainer.innerHTML = '<div class="grid-no-selection">এই সময়ের জন্য সিরিয়াল উপলব্ধ নেই</div>';
+      if (this.config.onGridUpdate) {
+        this.config.onGridUpdate('grid', { day, time, type, service, start: 0, end: 0 });
+      }
       return;
     }
     
     let start, end;
-    if (Array.isArray(range)) { [start, end] = range; }
-    else if (typeof range === 'string') {
+    if (Array.isArray(range)) { 
+      [start, end] = range; 
+    } else if (typeof range === 'number') {
+      start = 1;
+      end = range;
+    } else if (typeof range === 'string') {
       if (range.includes('-')) {
         const parts = range.split('-');
         start = parseInt(parts[0]);
@@ -529,20 +525,25 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
       }
     }
     
-    const pendingKey = `${dateString}_${day}_${time}_${type}`;
-    const pendingData = this.pendingSelections[pendingKey] || { user: [], admin: [] };
+    if (isNaN(start) || isNaN(end) || start <= 0 || end < start) {
+      gridContainer.innerHTML = '<div class="grid-no-selection">এই সময়ের জন্য সিরিয়াল উপলব্ধ নেই</div>';
+      if (this.config.onGridUpdate) {
+        this.config.onGridUpdate('grid', { day, time, type, service, start: 0, end: 0 });
+      }
+      return;
+    }
+
+    const pendingData = this.getPendingDataForKey(dateString, day, time, type, service);
     const currentScroll = gridContainer.scrollTop;
     
     gridContainer.innerHTML = '';
     
-    const dateHeader = document.createElement('div');
-    dateHeader.className = 'date-header';
-    dateHeader.textContent = `📅 অ্যাপয়েন্টমেন্ট তারিখ: ${displayDate}`;
-    gridContainer.appendChild(dateHeader);
-    
-    // ডিবাগ: দেখুন কী কী অ্যাপয়েন্টমেন্ট আছে
-    const debugKey = `${dateString}_${day}_${type}`;
-    console.log(`🔍 গ্রিড রেন্ডার: কী=${debugKey}, অ্যাপয়েন্টমেন্ট=${this.appointments[debugKey] || []}`);
+    if (displayDate) {
+      const dateHeader = document.createElement('div');
+      dateHeader.className = 'date-header';
+      dateHeader.textContent = `📅 অ্যাপয়েন্টমেন্ট তারিখ: ${displayDate}`;
+      gridContainer.appendChild(dateHeader);
+    }
     
     for (let serial = start; serial <= end; serial++) {
       const serialItem = document.createElement('div');
@@ -551,7 +552,7 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
       serialItem.dataset.serial = serial;
       serialItem.dataset.date = dateString;
       
-      const status = this.getSerialStatus(serial, day, time, type, dateString, pendingData);
+      const status = this.getSerialStatus(serial, day, time, type, dateString, pendingData, service);
       
       if (status.isBooked) {
         serialItem.classList.add('booked');
@@ -559,7 +560,7 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
       else if (this.multiSelect && this.selectedSerials.some(s => s.serial === serial)) {
         serialItem.classList.add('selected');
       }
-      else if (status.isCurrentUserPending || status.isCurrentAdminPending) {
+      else if (this.currentSelection === serial || status.isCurrentUserPending || status.isCurrentAdminPending) {
         serialItem.classList.add('selected');
       }
       else if (status.isOtherUserPending || status.isAdminPending) {
@@ -575,19 +576,41 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
     requestAnimationFrame(() => { gridContainer.scrollTop = currentScroll; });
     
     if (this.config.onGridUpdate) {
-      this.config.onGridUpdate('grid', { day, time, type, start, end, date: dateString, displayDate });
+      this.config.onGridUpdate('grid', { day, time, type, service, start, end, date: dateString, displayDate });
     }
   }
 
-  getSerialRange(day, type, time) {
-    if (this.serialRanges[day] && this.serialRanges[day][type] && this.serialRanges[day][type][time]) {
-      return this.serialRanges[day][type][time];
+  getSerialRange(day, type, time, service = null) {
+    if (!this.serialRanges) return null;
+    
+    // Check by day first
+    if (day && this.serialRanges[day]) {
+      const currentService = service || (this.config.serviceElementId ? this.getElementValue(this.config.serviceElementId) : null);
+      if (currentService && this.serialRanges[day][currentService] && this.serialRanges[day][currentService][type]) {
+        const val = this.serialRanges[day][currentService][type][time];
+        if (val !== undefined && val !== null) return val;
+      }
+      if (this.serialRanges[day][type] && this.serialRanges[day][type][time] !== undefined) {
+        return this.serialRanges[day][type][time];
+      }
     }
+
+    // Search across all days if day is missing/mismatched
+    for (const dKey in this.serialRanges) {
+      const dData = this.serialRanges[dKey];
+      const currentService = service || (this.config.serviceElementId ? this.getElementValue(this.config.serviceElementId) : null);
+      if (currentService && dData[currentService] && dData[currentService][type] && dData[currentService][type][time] !== undefined) {
+        return dData[currentService][type][time];
+      }
+      if (dData[type] && dData[type][time] !== undefined) {
+        return dData[type][time];
+      }
+    }
+    
     return null;
   }
 
-  // ✅ ফিক্সড: টাইপ-সহ কী ব্যবহার করা হয়েছে
-  getSerialStatus(serial, day, time, type, dateString, pendingData) {
+  getSerialStatus(serial, day, time, type, dateString, pendingData, service = null) {
     const status = {
       isBooked: false,
       isOtherUserPending: false,
@@ -596,28 +619,44 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
       isCurrentAdminPending: false
     };
 
-    // টাইপ-সহ কী তৈরি
-    const key = `${dateString}_${day}_${type}`;
-    const dayAppointments = this.appointments[key] || [];
+    const currentService = service || (this.config.serviceElementId ? this.getElementValue(this.config.serviceElementId) : null);
+    const targetType = (type || '').toLowerCase();
+    const targetSerial = parseInt(serial);
 
-    // এখন শুধু সময় ও সিরিয়াল মিললেই বুকড (টাইপ তো কী-তেই আছে)
-    const appointment = dayAppointments.find(app => app.time === time && app.serial === serial);
+    if (this.appointmentsList && Array.isArray(this.appointmentsList)) {
+      const appointment = this.appointmentsList.find(app => {
+        const appDate = app.date || app.appointmentDate;
+        const appTime = app.time;
+        const appType = (app.patientType || app.type || '').toLowerCase();
+        const appService = app.serviceType || app.service || 'general';
+        const appSerial = parseInt(app.serial);
 
-    if (appointment) {
-      status.isBooked = true;
+        if (!appDate || isNaN(appSerial)) return false;
+
+        const dateMatch = (appDate === dateString);
+        const timeMatch = (appTime === time);
+        const typeMatch = (appType === targetType);
+        const serialMatch = (appSerial === targetSerial);
+        const serviceMatch = !currentService || !appService || (appService === currentService);
+
+        return dateMatch && timeMatch && typeMatch && serialMatch && serviceMatch;
+      });
+
+      if (appointment) {
+        status.isBooked = true;
+      }
     }
 
-    // পেন্ডিং চেক (পেন্ডিং কী-তে আগে থেকেই টাইপ আছে)
     if (!status.isBooked) {
-      if (this.currentUserPendingSerial === serial) {
+      if (this.currentUserPendingSerial === targetSerial) {
         status.isCurrentUserPending = true;
-      } else if (pendingData.user && pendingData.user.some(p => p.serial === serial)) {
+      } else if (pendingData.user && pendingData.user.some(p => parseInt(p.serial) === targetSerial)) {
         status.isOtherUserPending = true;
       }
 
-      if (pendingData.admin && pendingData.admin.some(p => p.serial === serial)) {
+      if (pendingData.admin && pendingData.admin.some(p => parseInt(p.serial) === targetSerial)) {
         status.isAdminPending = true;
-        const adminPending = pendingData.admin.find(p => p.serial === serial);
+        const adminPending = pendingData.admin.find(p => parseInt(p.serial) === targetSerial);
         if (adminPending && adminPending.adminId === this.config.adminSessionId) {
           status.isCurrentAdminPending = true;
         }
@@ -627,12 +666,22 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
     return status;
   }
 
-  async addPendingSelection(serial, day, time, type, dateString) {
+  async addPendingSelection(serial, day, time, type, dateString, service = null) {
     if (!this.config.db) return null;
     try {
       const expiryTime = this.config.mode === 'admin' ? this.config.adminPendingExpiry : this.config.userPendingExpiry;
+      const currentService = service || (this.config.serviceElementId ? this.getElementValue(this.config.serviceElementId) : null);
+      
       const pendingData = {
-        serial, day, time, type, appointmentDate: dateString,
+        serial: parseInt(serial),
+        day: day || '',
+        time,
+        type: (type || 'new').toLowerCase(),
+        patientType: (type || 'new').toLowerCase(),
+        date: dateString,
+        appointmentDate: dateString,
+        service: currentService || 'general',
+        serviceType: currentService || 'general',
         bookedBy: this.config.mode,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         expiresAt: new Date(Date.now() + expiryTime)
@@ -665,8 +714,6 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
     this.updateGrid();
   }
 
-  // ========== মাল্টি সিলেক্ট হেল্পার মেথড ==========
-  
   getSelectedSerials() {
     return this.selectedSerials.map(s => s.serial);
   }
@@ -685,11 +732,9 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
   
   setCurrentPatientIndex(index) {
     this.currentPatientIndex = index;
-    console.log(`👤 বর্তমান রোগী সেট: ${index}`);
   }
   
   async clearAllSelections() {
-    console.log("🗑️ সব সিলেকশন ক্লিয়ার করা হচ্ছে...");
     this._skipNextGridRender = true;
     
     for (const selected of this.selectedSerials) {
@@ -708,32 +753,6 @@ const unsubscribeOld = this.config.db.collectionGroup('old')
     if (selectedInput) selectedInput.value = '';
     
     this._skipNextGridRender = false;
-    
-    if (typeof updateAllSerialDisplays === 'function') {
-      updateAllSerialDisplays();
-    }
-  }
-  
-  async removeSerial(serial, patientIndex) {
-    const index = this.selectedSerials.findIndex(s => s.serial === serial && s.patientIndex === patientIndex);
-    if (index !== -1) {
-      this._skipNextGridRender = true;
-      
-      const element = document.querySelector(`.serial-item[data-serial="${serial}"]`);
-      if (element) {
-        element.classList.remove('selected');
-        element.classList.add('available');
-      }
-      
-      if (this.selectedSerials[index].pendingId) {
-        await this.removePendingSelection(this.selectedSerials[index].pendingId);
-      }
-      this.selectedSerials.splice(index, 1);
-      
-      this._skipNextGridRender = false;
-      return true;
-    }
-    return false;
   }
 
   cleanup() {
