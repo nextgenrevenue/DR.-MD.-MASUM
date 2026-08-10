@@ -1,4 +1,4 @@
-// table-manager.js - Table Management Component
+// table-manager.js - Clean & Optimized Table Management Component
 console.log("📊 TableManager loading...");
 
 class TableManager {
@@ -67,8 +67,6 @@ class TableManager {
             .btn-token:hover { background-color: #d97706; }
             .btn-token-details { background-color: #10b981; color: white; }
             .btn-token-details:hover { background-color: #059669; }
-            .btn-token-undo { background-color: #0ea5e9; color: white; }
-            .btn-token-undo:hover { background-color: #0284c7; }
             .btn-edit { background-color: #3b82f6; color: white; }
             .btn-edit:hover { background-color: #2563eb; }
             .btn-delete { background-color: #dc2626; color: white; }
@@ -128,6 +126,25 @@ class TableManager {
         if (parts.length > 0) return parts.join(' ');
         if (data.age && typeof data.age === 'number') return `${data.age} বছর`;
         return '-';
+    }
+
+    findAppointment(docId, patientType) {
+        const pType = (patientType || '').toLowerCase();
+        
+        // Search in filtered or main list using both docId and patientType
+        let found = (this.filteredAppointments || []).find(a => {
+            const aType = (a.data?.patientType || a.data?.type || 'new').toLowerCase();
+            return a.id === docId && (!pType || aType === pType);
+        });
+
+        if (!found) {
+            found = (this.appointments || []).find(a => {
+                const aType = (a.data?.patientType || a.data?.type || 'new').toLowerCase();
+                return a.id === docId && (!pType || aType === pType);
+            });
+        }
+
+        return found;
     }
 
     setAppointments(data) {
@@ -195,7 +212,6 @@ class TableManager {
             });
         }
 
-        // Sort by serial number ascending
         result.sort((a, b) => parseInt(a.data.serial || 0) - parseInt(b.data.serial || 0));
 
         this.filteredAppointments = result;
@@ -225,10 +241,11 @@ class TableManager {
         this.filteredAppointments.forEach(item => {
             const data = item.data;
             const docId = item.id;
+            const pType = (data.patientType || data.type || 'new').toLowerCase();
             const tr = document.createElement('tr');
 
             const serviceText = this.serviceNames[data.serviceType || data.service] || data.serviceType || 'সাধারণ';
-            const typeText = (data.patientType === 'new' || data.type === 'new') ? 'নতুন' : 'পুরাতন';
+            const typeText = pType === 'new' ? 'নতুন' : 'পুরাতন';
             const called = data.called === true;
             const tokenGiven = data.tokenGiven === true;
 
@@ -238,7 +255,7 @@ class TableManager {
             const bookingTimeStr = this.formatTimestamp(data.timestamp);
 
             tr.innerHTML = `
-                <td><strong>#${data.serial || '-'}</strong></td>
+                <td><strong>${data.serial || '-'}</strong></td>
                 <td><span class="status-badge ${called ? 'status-called' : 'status-not-called'}">${called ? 'কল করা হয়েছে' : 'কল করা হয়নি'}</span></td>
                 <td><span class="status-badge ${tokenGiven ? 'status-token-given' : 'status-token-not-given'}">${tokenGiven ? 'টোকেন দেওয়া হয়েছে' : 'টোকেন দেওয়া হয়নি'}</span></td>
                 <td><strong>${data.name || '-'}</strong></td>
@@ -249,19 +266,19 @@ class TableManager {
                 <td>${typeText}</td>
                 <td><small>${bookingTimeStr}</small></td>
                 <td>
-                    <button class="action-btn ${called ? 'btn-call-undo' : 'btn-call'}" onclick="window.tableManager.toggleStatus('${docId}', 'called', ${!called}, this)">
+                    <button class="action-btn ${called ? 'btn-call-undo' : 'btn-call'}" onclick="window.tableManager.toggleStatus('${docId}', '${pType}', 'called', ${!called}, this)">
                         ${called ? 'আন-কল' : 'কল করুন'}
                     </button>
                 </td>
                 <td>
-                    <button class="action-btn ${tokenGiven ? 'btn-token-details' : 'btn-token'}" onclick="window.tableManager.openTokenModal('${docId}', this)">
+                    <button class="action-btn ${tokenGiven ? 'btn-token-details' : 'btn-token'}" onclick="window.tableManager.openTokenModal('${docId}', '${pType}', this)">
                         ${tokenGiven ? '<i class="fas fa-ticket-alt"></i> বিস্তারিত' : '<i class="fas fa-ticket-alt"></i> টোকেন দিন'}
                     </button>
                 </td>
                 <td>
                     <div style="display: flex; gap: 4px; flex-direction: column;">
-                        <button class="action-btn btn-edit" onclick="window.tableManager.editEntry('${docId}')">এডিট</button>
-                        <button class="action-btn btn-delete" onclick="window.tableManager.deleteEntry('${docId}')">ডিলিট</button>
+                        <button class="action-btn btn-edit" onclick="window.tableManager.editEntry('${docId}', '${pType}')">এডিট</button>
+                        <button class="action-btn btn-delete" onclick="window.tableManager.deleteEntry('${docId}', '${pType}')">ডিলিট</button>
                     </div>
                 </td>
             `;
@@ -270,39 +287,46 @@ class TableManager {
         });
     }
 
-openTokenModal(docId, button) {
-    const item = (this.filteredAppointments || []).find(a => a.id === docId) || (this.appointments || []).find(a => a.id === docId);
-    const data = item ? item.data : {};
-    let docPath = item ? item.path : null;
+    openTokenModal(docId, patientType, button) {
+        if (typeof patientType === 'object' && patientType !== null && !button) {
+            button = patientType;
+            patientType = null;
+        }
 
-    if (!docPath && docId) {
+        const item = this.findAppointment(docId, patientType);
+        const data = item ? item.data : {};
+        const pType = (patientType || data.patientType || data.type || 'new').toLowerCase();
         const dateVal = data.date || data.appointmentDate || (this.currentFilters && this.currentFilters.date);
         const yymmdd = this.getYYMMDD(dateVal);
-        const pType = String(data.patientType || data.type || 'new').toLowerCase();
-        if (yymmdd) {
-            docPath = `appointments/${yymmdd}/${pType}/${docId}`;
+
+        const docPath = item?.path || (yymmdd ? `appointments/${yymmdd}/${pType}/${docId}` : null);
+
+        if (this.onTokenAction) {
+            this.onTokenAction(docId, data, docPath, button);
+        } else if (window.tokenModal && typeof window.tokenModal.openModal === 'function') {
+            window.tokenModal.openModal(docId, data, docPath);
+        } else if (typeof window.showTokenDetailsModal === 'function') {
+            window.showTokenDetailsModal(docId, docPath);
         }
     }
 
-    if (this.onTokenAction) {
-        this.onTokenAction(docId, data, docPath, button);
-    } else if (window.tokenModal && typeof window.tokenModal.openModal === 'function') {
-        window.tokenModal.openModal(docId, data, docPath);
-    } else if (typeof window.showTokenDetailsModal === 'function') {
-        window.showTokenDetailsModal(docId, docPath);
-    }
-}
-
-    toggleStatus(docId, field, newStatus, button) {
-        if (this.onStatusUpdate) this.onStatusUpdate(docId, field, newStatus, button);
+    toggleStatus(docId, patientType, field, newStatus, button) {
+        if (typeof field === 'boolean') {
+            // Shifted parameters fallback
+            button = newStatus;
+            newStatus = field;
+            field = patientType;
+            patientType = null;
+        }
+        if (this.onStatusUpdate) this.onStatusUpdate(docId, patientType, field, newStatus, button);
     }
 
-    editEntry(docId) {
-        if (this.onEdit) this.onEdit(docId);
+    editEntry(docId, patientType) {
+        if (this.onEdit) this.onEdit(docId, patientType);
     }
 
-    deleteEntry(docId) {
-        if (this.onDelete) this.onDelete(docId);
+    deleteEntry(docId, patientType) {
+        if (this.onDelete) this.onDelete(docId, patientType);
     }
 
     exportToCSV() {

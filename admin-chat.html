@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>লাইভ চ্যাট</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+      }
+    }
+  </script>
+  
+  <style>
+    /* ─── GENERAL RESET & CORE LAYOUT ─── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f1f5f9; }
+    
+    .app-container { display: flex; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
+    
+    /* ডেস্কটপ সাইডবার কন্টেনার */
+    #sidebar-container { width: 280px; flex-shrink: 0; height: 100vh; z-index: 10; }
+    
+    /* মেইন কন্টেন্ট এরিয়া ফ্লেক্সবক্স দিয়ে কন্ট্রোল */
+    .main-content { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      height: 100vh; 
+      min-width: 0; 
+      background: #f1f5f9; 
+      position: relative;
+    }
+    
+    /* টপ হেডার (components-inline.js থেকে আসা) এর জন্য স্পেসিং */
+    #header-container { flex-shrink: 0; height: 56px; z-index: 100; }
+    #footer-container { flex-shrink: 0; }
+    
+    /* কন্টেন্ট র‍্যাপার (ফিক্সড মার্জিন ও হাইট ক্যালকুলেশন বাদ দিয়ে flex ব্যবহার করা হয়েছে) */
+    .content-wrapper {
+      flex: 1;
+      padding: 12px 16px;
+      max-width: 1440px;
+      margin: 0 auto;
+      width: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 0; /* গুরুত্বপূর্ণ: চাইল্ড স্ক্রলিং ঠিক রাখার জন্য */
+    }
+    
+    /* ─── PAGE HEADER ─── */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 0 2px;
+      flex-shrink: 0;
+    }
+    .page-header h1 {
+      font-size: clamp(15px, 2.2vw, 22px);
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .page-header h1 i { color: #3b82f6; }
+    #totalUsersBadge {
+      font-size: 11px;
+      background: #e2e8f0;
+      color: #475569;
+      padding: 1px 12px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .header-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .header-actions .btn {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      padding: 5px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      transition: 0.2s;
+      text-decoration: none;
+      color: #1f2937;
+    }
+    .header-actions .btn:hover { background: #e2e8f0; }
+    .header-actions .btn-primary {
+      background: #dbeafe;
+      border-color: #3b82f6;
+      color: #2563eb;
+    }
+    .header-actions .btn-primary:hover { background: #bfdbfe; }
+    
+    /* ─── CHAT GRID ─── */
+    .chat-grid {
+      display: flex;
+      gap: 0;
+      flex: 1;
+      min-height: 0;
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      position: relative;
+    }
+    
+    /* ─── USER LIST ─── */
+    .user-list-container {
+      width: 340px;
+      flex-shrink: 0;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      border-right: 1px solid #e2e8f0;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
+    .user-list-header {
+      padding: 14px 18px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .user-list-header h3 {
+      font-size: 13px;
+      color: #475569;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .user-list-header h3 i { color: #3b82f6; }
+    .user-list-header .count {
+      background: #e2e8f0;
+      padding: 2px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      color: #64748b;
+    }
+    .user-search {
+      padding: 8px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .user-search input {
+      width: 100%;
+      padding: 8px 14px 8px 38px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 13px;
+      outline: none;
+      transition: 0.3s;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    .user-search input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+      background: white;
+    }
+    .user-search .search-icon {
+      position: absolute;
+      left: 26px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 13px;
+      pointer-events: none;
+    }
+    .user-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 0;
+      background: #fff;
+    }
+    .user-list::-webkit-scrollbar { width: 4px; }
+    .user-list::-webkit-scrollbar-track { background: #f1f5f9; }
+    .user-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    
+    .user-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      border-left: 3px solid transparent;
+      background: #fff;
+    }
+    .user-item:hover { background: #f1f5f9; }
+    .user-item.active {
+      background: #eff6ff;
+      border-left-color: #3b82f6;
+    }
+    .user-item .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 16px;
+      color: #fff;
+      background: linear-gradient(135deg, #3b82f6, #4f46e5);
+      text-transform: uppercase;
+    }
+    .user-item .info { flex: 1; min-width: 0; }
+    .user-item .info .name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #0f172a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .user-item .info .last-msg {
+      font-size: 11px;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .user-item .right-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+    .user-item .time { font-size: 10px; color: #94a3b8; white-space: nowrap; }
+    .user-item .badge-unread {
+      background: #ef4444;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 8px;
+      border-radius: 20px;
+      min-width: 20px;
+      text-align: center;
+      line-height: 18px;
+    }
+    
+    /* ─── CHAT AREA ─── */
+    .chat-area-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #fafbfc;
+      min-height: 0;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    .chat-area-header {
+      padding: 10px 16px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      min-height: 60px;
+    }
+    .chat-area-header .back-btn {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: #0f172a;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: 0.2s;
+    }
+    .chat-area-header .back-btn:hover { background: #e2e8f0; }
+    .chat-area-header .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 16px;
+      color: #fff;
+      background: linear-gradient(135deg, #3b82f6, #4f46e5);
+      text-transform: uppercase;
+    }
+    .chat-area-header .info { flex: 1; min-width: 0; }
+    .chat-area-header .info h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f172a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chat-area-header .info p {
+      font-size: 11px;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chat-area-header .actions { display: flex; gap: 2px; flex-shrink: 0; }
+    .chat-area-header .actions button {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 8px;
+      transition: 0.3s;
+      font-size: 14px;
+    }
+    .chat-area-header .actions button:hover { background: #f1f5f9; color: #0f172a; }
+    
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px 8px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-height: 0;
+    }
+    .chat-messages::-webkit-scrollbar { width: 5px; }
+    .chat-messages::-webkit-scrollbar-track { background: #f1f5f9; }
+    .chat-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    
+    .chat-messages .message {
+      max-width: 78%;
+      padding: 9px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.5;
+      animation: msgSlideIn 0.2s ease;
+      word-wrap: break-word;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    @keyframes msgSlideIn {
+      from { opacity: 0; transform: translateY(6px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .chat-messages .message.user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #3b82f6, #4f46e5);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-messages .message.admin {
+      align-self: flex-start;
+      background: #e9ecef;
+      color: #1f2937;
+      border-bottom-left-radius: 4px;
+    }
+    .chat-messages .message .time { font-size: 9px; opacity: 0.7; margin-top: 4px; display: block; text-align: right; }
+    .chat-messages .message .sender-label { font-size: 9px; font-weight: 600; display: block; margin-bottom: 2px; color: #3b82f6; }
+    
+    .chat-messages .empty-state {
+      text-align: center;
+      color: #94a3b8;
+      margin: auto;
+      font-size: 13px;
+      padding: 30px 20px;
+      background: rgba(255,255,255,0.7);
+      border-radius: 16px;
+    }
+    .chat-messages .empty-state i { font-size: 44px; display: block; margin-bottom: 12px; color: #cbd5e1; }
+    .chat-messages .empty-state h3 { color: #475569; font-weight: 500; margin-bottom: 4px; }
+    
+    .no-user-selected {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      padding: 20px;
+      text-align: center;
+      background: rgba(255,255,255,0.5);
+    }
+    .no-user-selected i { font-size: 52px; color: #cbd5e1; margin-bottom: 12px; }
+    .no-user-selected h3 { color: #475569; font-weight: 500; margin-bottom: 4px; font-size: 16px; }
+    .no-user-selected p { font-size: 13px; }
+    
+    .chat-input-area {
+      padding: 8px 12px;
+      background: #fff;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      flex-shrink: 0;
+      min-height: 56px;
+    }
+    .chat-input-area textarea {
+      flex: 1;
+      padding: 8px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 20px;
+      font-size: 13px;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      min-height: 38px;
+      max-height: 100px;
+      line-height: 1.5;
+      background: #f8fafc;
+      color: #0f172a;
+      transition: 0.3s;
+    }
+    .chat-input-area textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); background: #fff; }
+    .chat-input-area .send-btn {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #3b82f6, #4f46e5);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .chat-input-area .send-btn:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(59,130,246,0.4); }
+    .chat-input-area .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    
+    /* ─── TOAST ─── */
+    .toast-container {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999999;
+      padding: 10px 24px;
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 13px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+      animation: toastIn 0.35s ease;
+      max-width: 92%;
+      text-align: center;
+      pointer-events: none;
+    }
+    .toast-success { background: #16a34a; }
+    .toast-error { background: #dc2626; }
+    .toast-warning { background: #f59e0b; }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    }
+    
+    /* ─── MODAL ─── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.5);
+      z-index: 99999; /* জেন ইনডেক্স বাড়ানো হয়েছে */
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: #fff;
+      border-radius: 20px;
+      padding: 28px 30px;
+      max-width: 500px;
+      width: 92%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      animation: modalIn 0.3s ease;
+      position: relative;
+      z-index: 100000; /* ধোঁয়াশার উপরে কন্টেন্ট রাখার জন্য */
+    }
+    @keyframes modalIn {
+      from { transform: translateY(30px) scale(0.95); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .modal-box h2 { margin-bottom: 16px; color: #0f172a; display: flex; align-items: center; gap: 10px; font-size: 20px; }
+    .modal-box h2 i { color: #3b82f6; }
+    .modal-box label { font-weight: 600; display: block; margin: 14px 0 4px; color: #334155; font-size: 13px; }
+    .modal-box textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      transition: 0.3s;
+      background: #fafafa;
+    }
+    .modal-box textarea:focus { border-color: #3b82f6; outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+    .modal-actions { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; }
+    .modal-actions button { padding: 10px 24px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 13px; }
+    .modal-actions .btn-save { background: #3b82f6; color: #fff; }
+    .modal-actions .btn-save:hover { background: #2563eb; }
+    .modal-actions .btn-close { background: #e2e8f0; color: #1f2937; }
+    .modal-actions .btn-close:hover { background: #cbd5e1; }
+    
+    /* ─── RESPONSIVE BREAKPOINTS (TABLET) ─── */
+    @media (max-width: 992px) {
+      .user-list-container { width: 300px; }
+      .content-wrapper { padding: 8px 10px; }
+    }
+    
+/* ─── RESPONSIVE BREAKPOINTS (MOBILE) ─── */
+    @media (max-width: 768px) {
+      /* মোবাইল সাইডবার কন্টেনার ঠিক রাখা */
+      #sidebar-container {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        z-index: 200000 !important;
+        pointer-events: none;
+        width: 0;
+        height: 100vh;
+      }
+      
+      #sidebar {
+        left: -100% !important;
+        position: fixed !important;
+        top: 56px !important;
+        height: calc(100vh - 56px) !important;
+        transition: left 0.3s ease !important;
+      }
+      
+      #sidebar.mobile-open { left: 0 !important; pointer-events: auto !important; }
+      #sidebar-container:has(.mobile-open) { pointer-events: auto !important; width: 290px; }
+
+  
+      .content-wrapper { 
+        padding: 0 0 12px 0; 
+        height: calc(100vh - 60px); 
+        border-radius: 0; 
+      }
+      
+      .chat-grid { 
+        border-radius: 0; 
+        height: 100%; 
+        position: relative;
+        display: block; 
+      }
+      
+      /* ইউজার লিস্ট কন্টেনার - স্ক্রিনের বাইরে যাবে না */
+      .user-list-container {
+        width: 100%;
+        border-right: none;
+        border-radius: 0;
+        position: absolute;
+        top: 0; 
+        left: 0;
+        height: 100%;
+        z-index: 5;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+      }
+      /* ইউজার সিলেক্ট হলে লিস্টটি জাস্ট হাইড হবে */
+      .user-list-container.hidden { 
+        opacity: 0; 
+        visibility: hidden;
+        pointer-events: none; 
+      }
+      
+      /* চ্যাট এরিয়া কন্টেনার - স্ক্রিনের বাইরে যাবে না, জাস্ট হাইড/শো হবে */
+      .chat-area-container {
+        width: 100%;
+        border-radius: 0;
+        position: absolute;
+        top: 0; 
+        left: 0;
+        height: 100%;
+        z-index: 6;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+      }
+      /* অ্যাক্টিভ হলে চ্যাট বক্স সামনে চলে আসবে */
+      .chat-area-container.active { 
+        opacity: 1; 
+        visibility: visible;
+        pointer-events: auto; 
+      }
+      
+      .chat-area-header .back-btn { display: block !important; }
+      .user-item { padding: 12px 14px; }
+      .user-item .avatar { width: 42px; height: 42px; font-size: 15px; }
+      
+      .chat-messages { padding: 10px 12px 6px 12px; }
+      .chat-messages .message { max-width: 85%; font-size: 12.5px; }
+      
+      /* ইনপুট এরিয়াকে নিচ থেকে একটু উপরে তোলার স্পেসিং */
+      .chat-input-area { 
+        padding: 8px 10px; 
+        min-height: 52px; 
+        margin-bottom: 10px; /* নিচ থেকে চ্যাট ইনপুট বক্সকে উপরে ধরে রাখবে */
+      }
+      .chat-input-area textarea { font-size: 12px; min-height: 36px; border-radius: 18px; }
+      .chat-input-area .send-btn { width: 38px; height: 38px; }
+      
+      .page-header { padding: 6px 10px 0 10px; margin-bottom: 4px; }
+      .page-header h1 { font-size: 16px; }
+      .header-actions .btn span { display: none; }
+    }
+    
+    /* ─── RESPONSIVE BREAKPOINTS (SMALL MOBILE) ─── */
+    @media (max-width: 480px) {
+      #sidebar { top: 48px !important; height: calc(100vh - 48px) !important; }
+      .content-wrapper { height: calc(100vh - 54px); padding-bottom: 14px; }
+      
+      .chat-input-area {
+        margin-bottom: 14px; /* ছোট ফোনে বটম নেভিগেশন বারের জন্য আরও একটু উপরে তোলা */
+      }
+      
+      .user-list-header { padding: 10px 14px; }
+      .user-search input { font-size: 12px; }
+      .user-item { padding: 10px 12px; }
+      .chat-area-header { padding: 6px 10px; min-height: 50px; }
+      .chat-messages .message { max-width: 90%; font-size: 11.5px; }
+      .chat-input-area textarea { font-size: 11px; }
+    }
+  </style>
+  
+  <script>
+    (function() {
+      const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
+      const userRole = sessionStorage.getItem('userRole');
+      if (!isLoggedIn || isLoggedIn !== 'true') {
+        alert('অনুগ্রহ করে আগে লগইন করুন!');
+        window.location.href = 'login.html';
+        return;
+      }
+      const allowedRoles = ['admin', 'owner'];
+      if (!allowedRoles.includes(userRole)) {
+        alert('এই পেজে প্রবেশের অনুমতি আপনার নেই!');
+        window.location.href = 'userdashboard.html';
+      }
+    })();
+  </script>
+</head>
+<body>
+
+<div class="app-container">
+  <div id="sidebar-container"></div>
+  
+  <div class="main-content">
+    <div id="header-container"></div>
+    
+    <div class="content-wrapper">
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1>
+          <i class="fas fa-comment-dots"></i>
+          লাইভ চ্যাট
+          <span id="totalUsersBadge">০ জন</span>
+        </h1>
+        <div class="header-actions">
+          <button onclick="openAutoReplyModal()" class="btn btn-primary">
+            <i class="fas fa-edit"></i> <span>অটো রিপ্লাই সেট করুন</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Chat Grid -->
+      <div class="chat-grid">
+        <!-- User List -->
+        <div class="user-list-container" id="userListContainer">
+          <div class="user-list-header">
+            <h3><i class="fas fa-users"></i> ইউজার তালিকা</h3>
+            <span class="count" id="userCount">০</span>
+          </div>
+          <div class="user-search">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="userSearch" placeholder="খুঁজুন..." oninput="filterUsers(this.value)">
+          </div>
+          <div class="user-list" id="userList">
+            <div style="text-align:center;padding:40px 20px;color:#94a3b8;font-size:13px;">
+              <i class="fas fa-spinner fa-spin" style="font-size:24px;display:block;margin-bottom:10px;"></i>
+              ইউজার লোড হচ্ছে...
+            </div>
+          </div>
+        </div>
+        
+        <!-- Chat Area -->
+        <div class="chat-area-container" id="chatAreaContainer">
+          <div class="chat-area-header" id="chatHeader">
+            <button class="back-btn" id="chatBackBtn" onclick="goBackToUserList()">
+              <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="avatar" id="chatAvatar">?</div>
+            <div class="info">
+              <h4 id="chatUserName">ইউজার সিলেক্ট করুন</h4>
+              <p id="chatUserPhone">কোনো ইউজার নির্বাচন করা হয়নি</p>
+            </div>
+            <div class="actions">
+              <button onclick="clearChat()" title="চ্যাট ক্লিয়ার">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="chat-messages" id="chatMessages">
+            <div class="no-user-selected">
+              <i class="fas fa-comments"></i>
+              <h3>ইউজার সিলেক্ট করুন</h3>
+              <p>বাম দিকের তালিকা থেকে একজন ইউজার বেছে নিন</p>
+            </div>
+          </div>
+          
+          <div class="chat-input-area" id="chatInputArea" style="display:none;">
+            <textarea id="chatInput" rows="1" placeholder="মেসেজ লিখুন..." maxlength="500"></textarea>
+            <button class="send-btn" id="sendChatBtn">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="footer-container"></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="autoReplyModal">
+  <div class="modal-box">
+    <h2><i class="fas fa-robot"></i> অটো রিপ্লাই সেটিংস</h2>
+    <p style="color:#64748b;font-size:13px;margin-bottom:10px;">
+      ইউজার প্রথম মেসেজ দিলে স্বাগত বার্তা এবং অ্যাডমিন চ্যাট ওপেন করলে প্রত্যুত্তর যাবে তা এখানে পরিবর্তন করুন।  
+      <strong>{adminName}</strong> লিখলে তা লগইন করা অ্যাডমিনের নাম দিয়ে প্রতিস্থাপিত হবে।
+    </p>
+    <label for="welcomeMsg">স্বাগত বার্তা (ইউজারের প্রথম মেসেজের পর)</label>
+    <textarea id="welcomeMsg" rows="3" placeholder="স্বাগতম! কিছুক্ষনের মধ্যে সাপোর্ট টিম আপনার সাথে যোগাযোগ করবেন।"></textarea>
+    <label for="adminReplyMsg">অ্যাডমিনের প্রথম প্রত্যুত্তর (চ্যাট ওপেন করলে)</label>
+    <textarea id="adminReplyMsg" rows="3" placeholder="ডাঃ মোঃ ওয়াহিদুজ্জামান মাসুম এর চেম্বার থেকে {adminName} বলছি, আপনাকে কিভাবে সাহায্য করতে পারি?"></textarea>
+    <div class="modal-actions">
+      <button class="btn-close" onclick="closeAutoReplyModal()">বন্ধ</button>
+      <button class="btn-save" onclick="saveAutoReplySettings()"><i class="fas fa-save"></i> সংরক্ষণ</button>
+    </div>
+  </div>
+</div>
+
+<script src="components-inline.js"></script>
+
+<script type="module">
+import { initializeApp } from 'firebase/app';
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  addDoc,
+  query,
+  orderBy,
+  limit,
+  where,
+  onSnapshot,
+  serverTimestamp,
+  writeBatch,
+  setDoc
+} from 'firebase/firestore';
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDAdGUtNVgs5UspQeH8hL0i-L0WvPpOWnE",
+        authDomain: "appointment-e2050.firebaseapp.com",
+        projectId: "appointment-e2050",
+        storageBucket: "appointment-e2050.firebasestorage.app",
+        messagingSenderId: "367447068370",
+        appId: "1:367447068370:web:8e111bb010a19d21eda70b",
+        measurementId: "G-CRLSV1JJMQ"
+    };
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ─── GLOBALS ──────────────────────────────────────────────
+let currentUserId = null;
+let currentUnsubscribe = null;
+let allUsers = [];
+let isMobile = window.innerWidth <= 768;
+let isChatViewActive = false;
+
+// ─── COMPONENT LOADER ─────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(() => {
+    if (typeof ComponentLoader !== 'undefined') {
+      ComponentLoader.loadAllComponents('লাইভ চ্যাট');
+    }
+    setTimeout(() => {
+      loadAllUsers();
+      loadAutoReplySettings();
+      setupEventListeners();
+      handleResize();
+    }, 500);
+  }, 300);
+});
+
+window.addEventListener('resize', handleResize);
+function handleResize() {
+  isMobile = window.innerWidth <= 768;
+  if (!isMobile) {
+    document.getElementById('userListContainer').classList.remove('hidden');
+    document.getElementById('chatAreaContainer').classList.remove('active');
+    isChatViewActive = false;
+  } else {
+    if (!isChatViewActive) {
+      document.getElementById('userListContainer').classList.remove('hidden');
+      document.getElementById('chatAreaContainer').classList.remove('active');
+    }
+  }
+}
+
+// ─── NAVIGATION ────────────────────────────────────────────
+window.goBackToUserList = function() {
+  if (isMobile) {
+    document.getElementById('userListContainer').classList.remove('hidden');
+    document.getElementById('chatAreaContainer').classList.remove('active');
+    isChatViewActive = false;
+  }
+};
+
+function showChatView() {
+  if (isMobile) {
+    document.getElementById('userListContainer').classList.add('hidden');
+    document.getElementById('chatAreaContainer').classList.add('active');
+    isChatViewActive = true;
+  }
+}
+
+// ─── SETUP EVENTS ─────────────────────────────────────────
+
+function setupEventListeners() {
+  const sendBtn = document.getElementById('sendChatBtn');
+  const chatInput = document.getElementById('chatInput');
+  if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+  if (chatInput) {
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    chatInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+
+    });
+  }
+} 
+
+
+// ─── LOAD USERS ────────────────────────────────────────────
+async function loadAllUsers() {
+  const userList = document.getElementById('userList');
+  userList.innerHTML = `
+    <div style="text-align:center;padding:30px 15px;color:#94a3b8;font-size:13px;">
+      <i class="fas fa-spinner fa-spin" style="font-size:22px;display:block;margin-bottom:8px;"></i>
+      ইউজার লোড হচ্ছে...
+    </div>
+  `;
+  try {
+    const chatsRef = collection(db, 'chats');
+    const chatsSnapshot = await getDocs(chatsRef);
+    if (chatsSnapshot.empty) {
+      userList.innerHTML = `
+        <div style="text-align:center;padding:30px 15px;color:#94a3b8;font-size:13px;">
+          <i class="fas fa-user-slash" style="font-size:28px;display:block;margin-bottom:8px;"></i>
+          <p>কোনো ইউজার চ্যাট শুরু করেনি</p>
+        </div>
+      `;
+      document.getElementById('userCount').textContent = '০';
+      document.getElementById('totalUsersBadge').textContent = '০ জন';
+      return;
+    }
+    const userPromises = chatsSnapshot.docs.map(async (docSnap) => {
+      const userId = docSnap.id;
+      let userName = userId, userPhone = userId;
+      try {
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          userName = data.name || data.username || userId;
+          userPhone = data.phone || userId;
+        }
+      } catch (e) {}
+      const messagesRef = collection(db, 'chats', userId, 'messages');
+      const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(1));
+      const lastMsgSnap = await getDocs(q);
+      let lastMessage = '', lastTime = null, unreadCount = 0;
+      if (!lastMsgSnap.empty) {
+        const data = lastMsgSnap.docs[0].data();
+        lastMessage = data.text || '';
+        lastTime = data.timestamp ? data.timestamp.toDate() : new Date();
+      }
+      try {
+        const unreadQuery = query(messagesRef, where('sender', '==', 'user'), where('read', '==', false));
+        const unreadSnap = await getDocs(unreadQuery);
+        unreadCount = unreadSnap.size;
+      } catch (e) {}
+      return { id: userId, name: userName, phone: userPhone, lastMessage, lastTime, unread: unreadCount };
+    });
+    const results = await Promise.all(userPromises);
+    allUsers = results;
+    allUsers.sort((a, b) => {
+      if (!a.lastTime) return 1;
+      if (!b.lastTime) return -1;
+      return b.lastTime - a.lastTime;
+    });
+    renderUserList(allUsers);
+    document.getElementById('userCount').textContent = allUsers.length;
+    document.getElementById('totalUsersBadge').textContent = `${allUsers.length} জন`;
+  } catch (error) {
+    console.error('❌ Error loading users:', error);
+    userList.innerHTML = `
+      <div style="text-align:center;padding:30px 15px;color:#dc2626;font-size:13px;">
+        <i class="fas fa-exclamation-circle" style="font-size:28px;display:block;margin-bottom:8px;"></i>
+        <p>ইউজার লোড করতে ব্যর্থ</p>
+        <p style="font-size:11px;margin-top:4px;">${error.message}</p>
+      </div>
+    `;
+  }
+}
+
+function renderUserList(users) {
+  const userList = document.getElementById('userList');
+  if (!users || users.length === 0) {
+    userList.innerHTML = `
+      <div style="text-align:center;padding:30px 15px;color:#94a3b8;font-size:13px;">
+        <i class="fas fa-user-slash" style="font-size:28px;display:block;margin-bottom:8px;"></i>
+        <p>কোনো ইউজার চ্যাট শুরু করেনি</p>
+      </div>
+    `;
+    return;
+  }
+  let html = '';
+  users.forEach(user => {
+    const isActive = currentUserId === user.id;
+    const initials = user.name.charAt(0).toUpperCase() || '?';
+    const timeStr = user.lastTime ? formatTime(user.lastTime) : '';
+    const lastMsg = user.lastMessage || 'কোনো মেসেজ নেই';
+    const unreadBadge = user.unread > 0 ? `<span class="badge-unread">${user.unread}</span>` : '';
+    const shortMsg = lastMsg.length > 40 ? lastMsg.slice(0, 40) + '…' : lastMsg;
+    html += `
+      <div class="user-item ${isActive ? 'active' : ''}" onclick="selectUser('${user.id}')" data-userid="${user.id}">
+        <div class="avatar">${initials}</div>
+        <div class="info">
+          <div class="name">${escapeHtml(user.name)}</div>
+          <div class="last-msg">${escapeHtml(shortMsg)}</div>
+        </div>
+        <div class="right-col">
+          ${timeStr ? `<span class="time">${timeStr}</span>` : ''}
+          ${unreadBadge}
+        </div>
+      </div>
+    `;
+  });
+  userList.innerHTML = html;
+}
+
+window.filterUsers = function(query) {
+  if (!query.trim()) { renderUserList(allUsers); return; }
+  const filtered = allUsers.filter(user =>
+    user.name.toLowerCase().includes(query.toLowerCase()) ||
+    user.phone.includes(query)
+  );
+  renderUserList(filtered);
+};
+
+// ─── SELECT USER ───────────────────────────────────────────
+window.selectUser = function(userId) {
+  if (currentUserId === userId) {
+    if (isMobile) showChatView();
+    return;
+  }
+  currentUserId = userId;
+  document.querySelectorAll('.user-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.userid === userId);
+  });
+  const user = allUsers.find(u => u.id === userId);
+  if (user) {
+    window.currentUserName = user.name; 
+    document.getElementById('chatAvatar').textContent = user.name.charAt(0).toUpperCase() || '?';
+    document.getElementById('chatUserName').textContent = user.name;
+    document.getElementById('chatUserPhone').textContent = user.phone;
+  }
+  document.getElementById('chatInputArea').style.display = 'flex';
+  loadUserMessages(userId);
+  if (isMobile) showChatView();
+};
+
+// ─── LOAD MESSAGES ─────────────────────────────────────────
+function loadUserMessages(userId) {
+  const chatMessages = document.getElementById('chatMessages');
+  if (currentUnsubscribe) { currentUnsubscribe(); currentUnsubscribe = null; }
+  chatMessages.innerHTML = `
+    <div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">
+      <i class="fas fa-spinner fa-spin" style="font-size:20px;"></i> মেসেজ লোড হচ্ছে...
+    </div>
+  `;
+  const messagesRef = collection(db, 'chats', userId, 'messages');
+  const q = query(messagesRef, orderBy('timestamp', 'asc'), limit(100));
+
+  currentUnsubscribe = onSnapshot(q, async (snapshot) => {
+    if (snapshot.empty) {
+      chatMessages.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-comment-slash"></i>
+          <h3>কোনো মেসেজ নেই</h3>
+          <p>এই ইউজারের সাথে এখনো কোনো কথোপকথন হয়নি</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    let adminMessages = [];
+    const welcomeText = await getWelcomeMessage();
+    // ইউজারের নাম গ্লোবাল থেকে নিন (selectUser এ সেট করতে হবে)
+    const userName = window.currentUserName || 'ইউজার';
+
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      const sender = data.sender || 'user';
+      const text = data.text || '';
+      const time = data.timestamp ? data.timestamp.toDate() : new Date();
+      const timeStr = formatTime(time);
+      const isUser = sender === 'user';
+
+      html += `
+        <div class="message ${isUser ? 'user' : 'admin'}">
+          ${isUser 
+            ? `<span class="sender-label">👤 ${escapeHtml(userName)}</span>` 
+            : '<span class="sender-label">📌 আপনি</span>'
+          }
+          ${escapeHtml(text)}
+          <span class="time">${timeStr}</span>
+        </div>
+      `;
+      if (sender === 'admin') adminMessages.push({ text, docId: doc.id });
+    });
+
+    chatMessages.innerHTML = html;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    markMessagesAsRead(userId);
+
+    // Auto-reply with dynamic admin name
+    const adminReplyMsg = await getAdminReplyMessage();
+    const hasAdminReply = adminMessages.some(msg => msg.text === adminReplyMsg || msg.text === welcomeText);
+    if (adminMessages.length > 0 && !hasAdminReply) {
+      try {
+        const msgRef = collection(db, 'chats', userId, 'messages');
+        await addDoc(msgRef, {
+          text: adminReplyMsg,
+          sender: 'admin',
+          timestamp: serverTimestamp(),
+          read: true
+        });
+        console.log('✅ অটো-রিপ্লাই পাঠানো হয়েছে');
+        loadAllUsers();
+      } catch (error) {
+        console.error('❌ অটো-রিপ্লাই পাঠাতে ব্যর্থ:', error);
+      }
+    }
+  }, (error) => {
+    console.error('Error loading messages:', error);
+    chatMessages.innerHTML = `
+      <div style="text-align:center;padding:20px;color:#dc2626;font-size:13px;">
+        <i class="fas fa-exclamation-circle"></i> মেসেজ লোড করতে ব্যর্থ
+      </div>
+    `;
+  });
+}
+
+// ─── MARK READ ─────────────────────────────────────────────
+async function markMessagesAsRead(userId) {
+  try {
+    const messagesRef = collection(db, 'chats', userId, 'messages');
+    const unreadQuery = query(messagesRef, where('sender', '==', 'user'), where('read', '==', false));
+    const unreadSnap = await getDocs(unreadQuery);
+    if (unreadSnap.size > 0) {
+      const batch = writeBatch(db);
+      unreadSnap.forEach(doc => batch.update(doc.ref, { read: true }));
+      await batch.commit();
+      loadAllUsers();
+    }
+  } catch (error) {}
+}
+
+// ─── SEND MESSAGE ──────────────────────────────────────────
+window.sendMessage = async function() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text || !currentUserId) {
+    if (!currentUserId) showToast('প্রথমে একজন ইউজার সিলেক্ট করুন!', 'warning');
+    return;
+  }
+  if (text.length > 500) { showToast('মেসেজ ৫০০ অক্ষরের বেশি হতে পারবে না!', 'error'); return; }
+  const sendBtn = document.getElementById('sendChatBtn');
+  sendBtn.disabled = true;
+  sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  try {
+    const messagesRef = collection(db, 'chats', currentUserId, 'messages');
+    await addDoc(messagesRef, {
+      text: text,
+      sender: 'admin',
+      timestamp: serverTimestamp(),
+      read: true
+    });
+    input.value = '';
+    input.style.height = 'auto';
+    showToast('✅ মেসেজ পাঠানো হয়েছে!', 'success');
+    loadAllUsers();
+  } catch (error) {
+    console.error('Error sending message:', error);
+    showToast('❌ মেসেজ পাঠাতে ব্যর্থ!', 'error');
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+    input.focus();
+  }
+};
+
+// ─── CLEAR CHAT ────────────────────────────────────────────
+window.clearChat = function() {
+  if (!currentUserId) return;
+  if (confirm('আপনি কি এই ইউজারের সমস্ত মেসেজ মুছে ফেলতে চান?')) {
+    const messagesRef = collection(db, 'chats', currentUserId, 'messages');
+    getDocs(messagesRef).then((snapshot) => {
+      const batch = writeBatch(db);
+      snapshot.forEach(doc => batch.delete(doc.ref));
+      return batch.commit();
+    }).then(() => {
+      showToast('✅ চ্যাট ক্লিয়ার করা হয়েছে!', 'success');
+      loadUserMessages(currentUserId);
+      loadAllUsers();
+    }).catch((error) => {
+      console.error('Error clearing chat:', error);
+      showToast('❌ চ্যাট ক্লিয়ার করতে ব্যর্থ!', 'error');
+    });
+  }
+};
+
+// ─── AUTO-REPLY SETTINGS ──────────────────────────────────
+const DEFAULT_WELCOME = 'স্বাগতম! কিছুক্ষনের মধ্যে সাপোর্ট টিম আপনার সাথে যোগাযোগ করবেন।';
+const DEFAULT_ADMIN_REPLY = 'ডাঃ মোঃ ওয়াহিদুজ্জামান মাসুম এর চেম্বার থেকে {adminName} বলছি, আপনাকে কিভাবে সাহায্য করতে পারি?';
+
+window.openAutoReplyModal = async function() {
+  document.getElementById('autoReplyModal').classList.add('active');
+  try {
+    const docRef = doc(db, 'settings', 'autoReply');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      document.getElementById('welcomeMsg').value = data.welcomeMessage || DEFAULT_WELCOME;
+      document.getElementById('adminReplyMsg').value = data.adminReplyMessage || DEFAULT_ADMIN_REPLY;
+    } else {
+      document.getElementById('welcomeMsg').value = DEFAULT_WELCOME;
+      document.getElementById('adminReplyMsg').value = DEFAULT_ADMIN_REPLY;
+    }
+  } catch (e) { console.error('Error loading settings:', e); }
+};
+window.closeAutoReplyModal = function() {
+  document.getElementById('autoReplyModal').classList.remove('active');
+};
+window.saveAutoReplySettings = async function() {
+  const welcome = document.getElementById('welcomeMsg').value.trim();
+  const adminReply = document.getElementById('adminReplyMsg').value.trim();
+  if (!welcome || !adminReply) { showToast('দুটি ফিল্ডই পূরণ করুন!', 'error'); return; }
+  try {
+    const docRef = doc(db, 'settings', 'autoReply');
+    await setDoc(docRef, { welcomeMessage: welcome, adminReplyMessage: adminReply, updatedAt: serverTimestamp() }, { merge: true });
+    showToast('✅ অটো রিপ্লাই সেটিংস সংরক্ষিত!', 'success');
+    closeAutoReplyModal();
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    showToast('❌ সংরক্ষণ করতে ব্যর্থ!', 'error');
+  }
+};
+
+async function getWelcomeMessage() {
+  try {
+    const docRef = doc(db, 'settings', 'autoReply');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists() && docSnap.data().welcomeMessage) return docSnap.data().welcomeMessage;
+  } catch (e) {}
+  return DEFAULT_WELCOME;
+}
+
+async function getAdminReplyMessage() {
+  try {
+    const docRef = doc(db, 'settings', 'autoReply');
+    const docSnap = await getDoc(docRef);
+    let template = DEFAULT_ADMIN_REPLY;
+    if (docSnap.exists() && docSnap.data().adminReplyMessage) {
+      template = docSnap.data().adminReplyMessage;
+    }
+    // 🔥 ডায়নামিক নাম বসান
+    const adminName = sessionStorage.getItem('adminName') || 'অ্যাডমিন';
+    return template.replace(/{adminName}/g, adminName);
+  } catch (e) {
+    const adminName = sessionStorage.getItem('adminName') || 'অ্যাডমিন';
+    return DEFAULT_ADMIN_REPLY.replace(/{adminName}/g, adminName);
+  }
+}
+
+async function loadAutoReplySettings() {}
+
+// ─── UTILITY ───────────────────────────────────────────────
+function formatTime(date) {
+  if (!date) return '';
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (date >= today) {
+    return date.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+  } else if (date >= yesterday) {
+    return 'গতকাল';
+  } else {
+    return date.toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' });
+  }
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function showToast(message, type = 'success', duration = 3000) {
+  const old = document.querySelector('.toast-container');
+  if (old) old.remove();
+  const container = document.createElement('div');
+  container.className = `toast-container toast-${type}`;
+  container.textContent = message;
+  document.body.appendChild(container);
+  setTimeout(() => {
+    container.style.opacity = '0';
+    container.style.transform = 'translateX(-50%) translateY(20px)';
+    container.style.transition = 'all 0.4s ease';
+    setTimeout(() => container.remove(), 400);
+  }, duration);
+}
+
+// Auto-scroll
+const observer = new MutationObserver(() => {
+  const el = document.getElementById('chatMessages');
+  if (el) el.scrollTop = el.scrollHeight;
+});
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('chatMessages');
+  if (el) observer.observe(el, { childList: true, subtree: true });
+});
+
+console.log('✅ অ্যাডমিন চ্যাট প্যানেল রেডি! (ব্লু থিম, মোবাইল স্লাইড, ডায়নামিক নাম)');
+
+// মোবাইল মেনু টগল করার জন্য গ্লোবাল ইভেন্ট লিসেনার
+document.addEventListener('click', function(e) {
+    const menuBtn = e.target.closest('#mobileMenuBtn');
+    if (menuBtn) {
+        const sidebar = document.getElementById('sidebar');
+        const icon = menuBtn.querySelector('i');
+        
+        if (sidebar) {
+            // টগল লজিক
+            sidebar.classList.toggle('mobile-open');
+            
+            // আইকন পরিবর্তন
+            if (sidebar.classList.contains('mobile-open')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-times');
+            } else {
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        }
+    }
+});
+</script>
+
+</body>
+</html>

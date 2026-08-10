@@ -105,16 +105,6 @@
             <span class="badge" id="sidebarBadge">
               <i class="fas fa-user-check"></i> সক্রিয়
             </span>
-            
-            <div class="stats">
-              <div class="stat-item">
-                <div class="label">📋 মোট সিরিয়াল</div>
-                <div class="value" id="sideTotal">0</div>
-              </div>
-              <div class="stat-item">
-                <div class="label">⏳ পেন্ডিং</div>
-                <div class="value" id="sidePending">0</div>
-              </div>
             </div>
           </div>
         </div>
@@ -599,25 +589,19 @@
   const MENU_CONFIG = {
     user: [
       { id: 'dashboard', icon: 'fa-tachometer-alt', label: 'ড্যাশবোর্ড', page: 'dashboard' },
-      { id: 'my-serials', icon: 'fa-list-alt', label: 'সিরিয়াল তালিকা', page: 'my-serials' },
-      { id: 'book-serial', icon: 'fa-calendar-plus', label: 'সিরিয়াল বুক', page: 'book-serial' },
       { id: 'profile', icon: 'fa-user-edit', label: 'প্রোফাইল', page: 'profile', isDropdown: true },
     ],
     admin: [
       { id: 'dashboard', icon: 'fa-tachometer-alt', label: 'ড্যাশবোর্ড', page: 'dashboard' },
-      { id: 'my-serials', icon: 'fa-list-alt', label: 'সিরিয়াল তালিকা', page: 'my-serials' },
-      { id: 'book-serial', icon: 'fa-calendar-plus', label: 'সিরিয়াল বুক', page: 'book-serial' },
       { id: 'tokenmanagement', icon: 'fa-ticket-alt', label: 'টোকেন ম্যানেজমেন্ট', page: 'tokenmanagement' },
+      { id: 'management', icon: 'fa-tasks', label: 'সিরিয়াল ম্যানেজমেন্ট', page: 'management' },
       { id: 'admin-chat', icon: 'fa-comment-dots', label: 'লাইভ চ্যাট', page: 'admin-chat' },
       { id: 'notice', icon: 'fa-bullhorn', label: 'নোটিশ', page: 'notice' },
       { id: 'profile', icon: 'fa-user-edit', label: 'প্রোফাইল', page: 'profile', isDropdown: true },
     ],
     owner: [
       { id: 'dashboard', icon: 'fa-tachometer-alt', label: 'ড্যাশবোর্ড', page: 'dashboard' },
-      { id: 'my-serials', icon: 'fa-list-alt', label: 'সিরিয়াল তালিকা', page: 'my-serials' },
-      { id: 'book-serial', icon: 'fa-calendar-plus', label: 'সিরিয়াল বুক', page: 'book-serial' },
       { id: 'tokenmanagement', icon: 'fa-ticket-alt', label: 'টোকেন ম্যানেজমেন্ট', page: 'tokenmanagement' },
-      { id: 'allserial', icon: 'fa-calendar-check', label: 'অ্যাপয়েন্টমেন্ট সমুহ', page: 'allserial' },
       { id: 'management', icon: 'fa-tasks', label: 'সিরিয়াল ম্যানেজমেন্ট', page: 'management' },
       { id: 'admincontrol', icon: 'fa-user-shield', label: 'অ্যাডমিন কন্ট্রোল', page: 'admincontrol' },
       { id: 'admin-chat', icon: 'fa-comment-dots', label: 'লাইভ চ্যাট', page: 'admin-chat' },
@@ -737,7 +721,7 @@ initProfile() {
   const roleColors = {
     user: { bg: '#dcfce7', color: '#15803d', label: '👤 ইউজার' },
     admin: { bg: '#dbeafe', color: '#2563eb', label: '🛡️ অ্যাডমিন' },
-    owner: { bg: '#fef3c7', color: '#d97706', label: '👑 ওনার' }
+    owner: { bg: '#fef3c7', color: '#d97706', label: '👑 সুপার অ্যাডমিন ' }
   };
   const r = roleColors[role] || roleColors.user;
   badge.style.background = r.bg;
@@ -1086,7 +1070,7 @@ async loadNameFromFirebase(phone) {
       const labels = {
         user: '👤 ইউজার',
         admin: '🛡️ অ্যাডমিন',
-        owner: '👑 ওনার'
+        owner: '👑 সুপার অ্যাডমিন'
       };
       return labels[role] || '👤 ইউজার';
     },

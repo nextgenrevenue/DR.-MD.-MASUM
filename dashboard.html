@@ -10,6 +10,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
   <script src="components-inline.js"></script>
   <script src="grid.js"></script>
@@ -156,6 +159,22 @@
       margin-bottom: 20px;
     }
 
+    .button-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* মোবাইলের এলিমেন্টগুলো ডেস্কটপে হাইড রাখার জন্য ডিফল্ট */
+    .mobile-filter-row-top,
+    .mobile-filter-row-status,
+    .mobile-filter-row-bottom,
+    .mobile-search-box,
+    .mobile-button-row {
+      display: none;
+    }
+
     @media (min-width: 1025px) {
       .admin-table-header {
         display: flex;
@@ -208,7 +227,7 @@
         flex-shrink: 0;
       }
       
-      .filter-group select {
+      .filter-group select, .header-actions select {
         padding: 7px 10px;
         border: 1px solid var(--border-color);
         border-radius: 6px;
@@ -227,7 +246,6 @@
         position: relative;
         width: 180px;
         flex-shrink: 0;
-        margin-left: 10px;
       }
       
       .search-box input {
@@ -257,7 +275,6 @@
         gap: 5px;
         flex-shrink: 0;
         height: 36px;
-        margin-left: 10px;
       }
       
       .download-btn {
@@ -276,27 +293,91 @@
         gap: 5px;
         flex-shrink: 0;
         height: 36px;
-        margin-left: 10px;
       }
       
       .download-btn:hover { background-color: #0284c7; }
-      
-      .mobile-date-picker-row,
-      .mobile-filter-row-1,
-      .mobile-filter-row-2,
-      .mobile-button-row { display: none !important; }
-      
       .search-icon { width: 14px; height: 14px; left: 10px; }
     }
 
     @media (max-width: 768px) {
+
+      .mobile-filter-row-bottom {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 4px !important;
+    width: 100% !important;
+    margin-bottom: 10px !important;
+    align-items: center;
+  }
+
+  .mobile-filter-row-bottom select {
+    width: 100% !important;
+    font-size: 10px !important;
+    padding: 6px 2px !important;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: 'Noto Sans Bengali', sans-serif;
+    background-color: var(--white);
+    color: var(--dark);
+    cursor: pointer;
+    height: 36px !important;
+    box-sizing: border-box;
+    text-align: center;
+  }
+
+  .mobile-search-box { 
+    position: relative !important; 
+    display: block !important; 
+    width: 100% !important;
+    margin-bottom: 0 !important;
+  }
+  
+  .mobile-search-box input {
+    width: 100% !important;
+    padding: 6px 4px 6px 24px !important;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: 'Noto Sans Bengali', sans-serif;
+    font-size: 10px !important;
+    display: block !important;
+    height: 36px !important;
+    box-sizing: border-box;
+  }
+
+  .mobile-search-box .search-icon {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    color: var(--gray);
+  }
+      .dashboard-cards {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+      }
+
+      .stat-card {
+        padding: 14px 10px;
+      }
+
+      .stat-card h3 {
+        font-size: 13px;
+        height: 36px;
+      }
+
+      .stat-card p {
+        font-size: 24px;
+      }
+
       .header-actions { display: none !important; }
       
       .admin-table-header {
         display: flex;
         flex-direction: column;
         gap: 12px;
-        margin-bottom: 15px;
+        margin-bottom: 12px;
         width: 100%;
       }
       
@@ -310,39 +391,41 @@
         display: block !important;
       }
       
-      .mobile-date-picker-row {
-        display: flex !important;
+      /* ১ লাইনে ৩টি কলাম (তারিখ, সার্ভিস, রোগীর ধরন) */
+      .mobile-filter-row-top {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
         width: 100%;
         order: 2;
       }
       
-      .mobile-date-picker-row .date-picker {
+      .mobile-filter-row-top .date-picker,
+      .mobile-filter-row-top select {
         width: 100%;
-        font-size: 14px;
-        padding: 10px 12px;
+        font-size: 11px;
+        padding: 8px 4px;
         border: 1px solid var(--border-color);
         border-radius: 6px;
         font-family: 'Noto Sans Bengali', sans-serif;
         background-color: var(--white);
         color: var(--dark);
         cursor: pointer;
-        display: block !important;
-        height: 40px;
+        height: 38px;
         box-sizing: border-box;
+        text-align: center;
       }
-      
-      .mobile-filter-row-1 {
+
+      /* কল ও টোকেন স্ট্যাটাস ফিল্টার (২ কলাম) */
+      .mobile-filter-row-status {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr);
         gap: 8px;
         width: 100%;
-        order: 3;
-        align-items: stretch;
+        margin-bottom: 12px;
       }
-      
-      .mobile-filter-row-1 .filter-group { display: contents !important; }
-      
-      .mobile-filter-row-1 select {
+
+      .mobile-filter-row-status select {
         width: 100%;
         font-size: 13px;
         padding: 10px 12px;
@@ -352,36 +435,15 @@
         background-color: var(--white);
         color: var(--dark);
         cursor: pointer;
-        display: block !important;
         height: 40px;
         box-sizing: border-box;
       }
       
-      .mobile-filter-row-2 {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr 2fr;
-        gap: 8px;
-        width: 100%;
-        order: 4;
-        align-items: stretch;
+      .mobile-search-box { 
+        position: relative; 
+        display: block !important; 
+        margin-bottom: 12px;
       }
-      
-      .mobile-filter-row-2 select {
-        width: 100%;
-        font-size: 13px;
-        padding: 10px 12px;
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        font-family: 'Noto Sans Bengali', sans-serif;
-        background-color: var(--white);
-        color: var(--dark);
-        cursor: pointer;
-        display: block !important;
-        height: 40px;
-        box-sizing: border-box;
-      }
-      
-      .mobile-search-box { position: relative; display: block !important; }
       
       .mobile-search-box input {
         width: 100%;
@@ -400,8 +462,6 @@
         grid-template-columns: repeat(2, 1fr);
         gap: 8px;
         width: 100%;
-        order: 5;
-        margin-top: 5px;
       }
       
       .mobile-add-btn, .mobile-download-btn {
@@ -510,12 +570,6 @@
     <div id="sidebar-container"></div> 
     
     <main class="admin-main">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="color: var(--dark); font-size: 22px;">রিয়েল-টাইম সিরিয়াল ট্র্যাকিং</h2> 
-        <a href="/appointment.html" style="padding: 8px 16px; background: var(--primary); color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">
-          <i class="fas fa-calendar-plus"></i> অ্যাপয়েন্টমেন্ট বুকিং ফর্ম
-        </a>
-      </div>
       
       <!-- ড্যাশবোর্ড কার্ড -->
       <div class="dashboard-cards"> 
@@ -555,6 +609,25 @@
         <div class="admin-table-header">
           <h2>আজকের অ্যাপয়েন্টমেন্ট</h2>
           
+          <!-- মোবাইলে ৩টি ফিল্টার ১ লাইনে ৩টি কলামে রাখার জন্য -->
+          <div class="mobile-filter-row-top">
+            <input type="date" id="dateFilterMobile" class="date-picker" value="">
+            <select id="serviceFilterMobile">
+              <option value="all">সকল সার্ভিস</option>
+              <option value="general">সাধারণ সিরিয়াল</option>
+              <option value="microneedling">মাইক্রোনিডলিং</option>
+              <option value="prp">পি আর পি</option>
+              <option value="cryosurgery">ক্রায়োসার্জারি</option>
+              <option value="electrocautery">ইলেক্ট্রোক্যাটারি</option>
+            </select>
+            <select id="typeFilterMobile">
+              <option value="all">সকল রোগী</option>
+              <option value="new">নতুন রোগী</option>
+              <option value="old">পুরাতন রোগী</option>
+            </select>
+          </div>
+          
+          <!-- ডেস্কটপের ফিল্টার সেকশন -->
           <div class="header-actions">
             <div class="filter-group">
               <input type="date" id="dateFilter" class="date-picker" value="">
@@ -573,19 +646,19 @@
                 <option value="new">নতুন রোগী</option>
                 <option value="old">পুরাতন রোগী</option>
               </select>
-              
-              <select id="call-status-filter">
-                <option value="all">কল স্ট্যাটাস</option>
-                <option value="called">কল করা হয়েছে</option>
-                <option value="not_called">কল করা হয়নি</option>
-              </select>
-              
-              <select id="token-status-filter">
-                <option value="all">টোকেন স্ট্যাটাস</option>
-                <option value="given">টোকেন দেওয়া হয়েছে</option>
-                <option value="not_given">টোকেন দেওয়া হয়নি</option>
-              </select>
             </div>
+              
+            <select id="call-status-filter">
+              <option value="all">কল স্ট্যাটাস</option>
+              <option value="called">কল করা হয়েছে</option>
+              <option value="not_called">কল করা হয়নি</option>
+            </select>
+            
+            <select id="token-status-filter">
+              <option value="all">টোকেন স্ট্যাটাস</option>
+              <option value="given">টোকেন দেওয়া হয়েছে</option>
+              <option value="not_given">টোকেন দেওয়া হয়নি</option>
+            </select>
             
             <div class="search-box">
               <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -606,64 +679,42 @@
               </button>
             </div>
           </div>
-          
-          <div class="mobile-date-picker-row">
-            <input type="date" id="dateFilterMobile" class="date-picker" value="">
-          </div>
-          
-          <div class="mobile-filter-row-1">
-            <div class="filter-group">
-              <select id="serviceFilterMobile">
-                <option value="all">সকল সার্ভিস</option>
-                <option value="general">সাধারণ সিরিয়াল</option>
-                <option value="microneedling">মাইক্রোনিডলিং</option>
-                <option value="prp">পি আর পি</option>
-                <option value="cryosurgery">ক্রায়োসার্জারি</option>
-                <option value="electrocautery">ইলেক্ট্রোক্যাটারি</option>
-              </select>
-              
-              <select id="typeFilterMobile">
-                <option value="all">সকল রোগী</option>
-                <option value="new">নতুন রোগী</option>
-                <option value="old">পুরাতন রোগী</option>
-              </select>
-            </div>
-          </div>
-          
-          <div class="mobile-filter-row-2">
-            <select id="call-status-filter-mobile">
-              <option value="all">কল স্ট্যাটাস</option>
-              <option value="called">কল করা হয়েছে</option>
-              <option value="not_called">কল করা হয়নি</option>
-            </select>
-
-            <select id="token-status-filter-mobile">
-              <option value="all">টোকেন স্ট্যাটাস</option>
-              <option value="given">টোকেন দেওয়া হয়েছে</option>
-              <option value="not_given">টোকেন দেওয়া হয়নি</option>
-            </select>
-            
-            <div class="search-box mobile-search-box">
-              <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-              </svg>
-              <input type="text" id="searchInputMobile" placeholder="নাম, ফোন বা সিরিয়াল..." />
-            </div>
-          </div>
-          
-          <div class="mobile-button-row">
-            <button class="add-btn mobile-add-btn" id="openAddSerialModalBtnMobile">
-              <i class="fas fa-plus-circle"></i>
-              সিরিয়াল যুক্ত করুন
-            </button>
-            
-            <button class="download-btn mobile-download-btn" id="downloadDataBtnMobile">
-              <i class="fas fa-download"></i>
-              ডেটা ডাউনলোড
-            </button>
-          </div>
         </div>
-        
+          
+        <!-- মোবাইলের অন্যান্য ফিল্টার ও বাটন -->
+<div class="mobile-filter-row-bottom">
+  <select id="call-status-filter-mobile">
+    <option value="all">কল স্ট্যাটাস</option>
+    <option value="called">কল করা হয়েছে</option>
+    <option value="not_called">কল করা হয়নি</option>
+  </select>
+
+  <select id="token-status-filter-mobile">
+    <option value="all">টোকেন স্ট্যাটাস</option>
+    <option value="given">টোকেন দেওয়া হয়েছে</option>
+    <option value="not_given">টোকেন দেওয়া হয়নি</option>
+  </select>
+
+  <div class="search-box mobile-search-box">
+    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+    </svg>
+    <input type="text" id="searchInputMobile" placeholder="খুঁজুন..." />
+  </div>
+</div>
+          
+        <div class="mobile-button-row">
+          <button class="add-btn mobile-add-btn" id="openAddSerialModalBtnMobile">
+            <i class="fas fa-plus-circle"></i>
+            সিরিয়াল যুক্ত করুন
+          </button>
+          
+          <button class="download-btn mobile-download-btn" id="downloadDataBtnMobile">
+            <i class="fas fa-download"></i>
+            ডেটা ডাউনলোড
+          </button>
+        </div>
+
         <div id="statusMessage" class="stats-info">
           মোট বুকিং: <span id="filteredCount">০</span> টি। প্রদর্শিত: <span id="displayedCount">০</span> টি।
         </div>
@@ -700,16 +751,41 @@
   <div id="footer-container"></div>
   
 <script>
-    // =======================================================
-    // AUTHENTICATION CHECK
-    // =======================================================
-    function checkAuthentication() {
-        return true; // Bypass auth for demo/dev purposes
+function checkAuthentication() {
+      const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
+      const loginTime = sessionStorage.getItem('loginTime');
+      
+      if (!isLoggedIn) {
+        Swal.fire({
+          title: 'Need Login',
+          text: 'Please login first!!',
+          icon: 'warning',
+          confirmButtonText: 'Go to Login page'
+        }).then(() => {
+          window.location.href = '/login';
+        });
+        return false;
+      }
+      
+      const currentTime = new Date().getTime();
+      const sessionDuration = 2 * 60 * 60 * 1000;
+      
+      if (currentTime - parseInt(loginTime) > sessionDuration) {
+        sessionStorage.clear();
+        Swal.fire({
+          title: 'Session expired',
+          text: 'Session expired! Please login again.',
+          icon: 'info',
+          confirmButtonText: 'ok'
+        }).then(() => {
+          window.location.href = '/login';
+        });
+        return false;
+      }
+      
+      return true;
     }
 
-    // =======================================================
-    // FIREBASE CONFIG
-    // =======================================================
     const firebaseConfig = {
         apiKey: "AIzaSyDAdGUtNVgs5UspQeH8hL0i-L0WvPpOWnE",
         authDomain: "appointment-e2050.firebaseapp.com",
@@ -737,9 +813,6 @@
         console.error("❌ Firebase initialization error:", e);
     }
 
-    // =======================================================
-    // DOM REFS
-    // =======================================================
     const elements = {
         loadingMessage: document.getElementById('loadingMessage'),
         appointmentsTable: document.getElementById('appointmentsTable'),
@@ -769,9 +842,6 @@
         downloadDataBtnMobile: document.getElementById('downloadDataBtnMobile'),
     };
 
-    // =======================================================
-    // UTILITY FUNCTIONS
-    // =======================================================
     const toBengaliNumber = (num) => {
         if (num === null || num === undefined || num === '—') return '—';
         return String(num).replace(/\d/g, d => '০১২৩৪৫৬৭৮৯'[d]);
@@ -779,12 +849,8 @@
 
     const setDefaultDate = () => {
         const today = new Date().toISOString().split('T')[0];
-        if (elements.dateFilter) {
-            elements.dateFilter.value = today;
-        }
-        if (elements.dateFilterMobile) {
-            elements.dateFilterMobile.value = today;
-        }
+        if (elements.dateFilter) elements.dateFilter.value = today;
+        if (elements.dateFilterMobile) elements.dateFilterMobile.value = today;
         return today;
     };
 
@@ -803,9 +869,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             font-family: 'Noto Sans Bengali', sans-serif;
         `;
-        const colors = {
-            success: '#10b981', error: '#ef4444', warning: '#f59e0b', info: '#3b82f6'
-        };
+        const colors = { success: '#10b981', error: '#ef4444', warning: '#f59e0b', info: '#3b82f6' };
         alertEl.style.background = colors[type] || colors.info;
         alertEl.textContent = message;
         document.body.appendChild(alertEl);
@@ -828,9 +892,6 @@
         return `${yy}${mm}${dd}`;
     };
 
-    // =======================================================
-    // DASHBOARD CARDS UPDATE
-    // =======================================================
     async function updateDashboardCards(snapshot) {
         if (!snapshot) return;
 
@@ -875,9 +936,6 @@
         updateStatusMessage(confirmedCount);
     }
 
-    // =======================================================
-    // TABLE MANAGER SETUP
-    // =======================================================
     function setupTableManager() {
         if (!db) return;
 
@@ -1069,11 +1127,16 @@
         attachSearch(elements.searchInputMobile, elements.searchInput);
 
         const filterMap = {
-            dateFilter: 'date', dateFilterMobile: 'date',
-            serviceFilter: 'service', serviceFilterMobile: 'service',
-            typeFilter: 'type', typeFilterMobile: 'type',
-            callStatusFilter: 'callStatus', callStatusFilterMobile: 'callStatus',
-            tokenStatusFilter: 'tokenStatus', tokenStatusFilterMobile: 'tokenStatus'
+            'dateFilter': 'date',
+            'dateFilterMobile': 'date',
+            'serviceFilter': 'service',
+            'serviceFilterMobile': 'service',
+            'typeFilter': 'type',
+            'typeFilterMobile': 'type',
+            'call-status-filter': 'callStatus',        
+            'call-status-filter-mobile': 'callStatus',   
+            'token-status-filter': 'tokenStatus',         
+            'token-status-filter-mobile': 'tokenStatus'   
         };
         Object.keys(filterMap).forEach(id => {
             const el = document.getElementById(id);
@@ -1089,6 +1152,9 @@
     }
 
     function initializeDashboard() {
+      if (!checkAuthentication()) {
+        return; 
+    }
         if (!db) return;
         if (typeof TokenModal !== 'undefined') {
             window.tokenModal = new TokenModal({

@@ -1555,7 +1555,19 @@ document.getElementById('appointmentForm').addEventListener('submit', async func
         return false;
     }
 
+    // ==================== 1. আগে customDocId তৈরি করুন ====================
+    const dateObj = new Date(selectedDateStr);
+    const yy = String(dateObj.getFullYear()).slice(-2);
+    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+    const yymmdd = `${yy}${mm}${dd}`;
+
+    const formattedSerial = String(selectedSerial).padStart(2, '0');
+    const customDocId = `${yymmdd}-${formattedSerial}`; 
+
+    // ==================== 2. এবার appointmentData-তে ব্যবহার করুন ====================
     const appointmentData = {
+        appointmentId: customDocId, 
         name: nameInput.value.trim(),
         phone: selectedPhone,
         ageYears: finalAgeData.dbYears,
@@ -1582,16 +1594,9 @@ document.getElementById('appointmentForm').addEventListener('submit', async func
         submitBtn.classList.add('loading');
         submitBtn.textContent = 'সাবমিট করা হচ্ছে...';
 
-        const dateObj = new Date(selectedDateStr);
-        const yy = String(dateObj.getFullYear()).slice(-2);
-        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const dd = String(dateObj.getDate()).padStart(2, '0');
-        const yymmdd = `${yy}${mm}${dd}`;
-
         const typeFolder = (typeSelect.value === 'new' || typeSelect.value === 'নতুন') ? 'new' : 'old';
-        const formattedSerial = String(selectedSerial).padStart(2, '0');
-        const customDocId = `${yymmdd}-${formattedSerial}`;
 
+        // ==================== 3. Firestore রেফারেন্স ====================
         const docRef = db.collection('appointments')
             .doc(yymmdd)
             .collection(typeFolder)
@@ -1624,7 +1629,6 @@ document.getElementById('appointmentForm').addEventListener('submit', async func
         submitBtn.textContent = 'সাবমিট করুন';
     }
 });
-
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', async function () {
     console.log('🏁 Appointment form DOM loaded');

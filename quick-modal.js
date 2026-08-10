@@ -84,18 +84,18 @@ class QuickModal {
         modalDiv.className = 'quick-modal-overlay';
         modalDiv.style.cssText = `
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; 
             overflow-y: auto; padding: 20px 10px;
         `;
 
         modalDiv.innerHTML = `
             <div class="quick-modal-content" style="background: white; border-radius: 12px; width: 100%; max-width: 680px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; position: relative; margin: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 12px;">
-                    <h3 id="quickModalTitle" style="margin: 0; color: #1d4ed8; font-size: 20px; font-weight: 700;">⚡ নতুন দ্রুত বুকিং</h3>
+                    <h3 id="quickModalTitle" style="margin: 0; color: #1d4ed8; font-size: 20px; font-weight: 700;">⚡ সিরিয়াল যুক্ত করুন</h3>
                     <button id="closeQuickModalBtn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">&times;</button>
                 </div>
 
-                <form id="quickAppointmentForm" style="display: flex; flex-direction: column; gap: 16px;">
+                <form id="quickAppointmentForm" style="display: flex; flex-direction: column; gap: 16px;"> 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <div>
                             <label style="font-weight: 600; font-size: 14px; margin-bottom: 4px; display: block; color: #374151;">তারিখ *</label>
@@ -316,7 +316,7 @@ class QuickModal {
         this.editDocId = null;
         this.originalData = null;
 
-        document.getElementById('quickModalTitle').textContent = '⚡ নতুন দ্রুত বুকিং';
+        document.getElementById('quickModalTitle').textContent = '⚡ সিরিয়াল যুক্ত করুন';
         document.getElementById('quickSubmitBtn').textContent = 'সংরক্ষণ করুন';
 
         const today = new Date().toISOString().split('T')[0];
@@ -735,6 +735,7 @@ class QuickModal {
             const ageStr = this.createAgeString(patient.years, patient.months, patient.days);
 
             const appointmentData = {
+                appointmentId: customDocId,
                 name: patient.name,
                 phone: data.phone,
                 ageYears: patient.years,
