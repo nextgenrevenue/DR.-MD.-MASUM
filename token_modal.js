@@ -501,33 +501,45 @@ class TokenModal {
                 this.showAlert(`✅ টোকেন ${tokenNumber} তৈরি করা হয়েছে! (সিরিয়াল: ${originalSerial})`, 'success');
             }
 
-            // 4. Update Main Appointment Document safely in place
-            const updatePayload = {
-                tokenGiven: true,
-                tokenNumber: tokenNumber,
-                tokenTimestamp: this.firebase?.firestore?.FieldValue?.serverTimestamp() || new Date(),
-                appointmentId: this.currentTokenId,
-                tokenFee: fee,
-                tokenPaid: paid,
-                givenBy: givenBy,
-                patientType: targetPatientType,
-                type: targetPatientType,
-                lastTokenUpdate: this.firebase?.firestore?.FieldValue?.serverTimestamp() || new Date()
-            };
+// 4. Update Main Appointment Document safely in place
+const updatePayload = {
+    tokenGiven: true,
+    tokenNumber: tokenNumber,
+    tokenTimestamp: this.firebase?.firestore?.FieldValue?.serverTimestamp() || new Date(),
+    appointmentId: this.currentTokenId,
+    tokenFee: fee,
+    tokenPaid: paid,
+    givenBy: givenBy,
+    patientType: targetPatientType,
+    type: targetPatientType,
+    serial: originalSerial, // মূল সিরিয়াল বজায় রাখা
+    appointmentSerial: originalSerial,
+    lastTokenUpdate: this.firebase?.firestore?.FieldValue?.serverTimestamp() || new Date()
+};
 
-            if (this.originalAppointmentPath) {
-                try {
-                    await this.db.doc(this.originalAppointmentPath).set(updatePayload, { merge: true });
-                } catch (e) {
-                    console.warn("Appointment update warning:", e);
-                }
-            } else if (yymmdd && this.currentTokenId) {
-                try {
-                    await this.db.collection('appointments').doc(yymmdd).collection(origPatientType).doc(this.currentTokenId).set(updatePayload, { merge: true });
-                } catch (e) {
-                    console.warn("Appointment update fallback warning:", e);
-                }
-            }
+// যদি রোগীর ধরন (Type) পরিবর্তন হয়, তবে পুরনো লোকেশন থেকে ডকুমেন্ট ডিলিট করে নতুন লোকেশনে মুভ করুন
+if (origPatientType !== targetPatientType) {
+    const oldPath = this.originalAppointmentPath || `appointments/${yymmdd}/${origPatientType}/${this.currentTokenId}`;
+    const newPath = `appointments/${yymmdd}/${targetPatientType}/${this.currentTokenId}`;
+
+    // ১. পুরনো ডকুমেন্ট কপি করে নতুন সাব-কলেকশনে সেভ করুন
+    await this.db.doc(newPath).set({
+        ...fetchedData,
+        ...updatePayload
+    }, { merge: true });
+
+    // ২. পুরনো সাব-কলেকশন থেকে ডিলিট করে দিন যেন ডুপ্লিকেট না হয়
+    try {
+        await this.db.doc(oldPath).delete();
+    } catch (e) {
+        console.warn("Old appointment deletion warning:", e);
+    }
+} else {
+    // যদি টাইপ পরিবর্তন না হয়, তবে সরাসরি আপডেট করুন
+    if (this.originalAppointmentPath) {
+        await this.db.doc(this.originalAppointmentPath).set(updatePayload, { merge: true });
+    }
+}
 
             const savedTokenNum = tokenNumber;
             this.closeModal();
