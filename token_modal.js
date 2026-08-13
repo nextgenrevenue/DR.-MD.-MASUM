@@ -117,34 +117,40 @@ class TokenModal {
                 }
             }
 
-            // Check subcollection specifically matching the patient type
-            let paymentDocData = null;
-            let paymentDocPath = null;
-            const primarySubcol = patientType === 'old' ? 'payment_old' : 'payment_new';
+// Check subcollections (both payment_new and payment_old)
+let paymentDocData = null;
+let paymentDocPath = null;
+const subcols = ['payment_new', 'payment_old'];
 
-            if (yymmdd && docId) {
-                // 1. Direct doc ID check in primary subcollection
-                try {
-                    const directRef = this.db.collection('paymentHistories').doc(yymmdd).collection(primarySubcol).doc(docId);
-                    const directSnap = await directRef.get();
-                    if (directSnap.exists) {
-                        paymentDocData = directSnap.data();
-                        paymentDocPath = directSnap.ref.path;
-                    }
-                } catch (e) {}
-
-                // 2. Query by appointmentId in primary subcollection
-                if (!paymentDocData) {
-                    try {
-                        const snap = await this.db.collection('paymentHistories').doc(yymmdd).collection(primarySubcol)
-                            .where('appointmentId', '==', String(docId)).limit(1).get();
-                        if (!snap.empty) {
-                            paymentDocData = snap.docs[0].data();
-                            paymentDocPath = snap.docs[0].ref.path;
-                        }
-                    } catch (e) {}
-                }
+if (yymmdd && docId) {
+    // 1. Direct doc ID check in both subcollections
+    for (const subcol of subcols) {
+        try {
+            const directRef = this.db.collection('paymentHistories').doc(yymmdd).collection(subcol).doc(docId);
+            const directSnap = await directRef.get();
+            if (directSnap.exists) {
+                paymentDocData = directSnap.data();
+                paymentDocPath = directSnap.ref.path;
+                break;
             }
+        } catch (e) {}
+    }
+
+    // 2. Query by appointmentId in both subcollections
+    if (!paymentDocData) {
+        for (const subcol of subcols) {
+            try {
+                const snap = await this.db.collection('paymentHistories').doc(yymmdd).collection(subcol)
+                    .where('appointmentId', '==', String(docId)).limit(1).get();
+                if (!snap.empty) {
+                    paymentDocData = snap.docs[0].data();
+                    paymentDocPath = snap.docs[0].ref.path;
+                    break;
+                }
+            } catch (e) {}
+        }
+    }
+}
 
             const finalData = { ...mainData, ...(paymentDocData || {}) };
             this.paymentDocPath = paymentDocPath;
@@ -359,33 +365,44 @@ class TokenModal {
             const origPatientType = (this.originalPatientType || 'new').toLowerCase() === 'old' ? 'old' : 'new';
             const origSubcol = origPatientType === 'old' ? 'payment_old' : 'payment_new';
 
-            // 2. Locate existing payment record Specifically for THIS patient
-            let existingDoc = null;
-            if (this.paymentDocPath) {
-                try {
-                    const snap = await this.db.doc(this.paymentDocPath).get();
-                    if (snap.exists) {
-                        existingDoc = snap;
-                    }
-                } catch (e) {}
-            }
+           // 2. Locate existing payment record Specifically for THIS patient
+let existingDoc = null;
+if (this.paymentDocPath) {
+    try {
+        const snap = await this.db.doc(this.paymentDocPath).get();
+        if (snap.exists) {
+            existingDoc = snap;
+        }
+    } catch (e) {}
+}
 
-            if (!existingDoc && yymmdd && this.currentTokenId) {
-                // Direct lookup by exact appointment docId in origSubcol
-                try {
-                    const snap = await this.db.collection('paymentHistories').doc(yymmdd)
-                        .collection(origSubcol).doc(this.currentTokenId).get();
-                    if (snap.exists) existingDoc = snap;
-                } catch (e) {}
-            }
+const subcols = ['payment_new', 'payment_old'];
 
-            if (!existingDoc && yymmdd && this.currentTokenId) {
-                try {
-                    const snap = await this.db.collection('paymentHistories').doc(yymmdd)
-                        .collection(origSubcol).where('appointmentId', '==', String(this.currentTokenId)).limit(1).get();
-                    if (!snap.empty) existingDoc = snap.docs[0];
-                } catch (e) {}
+if (!existingDoc && yymmdd && this.currentTokenId) {
+    for (const subcol of subcols) {
+        try {
+            const snap = await this.db.collection('paymentHistories').doc(yymmdd)
+                .collection(subcol).doc(this.currentTokenId).get();
+            if (snap.exists) {
+                existingDoc = snap;
+                break;
             }
+        } catch (e) {}
+    }
+}
+
+if (!existingDoc && yymmdd && this.currentTokenId) {
+    for (const subcol of subcols) {
+        try {
+            const snap = await this.db.collection('paymentHistories').doc(yymmdd)
+                .collection(subcol).where('appointmentId', '==', String(this.currentTokenId)).limit(1).get();
+            if (!snap.empty) {
+                existingDoc = snap.docs[0];
+                break;
+            }
+        } catch (e) {}
+    }
+}
 
             let tokenNumber;
 
@@ -501,7 +518,7 @@ class TokenModal {
                 this.showAlert(`✅ টোকেন ${tokenNumber} তৈরি করা হয়েছে! (সিরিয়াল: ${originalSerial})`, 'success');
             }
 
-// 4. Update Main Appointment Document safely in place
+// 4. Update Main Appointment Document safely in place (Keep original patient type in appointment)
 const updatePayload = {
     tokenGiven: true,
     tokenNumber: tokenNumber,
@@ -510,34 +527,21 @@ const updatePayload = {
     tokenFee: fee,
     tokenPaid: paid,
     givenBy: givenBy,
-    patientType: targetPatientType,
-    type: targetPatientType,
-    serial: originalSerial, // মূল সিরিয়াল বজায় রাখা
-    appointmentSerial: originalSerial,
+    tokenPatientType: targetPatientType, // শুধুমাত্র টোকেনের জন্য টাইপ সংরক্ষণ
     lastTokenUpdate: this.firebase?.firestore?.FieldValue?.serverTimestamp() || new Date()
 };
 
-// যদি রোগীর ধরন (Type) পরিবর্তন হয়, তবে পুরনো লোকেশন থেকে ডকুমেন্ট ডিলিট করে নতুন লোকেশনে মুভ করুন
-if (origPatientType !== targetPatientType) {
-    const oldPath = this.originalAppointmentPath || `appointments/${yymmdd}/${origPatientType}/${this.currentTokenId}`;
-    const newPath = `appointments/${yymmdd}/${targetPatientType}/${this.currentTokenId}`;
-
-    // ১. পুরনো ডকুমেন্ট কপি করে নতুন সাব-কলেকশনে সেভ করুন
-    await this.db.doc(newPath).set({
-        ...fetchedData,
-        ...updatePayload
-    }, { merge: true });
-
-    // ২. পুরনো সাব-কলেকশন থেকে ডিলিট করে দিন যেন ডুপ্লিকেট না হয়
+if (this.originalAppointmentPath) {
     try {
-        await this.db.doc(oldPath).delete();
-    } catch (e) {
-        console.warn("Old appointment deletion warning:", e);
-    }
-} else {
-    // যদি টাইপ পরিবর্তন না হয়, তবে সরাসরি আপডেট করুন
-    if (this.originalAppointmentPath) {
         await this.db.doc(this.originalAppointmentPath).set(updatePayload, { merge: true });
+    } catch (e) {
+        console.warn("Appointment update warning:", e);
+    }
+} else if (yymmdd && this.currentTokenId) {
+    try {
+        await this.db.collection('appointments').doc(yymmdd).collection(origPatientType).doc(this.currentTokenId).set(updatePayload, { merge: true });
+    } catch (e) {
+        console.warn("Appointment update fallback warning:", e);
     }
 }
 
