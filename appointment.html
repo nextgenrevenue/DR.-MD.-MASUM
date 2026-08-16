@@ -1566,27 +1566,29 @@ document.getElementById('appointmentForm').addEventListener('submit', async func
     const customDocId = `${yymmdd}-${formattedSerial}`; 
 
     // ==================== 2. এবার appointmentData-তে ব্যবহার করুন ====================
-    const appointmentData = {
-        appointmentId: customDocId, 
-        name: nameInput.value.trim(),
-        phone: selectedPhone,
-        ageYears: finalAgeData.dbYears,
-        ageMonths: finalAgeData.dbMonths,
-        ageDays: finalAgeData.dbDays,
-        ageString: finalAgeData.ageDisplay,
-        ageDisplay: finalAgeData.ageDisplay,
-        originalInput: finalAgeData.ageInputText,
-        patientType: typeSelect.value,
-        serviceType: serviceType,
-        date: selectedDateStr,
-        appointmentDate: selectedDateStr,
-        day: dayName,
-        time: timeSelect.value,
-        serial: selectedSerial,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        status: 'confirmed',
-        age: finalAgeData.ageInMonths
-    };
+const appointmentData = {
+    appointmentId: customDocId, 
+    name: nameInput.value.trim(),
+    phone: selectedPhone,
+    ageYears: finalAgeData.dbYears,
+    ageMonths: finalAgeData.dbMonths,
+    ageDays: finalAgeData.dbDays,
+    ageString: finalAgeData.ageDisplay, 
+    ageDisplay: finalAgeData.ageDisplay,
+    originalInput: finalAgeData.ageInputText,
+    patientType: typeSelect.value,
+    type: (serviceType === 'general') ? typeSelect.value : 'সার্জারী',
+    serviceType: serviceType,
+    service: serviceType,
+    date: selectedDateStr,
+    appointmentDate: selectedDateStr,
+    day: dayName,
+    time: timeSelect.value,
+    serial: selectedSerial,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    status: 'confirmed',
+    age: finalAgeData.ageInMonths
+};
 
     currentAppointmentData = appointmentData;
 
@@ -1594,7 +1596,12 @@ document.getElementById('appointmentForm').addEventListener('submit', async func
         submitBtn.classList.add('loading');
         submitBtn.textContent = 'সাবমিট করা হচ্ছে...';
 
-        const typeFolder = (typeSelect.value === 'new' || typeSelect.value === 'নতুন') ? 'new' : 'old';
+        let typeFolder = 'new';
+if (serviceType === 'general') {
+    typeFolder = (typeSelect.value === 'old' || typeSelect.value === 'পুরাতন') ? 'old' : 'new';
+} else {
+    typeFolder = 'surgery'; // সার্জারি বা অন্য চিকিৎসার জন্য
+}
 
         // ==================== 3. Firestore রেফারেন্স ====================
         const docRef = db.collection('appointments')

@@ -184,13 +184,13 @@ class TableManager {
         });
     }
 
-    // ৩. রোগীর ধরন (Type) ফিল্টার - সার্জারী ও বাংলা টেক্সট সাপোর্ট
+    // ৩. রোগীর ধরন (Type) ফিল্টার - সার্জারি ও বাংলা টেক্সট সাপোর্ট
     if (f.type && f.type !== 'all') {
         result = result.filter(item => {
             const t = (item.data.patientType || item.data.type || 'new').toLowerCase();
             
             if (f.type === 'surgery') {
-                return t === 'surgery' || t === 'সার্জারী';
+                return t === 'surgery' || t === 'সার্জারি';
             }
             if (f.type === 'old') {
                 return t === 'old' || t === 'পুরাতন';
@@ -265,8 +265,8 @@ class TableManager {
             let typeText = 'নতুন';
 if (pType === 'old') {
     typeText = 'পুরাতন';
-} else if (pType === 'surgery' || pType === 'সার্জারী') {
-    typeText = 'সার্জারী';
+} else if (pType === 'surgery' || pType === 'সার্জারি') {
+    typeText = 'সার্জারি';
 }
             const called = data.called === true;
             const tokenGiven = data.tokenGiven === true;
