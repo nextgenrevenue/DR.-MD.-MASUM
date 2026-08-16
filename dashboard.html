@@ -847,12 +847,12 @@ function checkAuthentication() {
         return String(num).replace(/\d/g, d => '০১২৩৪৫৬৭৮৯'[d]);
     };
 
-    const setDefaultDate = () => {
-        const today = new Date().toISOString().split('T')[0];
-        if (elements.dateFilter) elements.dateFilter.value = today;
-        if (elements.dateFilterMobile) elements.dateFilterMobile.value = today;
-        return today;
-    };
+const setDefaultDate = () => {
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
+    if (elements.dateFilter) elements.dateFilter.value = today;
+    if (elements.dateFilterMobile) elements.dateFilterMobile.value = today;
+    return today;
+};
 
     const updateStatusMessage = (count) => {
         if (elements.filteredCount && elements.displayedCount) {
@@ -950,20 +950,27 @@ function checkAuthentication() {
             tbodyId: 'appointmentsBody',
             loadingMessageId: 'loadingMessage',
 
-            onStatusUpdate: async (docId, field, newStatus, button) => {
-                const item = appointmentsData.find(a => a.id === docId);
-                if (!item) return showAlert('অ্যাপয়েন্টমেন্ট পাওয়া যায়নি', 'error');
-                const yymmdd = getYYMMDD(item.data.date);
-                const patientType = (item.data.patientType || item.data.type || 'new').toLowerCase();
-                try {
-                    await db.collection('appointments').doc(yymmdd)
-                        .collection(patientType).doc(docId)
-                        .update({ [field]: newStatus, [`${field}Timestamp`]: firebase.firestore.FieldValue.serverTimestamp() });
-                    showAlert('স্ট্যাটাস আপডেট হয়েছে', 'success');
-                } catch (error) {
-                    showAlert('আপডেটে সমস্যা হয়েছে', 'error');
-                }
-            },
+onStatusUpdate: async (docId, patientType, field, newStatus, button) => {
+    // patientType না থাকলে ডেটা থেকে খুঁজে বের করা
+    const item = appointmentsData.find(a => a.id === docId);
+    if (!item) return showAlert('অ্যাপয়েন্টমেন্ট পাওয়া যায়নি', 'error');
+    
+    const pType = (patientType || item.data.patientType || item.data.type || 'new').toLowerCase();
+    const yymmdd = getYYMMDD(item.data.date);
+    
+    try {
+        await db.collection('appointments').doc(yymmdd)
+            .collection(pType).doc(docId)
+            .update({ 
+                [field]: newStatus, 
+                [`${field}Timestamp`]: firebase.firestore.FieldValue.serverTimestamp() 
+            });
+        showAlert('স্ট্যাটাস আপডেট হয়েছে', 'success');
+    } catch (error) {
+        console.error("Status update error:", error);
+        showAlert('আপডেটে সমস্যা হয়েছে', 'error');
+    }
+},
 
             onTokenAction: (docId, data, docPath) => {
                 if (window.tokenModal && typeof window.tokenModal.openModal === 'function') {
