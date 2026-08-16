@@ -163,61 +163,78 @@ class TableManager {
         this.applyFilters();
     }
 
-    applyFilters() {
-        let result = [...this.appointments];
-        const f = this.currentFilters;
+   applyFilters() {
+    let result = [...this.appointments];
+    const f = this.currentFilters;
 
-        if (f.date) {
-            result = result.filter(item => {
-                const d = item.data.date || item.data.appointmentDate || '';
-                return d === f.date;
-            });
-        }
-
-        if (f.service && f.service !== 'all') {
-            result = result.filter(item => {
-                const s = item.data.serviceType || item.data.service || 'general';
-                return s === f.service;
-            });
-        }
-
-        if (f.type && f.type !== 'all') {
-            result = result.filter(item => {
-                const t = (item.data.patientType || item.data.type || 'new').toLowerCase();
-                return t === f.type;
-            });
-        }
-
-        if (f.callStatus && f.callStatus !== 'all') {
-            result = result.filter(item => {
-                const called = item.data.called === true;
-                return f.callStatus === 'called' ? called : !called;
-            });
-        }
-
-        if (f.tokenStatus && f.tokenStatus !== 'all') {
-            result = result.filter(item => {
-                const token = item.data.tokenGiven === true;
-                return f.tokenStatus === 'given' ? token : !token;
-            });
-        }
-
-        if (f.search) {
-            const query = f.search;
-            result = result.filter(item => {
-                const name = (item.data.name || '').toLowerCase();
-                const phone = (item.data.phone || '').toLowerCase();
-                const serial = String(item.data.serial || '');
-                return name.includes(query) || phone.includes(query) || serial.includes(query);
-            });
-        }
-
-        result.sort((a, b) => parseInt(a.data.serial || 0) - parseInt(b.data.serial || 0));
-
-        this.filteredAppointments = result;
-        this.renderTable();
-        if (this.onFilterChange) this.onFilterChange(f, result.length);
+    // ১. ডেট ফিল্টার
+    if (f.date) {
+        result = result.filter(item => {
+            const d = item.data.date || item.data.appointmentDate || '';
+            // যদি ডকুমেন্টে date না থাকে তবে ডেট ফিল্টার স্কিপ করবে
+            return !d || d === f.date; 
+        });
     }
+
+    // ২. সার্ভিস ফিল্টার
+    if (f.service && f.service !== 'all') {
+        result = result.filter(item => {
+            const s = item.data.serviceType || item.data.service || 'general';
+            return s === f.service;
+        });
+    }
+
+    // ৩. রোগীর ধরন (Type) ফিল্টার - সার্জারী ও বাংলা টেক্সট সাপোর্ট
+    if (f.type && f.type !== 'all') {
+        result = result.filter(item => {
+            const t = (item.data.patientType || item.data.type || 'new').toLowerCase();
+            
+            if (f.type === 'surgery') {
+                return t === 'surgery' || t === 'সার্জারী';
+            }
+            if (f.type === 'old') {
+                return t === 'old' || t === 'পুরাতন';
+            }
+            if (f.type === 'new') {
+                return t === 'new' || t === 'নতুন';
+            }
+            return t === f.type;
+        });
+    }
+
+    // ৪. কল স্ট্যাটাস ফিল্টার
+    if (f.callStatus && f.callStatus !== 'all') {
+        result = result.filter(item => {
+            const called = item.data.called === true;
+            return f.callStatus === 'called' ? called : !called;
+        });
+    }
+
+    // ৫. টোকেন স্ট্যাটাস ফিল্টার
+    if (f.tokenStatus && f.tokenStatus !== 'all') {
+        result = result.filter(item => {
+            const token = item.data.tokenGiven === true;
+            return f.tokenStatus === 'given' ? token : !token;
+        });
+    }
+
+    // ৬. সার্চ ফিল্টার
+    if (f.search) {
+        const query = f.search;
+        result = result.filter(item => {
+            const name = (item.data.name || '').toLowerCase();
+            const phone = (item.data.phone || '').toLowerCase();
+            const serial = String(item.data.serial || '');
+            return name.includes(query) || phone.includes(query) || serial.includes(query);
+        });
+    }
+
+    result.sort((a, b) => parseInt(a.data.serial || 0) - parseInt(b.data.serial || 0));
+
+    this.filteredAppointments = result;
+    this.renderTable();
+    if (this.onFilterChange) this.onFilterChange(f, result.length);
+}
 
     renderTable() {
         const tbody = document.getElementById(this.tbodyId);
@@ -245,7 +262,12 @@ class TableManager {
             const tr = document.createElement('tr');
 
             const serviceText = this.serviceNames[data.serviceType || data.service] || data.serviceType || 'সাধারণ';
-            const typeText = pType === 'new' ? 'নতুন' : 'পুরাতন';
+            let typeText = 'নতুন';
+if (pType === 'old') {
+    typeText = 'পুরাতন';
+} else if (pType === 'surgery' || pType === 'সার্জারী') {
+    typeText = 'সার্জারী';
+}
             const called = data.called === true;
             const tokenGiven = data.tokenGiven === true;
 

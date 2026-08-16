@@ -12,7 +12,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
   <script src="components-inline.js"></script>
   <script src="grid.js"></script>
@@ -46,7 +45,7 @@
       --prp-color: #10b981;
       --cryosurgery-color: #0ea5e9;
       --electrocautery-color: #f59e0b;
-      --pending-color: #ef4444;
+      --total-color: #ef4444;
     }
 
     * {
@@ -148,8 +147,8 @@
     .stat-card.electrocautery { border-color: var(--electrocautery-color); color: var(--electrocautery-color); }
     .stat-card.electrocautery p { color: var(--electrocautery-color); }
     
-    .stat-card.pending { border-color: var(--pending-color); color: var(--pending-color); }
-    .stat-card.pending p { color: var(--pending-color); }
+    .stat-card.total { border-color: var(--total-color); color: var(--total-color); }
+    .stat-card.total p { color: var(--total-color); }
 
     .filter-section {
       background-color: var(--white);
@@ -166,7 +165,6 @@
       flex-shrink: 0;
     }
 
-    /* মোবাইলের এলিমেন্টগুলো ডেস্কটপে হাইড রাখার জন্য ডিফল্ট */
     .mobile-filter-row-top,
     .mobile-filter-row-status,
     .mobile-filter-row-bottom,
@@ -300,59 +298,58 @@
     }
 
     @media (max-width: 768px) {
-
       .mobile-filter-row-bottom {
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 4px !important;
-    width: 100% !important;
-    margin-bottom: 10px !important;
-    align-items: center;
-  }
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 4px !important;
+        width: 100% !important;
+        margin-bottom: 10px !important;
+        align-items: center;
+      }
 
-  .mobile-filter-row-bottom select {
-    width: 100% !important;
-    font-size: 10px !important;
-    padding: 6px 2px !important;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-family: 'Noto Sans Bengali', sans-serif;
-    background-color: var(--white);
-    color: var(--dark);
-    cursor: pointer;
-    height: 36px !important;
-    box-sizing: border-box;
-    text-align: center;
-  }
+      .mobile-filter-row-bottom select {
+        width: 100% !important;
+        font-size: 10px !important;
+        padding: 6px 2px !important;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: 'Noto Sans Bengali', sans-serif;
+        background-color: var(--white);
+        color: var(--dark);
+        cursor: pointer;
+        height: 36px !important;
+        box-sizing: border-box;
+        text-align: center;
+      }
 
-  .mobile-search-box { 
-    position: relative !important; 
-    display: block !important; 
-    width: 100% !important;
-    margin-bottom: 0 !important;
-  }
-  
-  .mobile-search-box input {
-    width: 100% !important;
-    padding: 6px 4px 6px 24px !important;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-family: 'Noto Sans Bengali', sans-serif;
-    font-size: 10px !important;
-    display: block !important;
-    height: 36px !important;
-    box-sizing: border-box;
-  }
+      .mobile-search-box { 
+        position: relative !important; 
+        display: block !important; 
+        width: 100% !important;
+        margin-bottom: 0 !important;
+      }
+      
+      .mobile-search-box input {
+        width: 100% !important;
+        padding: 6px 4px 6px 24px !important;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: 'Noto Sans Bengali', sans-serif;
+        font-size: 10px !important;
+        display: block !important;
+        height: 36px !important;
+        box-sizing: border-box;
+      }
 
-  .mobile-search-box .search-icon {
-    position: absolute;
-    left: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 12px;
-    height: 12px;
-    color: var(--gray);
-  }
+      .mobile-search-box .search-icon {
+        position: absolute;
+        left: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 12px;
+        height: 12px;
+        color: var(--gray);
+      }
       .dashboard-cards {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 10px;
@@ -391,7 +388,6 @@
         display: block !important;
       }
       
-      /* ১ লাইনে ৩টি কলাম (তারিখ, সার্ভিস, রোগীর ধরন) */
       .mobile-filter-row-top {
         display: grid !important;
         grid-template-columns: repeat(3, 1fr);
@@ -416,7 +412,6 @@
         text-align: center;
       }
 
-      /* কল ও টোকেন স্ট্যাটাস ফিল্টার (২ কলাম) */
       .mobile-filter-row-status {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr);
@@ -571,7 +566,6 @@
     
     <main class="admin-main">
       
-      <!-- ড্যাশবোর্ড কার্ড -->
       <div class="dashboard-cards"> 
         <div class="stat-card general">
           <h3>সাধারণ সিরিয়াল</h3>
@@ -598,18 +592,16 @@
           <p id="electrocauterySerials">0</p>
         </div>
         
-        <div class="stat-card pending">
-          <h3>পেন্ডিং সিরিয়াল</h3>
-          <p id="pendingSerials">0</p>
+        <div class="stat-card total">
+          <h3>মোট সিরিয়াল</h3>
+          <p id="totalSerials">0</p>
         </div>
       </div>
       
-      <!-- ফিল্টার সেকশন -->
       <div class="filter-section">
         <div class="admin-table-header">
           <h2>আজকের অ্যাপয়েন্টমেন্ট</h2>
           
-          <!-- মোবাইলে ৩টি ফিল্টার ১ লাইনে ৩টি কলামে রাখার জন্য -->
           <div class="mobile-filter-row-top">
             <input type="date" id="dateFilterMobile" class="date-picker" value="">
             <select id="serviceFilterMobile">
@@ -624,10 +616,10 @@
               <option value="all">সকল রোগী</option>
               <option value="new">নতুন রোগী</option>
               <option value="old">পুরাতন রোগী</option>
+              <option value="surgery">সার্জারী রোগী</option>
             </select>
           </div>
           
-          <!-- ডেস্কটপের ফিল্টার সেকশন -->
           <div class="header-actions">
             <div class="filter-group">
               <input type="date" id="dateFilter" class="date-picker" value="">
@@ -645,6 +637,7 @@
                 <option value="all">সকল রোগী</option>
                 <option value="new">নতুন রোগী</option>
                 <option value="old">পুরাতন রোগী</option>
+                <option value="surgery">সার্জারী রোগী</option>
               </select>
             </div>
               
@@ -681,27 +674,26 @@
           </div>
         </div>
           
-        <!-- মোবাইলের অন্যান্য ফিল্টার ও বাটন -->
-<div class="mobile-filter-row-bottom">
-  <select id="call-status-filter-mobile">
-    <option value="all">কল স্ট্যাটাস</option>
-    <option value="called">কল করা হয়েছে</option>
-    <option value="not_called">কল করা হয়নি</option>
-  </select>
+        <div class="mobile-filter-row-bottom">
+          <select id="call-status-filter-mobile">
+            <option value="all">কল স্ট্যাটাস</option>
+            <option value="called">কল করা হয়েছে</option>
+            <option value="not_called">কল করা হয়নি</option>
+          </select>
 
-  <select id="token-status-filter-mobile">
-    <option value="all">টোকেন স্ট্যাটাস</option>
-    <option value="given">টোকেন দেওয়া হয়েছে</option>
-    <option value="not_given">টোকেন দেওয়া হয়নি</option>
-  </select>
+          <select id="token-status-filter-mobile">
+            <option value="all">টোকেন স্ট্যাটাস</option>
+            <option value="given">টোকেন দেওয়া হয়েছে</option>
+            <option value="not_given">টোকেন দেওয়া হয়নি</option>
+          </select>
 
-  <div class="search-box mobile-search-box">
-    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-    </svg>
-    <input type="text" id="searchInputMobile" placeholder="খুঁজুন..." />
-  </div>
-</div>
+          <div class="search-box mobile-search-box">
+            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            <input type="text" id="searchInputMobile" placeholder="খুঁজুন..." />
+          </div>
+        </div>
           
         <div class="mobile-button-row">
           <button class="add-btn mobile-add-btn" id="openAddSerialModalBtnMobile">
@@ -751,39 +743,39 @@
   <div id="footer-container"></div>
   
 <script>
-function checkAuthentication() {
-      const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
-      const loginTime = sessionStorage.getItem('loginTime');
-      
-      if (!isLoggedIn) {
-        Swal.fire({
-          title: 'Need Login',
-          text: 'Please login first!!',
-          icon: 'warning',
-          confirmButtonText: 'Go to Login page'
-        }).then(() => {
-          window.location.href = '/login';
-        });
-        return false;
-      }
-      
-      const currentTime = new Date().getTime();
-      const sessionDuration = 2 * 60 * 60 * 1000;
-      
-      if (currentTime - parseInt(loginTime) > sessionDuration) {
-        sessionStorage.clear();
-        Swal.fire({
-          title: 'Session expired',
-          text: 'Session expired! Please login again.',
-          icon: 'info',
-          confirmButtonText: 'ok'
-        }).then(() => {
-          window.location.href = '/login';
-        });
-        return false;
-      }
-      
-      return true;
+    function checkAuthentication() {
+        const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
+        const loginTime = sessionStorage.getItem('loginTime');
+        
+        if (!isLoggedIn) {
+            Swal.fire({
+                title: 'Need Login',
+                text: 'Please login first!!',
+                icon: 'warning',
+                confirmButtonText: 'Go to Login page'
+            }).then(() => {
+                window.location.href = '/login';
+            });
+            return false;
+        }
+        
+        const currentTime = new Date().getTime();
+        const sessionDuration = 2 * 60 * 60 * 1000;
+        
+        if (currentTime - parseInt(loginTime) > sessionDuration) {
+            sessionStorage.clear();
+            Swal.fire({
+                title: 'Session expired',
+                text: 'Session expired! Please login again.',
+                icon: 'info',
+                confirmButtonText: 'ok'
+            }).then(() => {
+                window.location.href = '/login';
+            });
+            return false;
+        }
+        
+        return true;
     }
 
     const firebaseConfig = {
@@ -825,7 +817,7 @@ function checkAuthentication() {
         prpSerials: document.getElementById('prpSerials'),
         cryosurgerySerials: document.getElementById('cryosurgerySerials'),
         electrocauterySerials: document.getElementById('electrocauterySerials'),
-        pendingSerials: document.getElementById('pendingSerials'),
+        totalSerials: document.getElementById('totalSerials'),
         dateFilter: document.getElementById('dateFilter'),
         serviceFilter: document.getElementById('serviceFilter'),
         typeFilter: document.getElementById('typeFilter'),
@@ -847,12 +839,12 @@ function checkAuthentication() {
         return String(num).replace(/\d/g, d => '০১২৩৪৫৬৭৮৯'[d]);
     };
 
-const setDefaultDate = () => {
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
-    if (elements.dateFilter) elements.dateFilter.value = today;
-    if (elements.dateFilterMobile) elements.dateFilterMobile.value = today;
-    return today;
-};
+    const setDefaultDate = () => {
+        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
+        if (elements.dateFilter) elements.dateFilter.value = today;
+        if (elements.dateFilterMobile) elements.dateFilterMobile.value = today;
+        return today;
+    };
 
     const updateStatusMessage = (count) => {
         if (elements.filteredCount && elements.displayedCount) {
@@ -861,19 +853,15 @@ const setDefaultDate = () => {
         }
     };
 
+    // SweetAlert2 ভিত্তিক showAlert ফাংশন
     const showAlert = (message, type = 'info') => {
-        const alertEl = document.createElement('div');
-        alertEl.style.cssText = `
-            position: fixed; top: 80px; right: 20px; padding: 16px 24px;
-            border-radius: 10px; color: white; font-weight: 600; z-index: 3000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            font-family: 'Noto Sans Bengali', sans-serif;
-        `;
-        const colors = { success: '#10b981', error: '#ef4444', warning: '#f59e0b', info: '#3b82f6' };
-        alertEl.style.background = colors[type] || colors.info;
-        alertEl.textContent = message;
-        document.body.appendChild(alertEl);
-        setTimeout(() => alertEl.remove(), 3000);
+        Swal.fire({
+            title: type === 'error' ? 'ত্রুটি!' : (type === 'success' ? 'সফল!' : 'তথ্য'),
+            text: message,
+            icon: type,
+            timer: type === 'success' ? 2000 : undefined,
+            showConfirmButton: type !== 'success'
+        });
     };
 
     const getYYMMDD = (dateString) => {
@@ -892,12 +880,21 @@ const setDefaultDate = () => {
         return `${yy}${mm}${dd}`;
     };
 
+    const getFolderFromItem = (itemData) => {
+        const service = itemData.serviceType || itemData.service;
+        if (service && service !== 'general') {
+            return 'surgery';
+        }
+        const patientType = (itemData.patientType || itemData.type || 'new').toLowerCase();
+        return (patientType === 'old' || patientType === 'পুরাতন') ? 'old' : 'new';
+    };
+
     async function updateDashboardCards(snapshot) {
         if (!snapshot) return;
 
         const selectedDate = tableManager?.currentFilters?.date || setDefaultDate();
         const serviceCounts = { general: 0, microneedling: 0, prp: 0, cryosurgery: 0, electrocautery: 0 };
-        let confirmedCount = 0;
+        let totalCount = 0;
 
         snapshot.forEach(doc => {
             const data = typeof doc.data === 'function' ? doc.data() : doc;
@@ -906,34 +903,21 @@ const setDefaultDate = () => {
                 appointmentDate = data.timestamp.toDate().toISOString().split('T')[0];
             }
             if (appointmentDate === selectedDate) {
-                confirmedCount++;
+                totalCount++;
                 const service = data.serviceType || data.service || 'general';
                 if (serviceCounts.hasOwnProperty(service)) serviceCounts[service]++;
             }
         });
-
-        let pendingCount = 0;
-        try {
-            const pendingSnap = await db.collection('pendingSelections').get();
-            const now = new Date();
-            pendingSnap.forEach(doc => {
-                const data = doc.data();
-                const dDate = data.date || data.appointmentDate;
-                if (dDate === selectedDate) {
-                    const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
-                    if (expiresAt && expiresAt > now) pendingCount++;
-                }
-            });
-        } catch (e) { console.error('Pending count error:', e); }
 
         if (elements.generalSerials) elements.generalSerials.textContent = toBengaliNumber(serviceCounts.general);
         if (elements.microneedlingSerials) elements.microneedlingSerials.textContent = toBengaliNumber(serviceCounts.microneedling);
         if (elements.prpSerials) elements.prpSerials.textContent = toBengaliNumber(serviceCounts.prp);
         if (elements.cryosurgerySerials) elements.cryosurgerySerials.textContent = toBengaliNumber(serviceCounts.cryosurgery);
         if (elements.electrocauterySerials) elements.electrocauterySerials.textContent = toBengaliNumber(serviceCounts.electrocautery);
-        if (elements.pendingSerials) elements.pendingSerials.textContent = toBengaliNumber(pendingCount);
+        
+        if (elements.totalSerials) elements.totalSerials.textContent = toBengaliNumber(totalCount);
 
-        updateStatusMessage(confirmedCount);
+        updateStatusMessage(totalCount);
     }
 
     function setupTableManager() {
@@ -950,27 +934,29 @@ const setDefaultDate = () => {
             tbodyId: 'appointmentsBody',
             loadingMessageId: 'loadingMessage',
 
-onStatusUpdate: async (docId, patientType, field, newStatus, button) => {
-    // patientType না থাকলে ডেটা থেকে খুঁজে বের করা
-    const item = appointmentsData.find(a => a.id === docId);
-    if (!item) return showAlert('অ্যাপয়েন্টমেন্ট পাওয়া যায়নি', 'error');
-    
-    const pType = (patientType || item.data.patientType || item.data.type || 'new').toLowerCase();
-    const yymmdd = getYYMMDD(item.data.date);
-    
-    try {
-        await db.collection('appointments').doc(yymmdd)
-            .collection(pType).doc(docId)
-            .update({ 
-                [field]: newStatus, 
-                [`${field}Timestamp`]: firebase.firestore.FieldValue.serverTimestamp() 
-            });
-        showAlert('স্ট্যাটাস আপডেট হয়েছে', 'success');
-    } catch (error) {
-        console.error("Status update error:", error);
-        showAlert('আপডেটে সমস্যা হয়েছে', 'error');
-    }
-},
+            onStatusUpdate: async (docId, patientType, field, newStatus, button) => {
+                const item = appointmentsData.find(a => a.id === docId);
+                if (!item) {
+                    return showAlert('অ্যাপয়েন্টমেন্ট পাওয়া যায়নি', 'error');
+                }
+                
+                const targetFolder = getFolderFromItem(item.data);
+                const yymmdd = getYYMMDD(item.data.date);
+                
+                try {
+                    await db.collection('appointments').doc(yymmdd)
+                        .collection(targetFolder).doc(docId)
+                        .update({ 
+                            [field]: newStatus, 
+                            [`${field}Timestamp`]: firebase.firestore.FieldValue.serverTimestamp() 
+                        });
+
+                    showAlert('স্ট্যাটাস আপডেট হয়েছে', 'success');
+                } catch (error) {
+                    console.error("Status update error:", error);
+                    showAlert('আপডেটে সমস্যা হয়েছে', 'error');
+                }
+            },
 
             onTokenAction: (docId, data, docPath) => {
                 if (window.tokenModal && typeof window.tokenModal.openModal === 'function') {
@@ -998,16 +984,34 @@ onStatusUpdate: async (docId, patientType, field, newStatus, button) => {
             onEdit: (docId) => openEditModal(docId),
 
             onDelete: async (docId) => {
-                if (!confirm('আপনি কি নিশ্চিত যে আপনি এই এন্ট্রি ডিলিট করতে চান?')) return;
+                const result = await Swal.fire({
+                    title: 'আপনি কি নিশ্চিত?',
+                    text: 'আপনি কি নিশ্চিত যে আপনি এই এন্ট্রি ডিলিট করতে চান?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'হ্যাঁ, ডিলিট করুন',
+                    cancelButtonText: 'বাতিল'
+                });
+
+                if (!result.isConfirmed) return;
+
                 const item = appointmentsData.find(a => a.id === docId);
-                if (!item) return showAlert('অ্যাপয়েন্টমেন্ট পাওয়া যায়নি', 'error');
+                if (!item) {
+                    return showAlert('অ্যাপয়েন্টমেন্ট পাওয়া যায়নি', 'error');
+                }
+                
                 const yymmdd = getYYMMDD(item.data.date);
-                const patientType = (item.data.patientType || item.data.type || 'new').toLowerCase();
+                const targetFolder = getFolderFromItem(item.data);
+                
                 try {
                     await db.collection('appointments').doc(yymmdd)
-                        .collection(patientType).doc(docId).delete();
+                        .collection(targetFolder).doc(docId).delete();
+
                     showAlert('সিরিয়াল সফলভাবে ডিলিট করা হয়েছে', 'success');
                 } catch (error) {
+                    console.error("Delete error:", error);
                     showAlert('ডিলিট করতে সমস্যা হয়েছে', 'error');
                 }
             }
@@ -1019,20 +1023,32 @@ onStatusUpdate: async (docId, patientType, field, newStatus, button) => {
     }
 
     async function openEditModal(docId) {
-        if (!db || !docId) return showAlert('ডেটা লোড করতে সমস্যা হয়েছে', 'error');
+        if (!db || !docId) {
+            return showAlert('ডেটা লোড করতে সমস্যা হয়েছে', 'error');
+        }
+
         const item = appointmentsData.find(a => a.id === docId);
-        if (!item) return showAlert('সিরিয়াল পাওয়া যায়নি', 'error');
+        if (!item) {
+            return showAlert('সিরিয়াল পাওয়া যায়নি', 'error');
+        }
+        
         const yymmdd = getYYMMDD(item.data.date);
-        const patientType = (item.data.patientType || item.data.type || 'new').toLowerCase();
+        const targetFolder = getFolderFromItem(item.data);
+        
         try {
             const doc = await db.collection('appointments').doc(yymmdd)
-                .collection(patientType).doc(docId).get();
-            if (!doc.exists) return showAlert('সিরিয়াল পাওয়া যায়নি', 'error');
+                .collection(targetFolder).doc(docId).get();
+
+            if (!doc.exists) {
+                return showAlert('সিরিয়াল পাওয়া যায়নি', 'error');
+            }
+
             const data = doc.data();
             if (window.quickModal?.openEditModal) {
                 window.quickModal.openEditModal(docId, data);
             }
         } catch (error) {
+            console.error("Edit modal error:", error);
             showAlert('ডেটা লোড করতে সমস্যা হয়েছে', 'error');
         }
     }
@@ -1048,10 +1064,10 @@ onStatusUpdate: async (docId, patientType, field, newStatus, button) => {
         const dateStr = targetDate || tableManager?.currentFilters?.date || elements.dateFilter?.value || setDefaultDate();
         const yymmdd = getYYMMDD(dateStr);
 
-        let newDocs = [], oldDocs = [];
+        let newDocs = [], oldDocs = [], surgeryDocs = [];
 
         const updateCombined = () => {
-            const combined = [...newDocs, ...oldDocs];
+            const combined = [...newDocs, ...oldDocs, ...surgeryDocs];
             combined.sort((a, b) => parseInt(a.data.serial || 0) - parseInt(b.data.serial || 0));
             appointmentsData = combined;
             if (tableManager) tableManager.setAppointments(combined);
@@ -1072,7 +1088,13 @@ onStatusUpdate: async (docId, patientType, field, newStatus, button) => {
                     updateCombined();
                 }, err => console.error('Old listener error:', err));
 
-            currentUnsubs.push(unsubNew, unsubOld);
+            const unsubSurgery = db.collection('appointments').doc(yymmdd).collection('surgery')
+                .onSnapshot(snap => {
+                    surgeryDocs = snap.docs.map(d => ({ id: d.id, data: d.data(), path: d.ref.path }));
+                    updateCombined();
+                }, err => console.error('Surgery listener error:', err));
+
+            currentUnsubs.push(unsubNew, unsubOld, unsubSurgery);
         }
 
         const cleanupPending = db.collection('pendingSelections')
@@ -1110,12 +1132,17 @@ onStatusUpdate: async (docId, patientType, field, newStatus, button) => {
                 from.addEventListener('change', () => { to.value = from.value; });
             }
         };
+        // সকল ফিল্টারের মোবাইল ও ডেস্কটপ সিঙ্ক
         syncFilters(elements.dateFilter, elements.dateFilterMobile);
         syncFilters(elements.dateFilterMobile, elements.dateFilter);
         syncFilters(elements.serviceFilter, elements.serviceFilterMobile);
         syncFilters(elements.serviceFilterMobile, elements.serviceFilter);
         syncFilters(elements.typeFilter, elements.typeFilterMobile);
         syncFilters(elements.typeFilterMobile, elements.typeFilter);
+        syncFilters(elements.callStatusFilter, elements.callStatusFilterMobile);
+        syncFilters(elements.callStatusFilterMobile, elements.callStatusFilter);
+        syncFilters(elements.tokenStatusFilter, elements.tokenStatusFilterMobile);
+        syncFilters(elements.tokenStatusFilterMobile, elements.tokenStatusFilter);
 
         const handleSearch = (value) => {
             if (tableManager) tableManager.search(value);
@@ -1159,9 +1186,9 @@ onStatusUpdate: async (docId, patientType, field, newStatus, button) => {
     }
 
     function initializeDashboard() {
-      if (!checkAuthentication()) {
-        return; 
-    }
+        if (!checkAuthentication()) {
+            return; 
+        }
         if (!db) return;
         if (typeof TokenModal !== 'undefined') {
             window.tokenModal = new TokenModal({

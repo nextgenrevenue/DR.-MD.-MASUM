@@ -7,150 +7,137 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- SweetAlert2 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
-  
-<style>
-    :root {
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --success: #16a34a;
-      --danger: #dc2626;
-      --warning: #f59e0b;
-      --gray: #6b7280;
-      --light-gray: #f3f4f6;
-      --white: #ffffff;
-      --dark: #1f2937;
-    }
-    
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    
-    body {
-      font-family: 'Noto Sans Bengali', sans-serif;
-      background-color: #f5f7fa;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    /* Admin Container */
-    .admin-container {
-      display: flex;
-      flex: 1;
-      margin-top: 60px; 
-      height: calc(100vh - 60px);
-    }
-    
-    /* Main Content */
-    .admin-main {
-      flex: 1;
-      padding: 20px;
-      background-color: #f9fafb;
-      overflow-y: auto;
-    }
-    
-    .page-title {
-      color: var(--dark);
-      margin-bottom: 25px;
-      font-size: 24px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid var(--light-gray);
-    }
-    
-    /* Statistics Cards */
-    .stats-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 15px;
-      margin-bottom: 25px;
-    }
-    
-    .stat-card {
-      background-color: var(--white);
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .stat-card h3 {
-      color: var(--gray);
-      font-size: 14px;
-      margin-bottom: 10px;
-    }
-    
-    .stat-card p {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--dark);
-    }
-    
-    .stat-card.general p {
-      color: #2563eb;
-    }
-    
-    .stat-card.microneedling p {
-      color: #7c3aed;
-    }
-    
-    .stat-card.prp p {
-      color: #d97706;
-    }
-    
-    .stat-card.cryosurgery p {
-      color: #16a34a;
-    }
-    
-    .stat-card.electrocautery p {
-      color: #be185d;
-    }
-    
-    .stat-card.pending p {
-      color: #0ea5e9;
-    }
-    
-    /* Multi-select Service Styles */
+ 
+  <style>
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --gray: #6b7280;
+  --light-gray: #f3f4f6;
+  --white: #ffffff;
+  --dark: #1f2937;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Noto Sans Bengali', sans-serif;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Admin Container */
+.admin-container {
+  display: flex;
+  flex: 1;
+  margin-top: 60px;
+  height: calc(100vh - 60px);
+}
+
+/* Main Content */
+.admin-main {
+  flex: 1;
+  padding: 20px;
+  background-color: #f9fafb;
+  overflow-y: auto;
+}
+
+.page-title {
+  color: var(--dark);
+  margin-bottom: 25px;
+  font-size: 24px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--light-gray);
+}
+
+/* Statistics Cards */
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.stat-card {
+  background-color: var(--white);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card h3 {
+  color: var(--gray);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.stat-card p {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.stat-card.general p { color: #2563eb; }
+.stat-card.microneedling p { color: #7c3aed; }
+.stat-card.prp p { color: #d97706; }
+.stat-card.cryosurgery p { color: #16a34a; }
+.stat-card.electrocautery p { color: #be185d; }
+.stat-card.pending p { color: #0ea5e9; }
+
+/* Multi-select Service Styles (Fixed Grid Layout & Alignment) */
 .multiselect-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* প্রতি সারিতে ২টি কলাম */
+  gap: 10px;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   padding: 10px;
   background-color: white;
-  display: flex; /* নতুন যোগ করুন */
-  flex-wrap: wrap; /* নতুন যোগ করুন */
-  gap: 10px; /* নতুন যোগ করুন */
-  align-items: center; /* নতুন যোগ করুন */
 }
 
 .service-checkbox {
   display: flex;
   align-items: center;
-  margin-bottom: 0; /* পরিবর্তন করুন */
-  padding: 8px 12px;
+  justify-content: flex-start;
+  padding: 10px 12px;
   border-radius: 6px;
-  transition: background-color 0.2s;
-  border: 1px solid #e5e7eb; /* নতুন যোগ করুন */
-  min-width: 140px; /* নতুন যোগ করুন */
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  width: 100%;
+  box-sizing: border-box;
+  transition: background-color 0.2s ease;
 }
 
 .service-checkbox:hover {
   background-color: #f3f4f6;
 }
 
-.service-checkbox input {
-  margin-right: 8px;
+.service-checkbox input[type="checkbox"] {
+  margin: 0 10px 0 0 !important;
   width: 18px;
   height: 18px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .service-checkbox label {
   cursor: pointer;
+  font-weight: 500;
+  color: #1f2937;
+  margin: 0;
+  text-align: left;
   flex: 1;
-  font-weight: normal;
-  white-space: nowrap; /* নতুন যোগ করুন */
 }
 
 .selected-services-tags {
@@ -184,413 +171,334 @@
 .service-tag.electrocautery { background-color: #fce7f3; color: #be185d; }
 .service-tag.cryosurgery { background-color: #dcfce7; color: #16a34a; }
 
-/* শুধু "সাধারণ" এবং "পি আর পি" এর জন্য */
-#servicesContainer > .service-checkbox:first-child,
-#servicesContainer > .service-checkbox:nth-child(3) {
-  border: 1px solid #d1d5db;
+/* Serial Management Component Styles */
+.serial-management-component {
+  margin-top: 20px;
+}
+
+.serial-management-component .admin-table {
+  width: 100%;
+  background-color: var(--white);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.serial-management-component .admin-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.serial-management-component .admin-table-header h2 {
+  font-size: 18px;
+  color: var(--dark);
+  flex: 1 0 100%;
+  text-align: center;
+  margin-bottom: 10px;
+  order: 1;
+}
+
+.serial-management-component .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1 0 100%;
+  order: 3;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.serial-management-component .filter-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: right;
+  order: 2;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.serial-management-component .filter-group select {
+  padding: 8px 15px;
+  border: 1px solid #e5e7eb;
   border-radius: 6px;
-  padding: 8px 12px;
-  background-color: white;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  font-family: 'Noto Sans Bengali', sans-serif;
+  background-color: var(--white);
+  cursor: pointer;
+  flex: 1;
+  min-width: 120px;
+  max-width: 200px;
 }
 
-/* চেকড হলে */
-#servicesContainer > .service-checkbox:first-child input:checked + label,
-#servicesContainer > .service-checkbox:nth-child(3) input:checked + label {
-  color: #2563eb;
+.serial-management-component .filter-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.serial-management-component .search-box {
+  position: relative;
+  order: 4;
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.serial-management-component .search-box input {
+  padding: 8px 15px 8px 35px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-family: 'Noto Sans Bengali', sans-serif;
+  width: 100%;
+}
+
+.serial-management-component .search-box input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.serial-management-component .search-box i {
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  color: var(--gray);
+}
+
+.serial-management-component .add-btn {
+  background-color: var(--primary);
+  color: var(--white);
+  padding: 8px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Noto Sans Bengali', sans-serif;
   font-weight: 600;
+  transition: background-color 0.2s ease;
+  order: 5;
+  white-space: nowrap;
 }
-    
-    /* Serial Management Component Styles */
-    .serial-management-component {
-      margin-top: 20px;
-    }
-    
-    .serial-management-component .admin-table {
-      width: 100%;
-      background-color: var(--white);
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
-    }
-    
-    .serial-management-component .admin-table-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 20px;
-      border-bottom: 1px solid #e5e7eb;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
-    
-    .serial-management-component .admin-table-header h2 {
-      font-size: 18px;
-      color: var(--dark);
-      flex: 1 0 100%;
-      text-align: center;
-      margin-bottom: 10px;
-      order: 1;
-    }
-    
-    .serial-management-component .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      flex: 1 0 100%;
-      order: 3;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    
-    .serial-management-component .filter-group {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: right;
-      order: 2;
-      width: 100%;
-      margin-bottom: 10px;
-    }
-    
-    .serial-management-component .filter-group select {
-      padding: 8px 15px;
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      font-family: 'Noto Sans Bengali', sans-serif;
-      background-color: var(--white);
-      cursor: pointer;
-      flex: 1;
-      min-width: 120px;
-      max-width: 200px;
-    }
-    
-    .serial-management-component .filter-group select:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-    
-    .serial-management-component .search-box {
-      position: relative;
-      order: 4;
-      flex: 1;
-      min-width: 200px;
-      max-width: 300px;
-    }
-    
-    .serial-management-component .search-box input {
-      padding: 8px 15px 8px 35px;
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      font-family: 'Noto Sans Bengali', sans-serif;
-      width: 100%;
-    }
-    
-    .serial-management-component .search-box input:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-    
-    .serial-management-component .search-box i {
-      position: absolute;
-      left: 12px;
-      top: 10px;
-      color: var(--gray);
-    }
-    
-    .serial-management-component .add-btn {
-      background-color: var(--primary);
-      color: var(--white);
-      padding: 8px 15px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-family: 'Noto Sans Bengali', sans-serif;
-      font-weight: 600;
-      transition: background-color 0.2s ease;
-      order: 5;
-      white-space: nowrap;
-    }
-    
-    .serial-management-component .add-btn:hover {
-      background-color: var(--primary-hover);
-    }
-    
-    .serial-management-component .table-container {
-      overflow-x: auto;
-    }
-    
-    .serial-management-component table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 800px;
-    }
-    
-    .serial-management-component th, 
-    .serial-management-component td {
-      padding: 12px 15px;
-      text-align: left;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    
-    .serial-management-component th {
-      background-color: var(--light-gray);
-      font-weight: 600;
-      color: var(--dark);
-    }
-    
-    .serial-management-component tr {
-      transition: all 0.2s ease;
-    }
-    
-    .serial-management-component tr:hover {
-      background-color: #f9fafb;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    /* রঙিন ব্যাকগ্রাউন্ডের জন্য স্টাইল */
-    .serial-management-component tr.fully-booked {
-      background-color: #fef2f2 !important;
-    }
-    
-    .serial-management-component tr.fully-available {
-      background-color: #f0fdf4 !important;
-    }
-    
-    .serial-management-component tr.low-availability {
-      background-color: #fffbeb !important;
-    }
-    
-    .serial-management-component .status {
-      display: inline-block;
-      padding: 5px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      margin-right: 5px;
-    }
-    
-    .serial-management-component .status.booked {
-      background-color: #fee2e2;
-      color: var(--danger);
-    }
-    
-    .serial-management-component .status.available {
-      background-color: #dcfce7;
-      color: var(--success);
-    }
-    
-    .serial-management-component .status.pending {
-      background-color: #dbeafe;
-      color: #2563eb;
-    }
-    
-    .serial-management-component .status.disabled {
-      background-color: #f3f4f6;
-      color: var(--gray);
-    }
 
-    .serial-management-component .action-btn {
-      padding: 5px 10px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: 'Noto Sans Bengali', sans-serif;
-      font-size: 13px;
-      margin-right: 5px;
-      transition: background-color 0.2s ease;
-    }
-    
-    .serial-management-component .edit-btn {
-      background-color: #bfdbfe;
-      color: var(--primary);
-    }
-    
-    .serial-management-component .edit-btn:hover {
-      background-color: #93c5fd;
-    }
-    
-    .serial-management-component .cancel-btn {
-      background-color: #fee2e2;
-      color: var(--danger);
-    }
-    
-    .serial-management-component .cancel-btn:hover {
-      background-color: #fecaca;
-    }
-    
-    .serial-management-component .disable-btn {
-      background-color: #fef3c7;
-      color: var(--warning);
-    }
-    
-    .serial-management-component .disable-btn:hover {
-      background-color: #fde68a;
-    }
-    
-    .serial-management-component .enable-btn {
-      background-color: #dcfce7;
-      color: var(--success);
-    }
-    
-    .serial-management-component .enable-btn:hover {
-      background-color: #bbf7d0;
-    }
-    
-    /* Modal Styles */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-    
-    .modal-content {
-      background-color: var(--white);
-      padding: 25px;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 500px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-    
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    
-    .modal-header h2 {
-      color: var(--dark);
-      font-size: 20px;
-    }
-    
-    .close-btn {
-      background: none;
-      border: none;
-      font-size: 22px;
-      cursor: pointer;
-      color: var(--gray);
-    }
-    
-    .close-btn:hover {
-      color: var(--dark);
-    }
-    
-    .form-group {
-      margin-bottom: 15px;
-    }
-    
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: var(--dark);
-    }
-    
-    .form-group input,
-    .form-group select {
-      width: 100%;
-      padding: 10px 15px;
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      font-family: 'Noto Sans Bengali', sans-serif;
-      font-size: 14px;
-    }
-    
-    .form-group input:focus,
-    .form-group select:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-    
-    .form-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 20px;
-    }
-    
-    .form-actions button {
-      padding: 8px 15px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-family: 'Noto Sans Bengali', sans-serif;
-      font-weight: 600;
-      border: none;
-      transition: background-color 0.2s ease;
-    }
-    
-    .submit-btn {
-      background-color: var(--primary);
-      color: var(--white);
-    }
-    
-    .submit-btn:hover {
-      background-color: var(--primary-hover);
-    }
-    
-    .cancel-btn-modal {
-      background-color: var(--light-gray);
-      color: var(--dark);
-    }
-    
-    .cancel-btn-modal:hover {
-      background-color: #e5e7eb;
-    }
-    
-    /* Loading Spinner */
-    .loading {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255,255,255,.3);
-      border-radius: 50%;
-      border-top-color: #fff;
-      animation: spin 1s ease-in-out infinite;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    /* Empty State */
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--gray);
-    }
-    
-    .empty-state i {
-      font-size: 48px;
-      margin-bottom: 15px;
-      opacity: 0.5;
-    }
-    
-    .empty-state h3 {
-      margin-bottom: 10px;
-      color: var(--dark);
-    }
-    
-    .empty-state p {
-      margin-bottom: 20px;
-    }
-    
-    /* Mobile Responsive */
+.serial-management-component .add-btn:hover {
+  background-color: var(--primary-hover);
+}
+
+.serial-management-component .table-container {
+  overflow-x: auto;
+}
+
+.serial-management-component table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.serial-management-component th, 
+.serial-management-component td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.serial-management-component th {
+  background-color: var(--light-gray);
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.serial-management-component tr {
+  transition: all 0.2s ease;
+}
+
+.serial-management-component tr:hover {
+  background-color: #f9fafb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Status styles */
+.serial-management-component tr.fully-booked { background-color: #fef2f2 !important; }
+.serial-management-component tr.fully-available { background-color: #f0fdf4 !important; }
+.serial-management-component tr.low-availability { background-color: #fffbeb !important; }
+
+.serial-management-component .status {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-right: 5px;
+}
+
+.serial-management-component .status.booked { background-color: #fee2e2; color: var(--danger); }
+.serial-management-component .status.available { background-color: #dcfce7; color: var(--success); }
+.serial-management-component .status.pending { background-color: #dbeafe; color: #2563eb; }
+.serial-management-component .status.disabled { background-color: #f3f4f6; color: var(--gray); }
+
+.serial-management-component .action-btn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Noto Sans Bengali', sans-serif;
+  font-size: 13px;
+  margin-right: 5px;
+  transition: background-color 0.2s ease;
+}
+
+.serial-management-component .edit-btn { background-color: #bfdbfe; color: var(--primary); }
+.serial-management-component .edit-btn:hover { background-color: #93c5fd; }
+.serial-management-component .cancel-btn { background-color: #fee2e2; color: var(--danger); }
+.serial-management-component .cancel-btn:hover { background-color: #fecaca; }
+.serial-management-component .disable-btn { background-color: #fef3c7; color: var(--warning); }
+.serial-management-component .disable-btn:hover { background-color: #fde68a; }
+.serial-management-component .enable-btn { background-color: #dcfce7; color: var(--success); }
+.serial-management-component .enable-btn:hover { background-color: #bbf7d0; }
+
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto; 
+  padding: 20px 10px; 
+}
+
+.modal-content {
+  background-color: var(--white);
+  padding: 25px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  max-height: 90vh; 
+  overflow-y: auto;  
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  color: var(--dark);
+  font-size: 20px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: var(--gray);
+}
+
+.close-btn:hover {
+  color: var(--dark);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-family: 'Noto Sans Bengali', sans-serif;
+  font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.form-actions button {
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Noto Sans Bengali', sans-serif;
+  font-weight: 600;
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+.submit-btn { background-color: var(--primary); color: var(--white); }
+.submit-btn:hover { background-color: var(--primary-hover); }
+.cancel-btn-modal { background-color: var(--light-gray); color: var(--dark); }
+.cancel-btn-modal:hover { background-color: #e5e7eb; }
+
+/* Loading & Empty States */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--gray);
+}
+
+.empty-state i {
+  font-size: 48px;
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin-bottom: 10px;
+  color: var(--dark);
+}
+
+.empty-state p {
+  margin-bottom: 20px;
+}
+
+/* Mobile Responsive */
 @media (max-width: 768px) {
-  .admin-main {
-    padding: 15px;
-  }
+  .admin-main { padding: 15px; }
   
   .stats-cards {
     display: grid;
@@ -600,10 +508,7 @@
   }
   
   .stat-card {
-    background-color: var(--white);
-    border-radius: 10px;
     padding: 15px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     min-height: 90px;
     display: flex;
     flex-direction: column;
@@ -611,26 +516,17 @@
   }
   
   .stat-card h3 {
-    color: var(--gray);
     font-size: 13px;
     margin-bottom: 8px;
     line-height: 1.3;
   }
   
-  .stat-card p {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--dark);
-  }
+  .stat-card p { font-size: 22px; }
 
-   .multiselect-container {
-    flex-direction: column; /* মোবাইলে ভের্টিকাল */
-    align-items: stretch;
-  }
-  
-  .service-checkbox {
-    width: 100%;
-    margin-bottom: 8px;
+  .multiselect-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
   
   .serial-management-component .admin-table-header {
@@ -685,31 +581,12 @@
 }
 
 @media (max-width: 480px) {
-  .admin-main {
-    padding: 10px;
-  }
-  
-  .stats-cards {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-  
-  .stat-card {
-    padding: 12px;
-    min-height: 85px;
-  }
-  
-  .stat-card h3 {
-    font-size: 12px;
-  }
-  
-  .stat-card p {
-    font-size: 20px;
-  }
-  
-  .page-title {
-    font-size: 20px;
-  }
+  .admin-main { padding: 10px; }
+  .stats-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stat-card { padding: 12px; min-height: 85px; }
+  .stat-card h3 { font-size: 12px; }
+  .stat-card p { font-size: 20px; }
+  .page-title { font-size: 20px; }
   
   .modal-content {
     margin: 5px;
@@ -732,28 +609,14 @@
   }
 }
 
-/* খুব ছোট ফোনের জন্য */
 @media (max-width: 360px) {
-  .stats-cards {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-  }
-  
-  .stat-card {
-    padding: 10px;
-    min-height: 80px;
-  }
-  
-  .stat-card h3 {
-    font-size: 11px;
-  }
-  
-  .stat-card p {
-    font-size: 18px;
-  }
+  .stats-cards { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .stat-card { padding: 10px; min-height: 80px; }
+  .stat-card h3 { font-size: 11px; }
+  .stat-card p { font-size: 18px; }
 }
-    
-/* ডেস্কটপের জন্য */
+
+/* Desktop Styles */
 @media (min-width: 769px) {
   .serial-management-component .admin-table-header {
     display: flex;
@@ -789,28 +652,20 @@
     white-space: nowrap;
   }
 }
-    
-    /* Print Styles */
-    @media print {
-      .serial-management-component .admin-table-header,
-      .serial-management-component .add-btn,
-      .serial-management-component .action-btn {
-        display: none !important;
-      }
-      
-      .serial-management-component table {
-        min-width: auto;
-      }
-      
-      .admin-main {
-        padding: 0;
-      }
-      
-      .stats-cards {
-        display: none;
-      }
-    }
-  </style>
+
+/* Print Styles */
+@media print {
+  .serial-management-component .admin-table-header,
+  .serial-management-component .add-btn,
+  .serial-management-component .action-btn {
+    display: none !important;
+  }
+  
+  .serial-management-component table { min-width: auto; }
+  .admin-main { padding: 0; }
+  .stats-cards { display: none; }
+}
+</style>
 </head>
 <body>
   <!-- হেডার কন্টেইনার -->

@@ -76,6 +76,24 @@ class QuickModal {
         }
     }
 
+    // সেবা অনুযায়ী রোগীর ধরনের ফিল্ড হাইড/শো করার ফাংশন
+    togglePatientTypeVisibility() {
+        const serviceSelect = document.getElementById('serviceType');
+        const patientTypeSelect = document.getElementById('patientTypeSelect');
+        if (!serviceSelect || !patientTypeSelect) return;
+
+        const patientTypeContainer = patientTypeSelect.closest('div');
+
+        if (serviceSelect.value === 'general') {
+            if (patientTypeContainer) patientTypeContainer.style.display = 'block';
+            patientTypeSelect.setAttribute('required', 'required');
+            if (!patientTypeSelect.value) patientTypeSelect.value = 'new';
+        } else {
+            if (patientTypeContainer) patientTypeContainer.style.display = 'none';
+            patientTypeSelect.removeAttribute('required');
+        }
+    }
+
     createModalHTML() {
         if (document.getElementById('quickAppointmentModal')) return;
 
@@ -91,7 +109,7 @@ class QuickModal {
         modalDiv.innerHTML = `
             <div class="quick-modal-content" style="background: white; border-radius: 12px; width: 100%; max-width: 680px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; position: relative; margin: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 12px;">
-                    <h3 id="quickModalTitle" style="margin: 0; color: #1d4ed8; font-size: 20px; font-weight: 700;">⚡ সিরিয়াল যুক্ত করুন</h3>
+                    <h3 id="quickModalTitle" style="margin: 0; color: #1d4ed8; font-size: 20px; font-weight: 700;"> সিরিয়াল যুক্ত করুন</h3>
                     <button id="closeQuickModalBtn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">&times;</button>
                 </div>
 
@@ -114,7 +132,7 @@ class QuickModal {
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div>
+                        <div id="patientTypeWrapper">
                             <label style="font-weight: 600; font-size: 14px; margin-bottom: 4px; display: block; color: #374151;">রোগীর ধরন *</label>
                             <select id="patientTypeSelect" required style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
                                 <option value="new">নতুন রোগী</option>
@@ -296,7 +314,10 @@ class QuickModal {
         }
 
         [dateInput, serviceSelect, typeSelect].forEach(elem => {
-            if (elem) elem.onchange = () => this.updateTimesAndGrid();
+            if (elem) elem.onchange = () => {
+                this.togglePatientTypeVisibility();
+                this.updateTimesAndGrid();
+            };
         });
 
         if (timeSelect) {
@@ -316,15 +337,23 @@ class QuickModal {
         this.editDocId = null;
         this.originalData = null;
 
-        document.getElementById('quickModalTitle').textContent = '⚡ সিরিয়াল যুক্ত করুন';
+        document.getElementById('quickModalTitle').textContent = ' সিরিয়াল যুক্ত করুন';
         document.getElementById('quickSubmitBtn').textContent = 'সংরক্ষণ করুন';
 
-        const today = new Date().toISOString().split('T')[0];
+        // Local Date সেট করা (রাত ১২টার সমস্যা সমাধান)
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const today = `${year}-${month}-${day}`;
+        
         document.getElementById('quickDate').value = today;
         document.getElementById('serviceType').value = 'general';
         document.getElementById('patientTypeSelect').value = 'new';
         document.getElementById('quickSerialInput').value = '';
         document.getElementById('selectedSerialInfo').textContent = '';
+
+        this.togglePatientTypeVisibility();
 
         const skipPhoneCb = document.getElementById('skipPhoneCheckbox');
         const phoneInput = document.getElementById('quickPhone');
@@ -358,10 +387,18 @@ class QuickModal {
         document.getElementById('quickModalTitle').textContent = '✏️ অ্যাপয়েন্টমেন্ট এডিট করুন';
         document.getElementById('quickSubmitBtn').textContent = 'হালনাগাদ করুন';
 
-        const dateVal = data.date || data.appointmentDate || new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const defaultDate = `${year}-${month}-${day}`;
+
+        const dateVal = data.date || data.appointmentDate || defaultDate;
         document.getElementById('quickDate').value = dateVal;
         document.getElementById('serviceType').value = data.serviceType || data.service || 'general';
         document.getElementById('patientTypeSelect').value = (data.patientType || data.type || 'new').toLowerCase();
+
+        this.togglePatientTypeVisibility();
 
         const skipPhoneCb = document.getElementById('skipPhoneCheckbox');
         const phoneInput = document.getElementById('quickPhone');
@@ -421,144 +458,192 @@ class QuickModal {
     }
 
     async updateTimesAndGrid() {
-        const dateVal = document.getElementById('quickDate').value;
-        const serviceVal = document.getElementById('serviceType').value;
-        const typeVal = document.getElementById('patientTypeSelect').value;
-        const timeSelect = document.getElementById('quickTime');
+    const dateVal = document.getElementById('quickDate').value;
+    const serviceVal = document.getElementById('serviceType').value;
+    const typeVal = document.getElementById('patientTypeSelect').value || 'new';
+    const timeSelect = document.getElementById('quickTime');
 
+    if (!timeSelect) return;
+
+    if (!dateVal) {
         timeSelect.innerHTML = '<option value="">সময় নির্বাচন করুন</option>';
+        await this.loadGridForSelection();
+        return;
+    }
 
-        if (!dateVal) return;
+    const englishDay = this.getDayNameEnglish(dateVal);
+    const dayData = this.serialRanges[englishDay];
+    let times = [];
 
-        const englishDay = this.getDayNameEnglish(dateVal);
-        const dayData = this.serialRanges[englishDay];
+    if (dayData) {
+        let targetObj = null;
 
-        if (dayData) {
-            let times = [];
-            if (dayData[serviceVal] && dayData[serviceVal][typeVal]) {
-                times = Object.keys(dayData[serviceVal][typeVal]);
-            } else if (dayData[typeVal]) {
-                times = Object.keys(dayData[typeVal]);
+        // সেবা ও রোগীর ধরন অনুযায়ী অবজেক্ট খোঁজা
+        if (dayData[serviceVal]) {
+            if (dayData[serviceVal][typeVal]) {
+                targetObj = dayData[serviceVal][typeVal];
+            } else {
+                targetObj = dayData[serviceVal];
             }
-
-            times.forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t;
-                opt.textContent = t;
-                timeSelect.appendChild(opt);
-            });
+        } else if (serviceVal === 'general' && dayData[typeVal]) {
+            targetObj = dayData[typeVal];
         }
+
+        // সময় বের করা
+        if (targetObj) {
+            if (targetObj.new || targetObj.old) {
+                const keysNew = targetObj.new ? Object.keys(targetObj.new) : [];
+                const keysOld = targetObj.old ? Object.keys(targetObj.old) : [];
+                times = [...new Set([...keysNew, ...keysOld])];
+            } else {
+                times = Object.keys(targetObj);
+            }
+        }
+    }
+
+    // 'new' বা 'old' কি-ওয়ার্ড ফিল্টার করা
+    times = times.filter(t => t !== 'new' && t !== 'old');
+
+    timeSelect.innerHTML = '';
+
+    if (times.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'এই সময়ে কোনো সিরিয়াল নেই';
+        timeSelect.appendChild(opt);
+    } else {
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = 'সময় নির্বাচন করুন';
+        timeSelect.appendChild(defaultOpt);
+
+        times.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t;
+            timeSelect.appendChild(opt);
+        });
 
         if (timeSelect.options.length > 1) {
             timeSelect.selectedIndex = 1;
         }
-
-        await this.loadGridForSelection();
     }
 
+    await this.loadGridForSelection();
+}
     async loadGridForSelection() {
-        const dateVal = document.getElementById('quickDate').value;
-        const serviceVal = document.getElementById('serviceType').value;
-        const typeVal = document.getElementById('patientTypeSelect').value;
-        const timeVal = document.getElementById('quickTime').value;
-        const gridContainer = document.getElementById('serialGrid');
+    const dateVal = document.getElementById('quickDate').value;
+    const serviceVal = document.getElementById('serviceType').value;
+    const typeVal = document.getElementById('patientTypeSelect').value || 'new';
+    const timeVal = document.getElementById('quickTime').value;
+    const gridContainer = document.getElementById('serialGrid');
 
-        if (!gridContainer) return;
-        gridContainer.innerHTML = '';
+    if (!gridContainer) return;
+    gridContainer.innerHTML = '';
 
-        if (!dateVal || !timeVal) {
-            gridContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #6b7280; padding: 20px;">তারিখ এবং সময় নির্বাচন করুন</div>';
-            return;
-        }
+    // সময় না থাকলে বা "এই সময়ে কোনো সিরিয়াল নেই" সিলেক্ট থাকলে গ্রিড দেখাবে না
+    if (!dateVal || !timeVal || timeVal === 'new' || timeVal === 'old') {
+        gridContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #6b7280; padding: 20px;">তারিখ এবং সময় নির্বাচন করুন</div>';
+        return;
+    }
 
-        const englishDay = this.getDayNameEnglish(dateVal);
-        let range = null;
-        if (this.serialRanges[englishDay]) {
-            const dData = this.serialRanges[englishDay];
-            if (dData[serviceVal] && dData[serviceVal][typeVal] && dData[serviceVal][typeVal][timeVal] !== undefined) {
+    const englishDay = this.getDayNameEnglish(dateVal);
+    let range = null;
+    if (this.serialRanges[englishDay]) {
+        const dData = this.serialRanges[englishDay];
+        if (dData[serviceVal]) {
+            if (dData[serviceVal][typeVal] && dData[serviceVal][typeVal][timeVal] !== undefined) {
                 range = dData[serviceVal][typeVal][timeVal];
-            } else if (dData[typeVal] && dData[typeVal][timeVal] !== undefined) {
-                range = dData[typeVal][timeVal];
+            } else if (dData[serviceVal][timeVal] !== undefined) {
+                range = dData[serviceVal][timeVal];
             }
+        } else if (dData[typeVal] && dData[typeVal][timeVal] !== undefined) {
+            range = dData[typeVal][timeVal];
         }
+    }
 
-        let start = 1, end = 20;
-        if (Array.isArray(range)) {
-            [start, end] = range;
-        } else if (typeof range === 'number') {
-            end = range;
-        } else if (typeof range === 'string') {
-            if (range.includes('-')) {
-                const parts = range.split('-');
-                start = parseInt(parts[0]);
-                end = parseInt(parts[1]);
-            } else {
-                end = parseInt(range);
-            }
+    // যদি ডেটাবেজে এই সময়ের রেঞ্জ সেট না থাকে, তবে অটোমেটিক ২০টি গ্রিড তৈরি হবে না
+    if (range === null || range === undefined) {
+        gridContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #dc2626; padding: 20px; font-weight: 600;">এই সেবার জন্য কোনো সিরিয়াল নির্ধারণ করা নেই</div>';
+        return;
+    }
+
+    let start = 1, end = 20;
+    if (Array.isArray(range)) {
+        [start, end] = range;
+    } else if (typeof range === 'number') {
+        end = range;
+    } else if (typeof range === 'string') {
+        if (range.includes('-')) {
+            const parts = range.split('-');
+            start = parseInt(parts[0]);
+            end = parseInt(parts[1]);
+        } else {
+            end = parseInt(range);
         }
+    }
 
-        // Fetch booked serials
-        const yymmdd = this.getYYMMDD(dateVal);
-        this.bookedSerials = [];
-        this.pendingSerials = [];
+    // Fetch booked serials
+    const yymmdd = this.getYYMMDD(dateVal);
+    this.bookedSerials = [];
+    this.pendingSerials = [];
 
-        if (this.db && yymmdd) {
-            try {
-                const snap = await this.db.collection('appointments').doc(yymmdd).collection(typeVal).get();
+    if (this.db && yymmdd) {
+        try {
+            const folders = ['new', 'old', 'surgery'];
+            for (const folder of folders) {
+                const snap = await this.db.collection('appointments').doc(yymmdd).collection(folder).get();
                 snap.forEach(doc => {
                     const data = doc.data();
                     const appTime = data.time;
-                    const appService = data.serviceType || data.service || 'general';
-                    if (appTime === timeVal && appService === serviceVal && data.serial) {
+                    if (appTime === timeVal && data.serial) {
                         this.bookedSerials.push(parseInt(data.serial));
                     }
                 });
-
-                // Fetch pending selections
-                const pendingSnap = await this.db.collection('pendingSelections').get();
-                const now = new Date();
-                pendingSnap.forEach(doc => {
-                    const pData = doc.data();
-                    const pDate = pData.date || pData.appointmentDate;
-                    const pType = (pData.type || pData.patientType || 'new').toLowerCase();
-                    const pTime = pData.time;
-                    const pService = pData.service || pData.serviceType || 'general';
-                    const expiresAt = pData.expiresAt?.toDate ? pData.expiresAt.toDate() : new Date(pData.expiresAt);
-
-                    if (pDate === dateVal && pTime === timeVal && pType === typeVal && pService === serviceVal && expiresAt > now) {
-                        if (pData.serial) this.pendingSerials.push(parseInt(pData.serial));
-                    }
-                });
-            } catch (e) {
-                console.error("❌ Error fetching booked serials:", e);
-            }
-        }
-
-        for (let s = start; s <= end; s++) {
-            const item = document.createElement('div');
-            item.className = 'serial-item';
-            item.textContent = s;
-            item.dataset.serial = s;
-
-            const isBooked = this.bookedSerials.includes(s) && (!this.isEditMode || s !== parseInt(this.originalData?.serial));
-            const isPending = this.pendingSerials.includes(s);
-
-            if (isBooked) {
-                item.classList.add('booked');
-                item.title = 'ইতিমধ্যে বুক করা';
-            } else if (isPending) {
-                item.classList.add('pending');
-                item.title = 'অন্য ক্লায়েন্ট প্রসেসিং করছে';
-            } else {
-                item.classList.add('available');
-                item.onclick = () => this.selectSerialRange(s, start, end);
             }
 
-            gridContainer.appendChild(item);
-        }
+            const pendingSnap = await this.db.collection('pendingSelections').get();
+            const now = new Date();
+            pendingSnap.forEach(doc => {
+                const pData = doc.data();
+                const pDate = pData.date || pData.appointmentDate;
+                const pTime = pData.time;
+                const expiresAt = pData.expiresAt?.toDate ? pData.expiresAt.toDate() : new Date(pData.expiresAt);
 
-        this.updateGridSelection();
+                if (pDate === dateVal && pTime === timeVal && expiresAt > now) {
+                    if (pData.serial) this.pendingSerials.push(parseInt(pData.serial));
+                }
+            });
+        } catch (e) {
+            console.error("❌ Error fetching booked serials:", e);
+        }
     }
+
+    for (let s = start; s <= end; s++) {
+        const item = document.createElement('div');
+        item.className = 'serial-item';
+        item.textContent = s;
+        item.dataset.serial = s;
+
+        const isBooked = this.bookedSerials.includes(s) && (!this.isEditMode || s !== parseInt(this.originalData?.serial));
+        const isPending = this.pendingSerials.includes(s);
+
+        if (isBooked) {
+            item.classList.add('booked');
+            item.title = 'ইতিমধ্যে বুক করা';
+        } else if (isPending) {
+            item.classList.add('pending');
+            item.title = 'অন্য ক্লায়েন্ট প্রসেসিং করছে';
+        } else {
+            item.classList.add('available');
+            item.onclick = () => this.selectSerialRange(s, start, end);
+        }
+
+        gridContainer.appendChild(item);
+    }
+
+    this.updateGridSelection();
+}
 
     selectSerialRange(startSerial, rangeMin, rangeMax) {
         const requiredCount = this.patientCount;
@@ -662,8 +747,10 @@ class QuickModal {
         const skipPhone = document.getElementById('skipPhoneCheckbox')?.checked;
         const phoneVal = document.getElementById('quickPhone')?.value.trim();
 
-        if (!dateVal || !serviceVal || !typeVal || !timeVal || isNaN(startSerial)) {
-            return this.showAlert('অনুগ্রহ করে তারিখ, সেবা, ধরন, সময় এবং সিরিয়াল সঠিকভাবে নির্বাচন করুন', 'error');
+        const isTypeValid = serviceVal === 'general' ? !!typeVal : true;
+
+        if (!dateVal || !serviceVal || !isTypeValid || !timeVal || isNaN(startSerial)) {
+            return this.showAlert('অনুগ্রহ করে তারিখ, সেবা, সময় এবং সিরিয়াল সঠিকভাবে নির্বাচন করুন', 'error');
         }
 
         if (!skipPhone && (!phoneVal || phoneVal.length < 11)) {
@@ -697,7 +784,7 @@ class QuickModal {
                 date: dateVal,
                 day: this.getDayNameBangla(dateVal),
                 service: serviceVal,
-                type: typeVal,
+                type: serviceVal === 'general' ? typeVal : 'সার্জারী',
                 time: timeVal,
                 startSerial: startSerial,
                 phone: skipPhone ? '-' : phoneVal,
@@ -724,7 +811,13 @@ class QuickModal {
 
     async saveToFirebase(data) {
         const yymmdd = this.getYYMMDD(data.date);
-        const typeFolder = (data.type === 'new' || data.type === 'নতুন') ? 'new' : 'old';
+        
+        let typeFolder = 'new';
+        if (data.service === 'general') {
+            typeFolder = (data.type === 'old' || data.type === 'পুরাতন') ? 'old' : 'new';
+        } else {
+            typeFolder = 'surgery';
+        }
 
         for (let i = 0; i < data.patients.length; i++) {
             const patient = data.patients[i];
@@ -775,10 +868,22 @@ class QuickModal {
 
     async updateInFirebase(oldDocId, oldData, newData) {
         const oldYYMMDD = this.getYYMMDD(oldData.date || oldData.appointmentDate);
-        const oldTypeFolder = (oldData.patientType === 'new' || oldData.type === 'new') ? 'new' : 'old';
+        
+        let oldTypeFolder = 'new';
+        if ((oldData.serviceType || oldData.service) === 'general') {
+            oldTypeFolder = (oldData.patientType === 'old' || oldData.type === 'old') ? 'old' : 'new';
+        } else {
+            oldTypeFolder = 'surgery';
+        }
 
         const newYYMMDD = this.getYYMMDD(newData.date);
-        const newTypeFolder = (newData.type === 'new' || newData.type === 'নতুন') ? 'new' : 'old';
+        let newTypeFolder = 'new';
+        if (newData.service === 'general') {
+            newTypeFolder = (newData.type === 'old' || newData.type === 'পুরাতন') ? 'old' : 'new';
+        } else {
+            newTypeFolder = 'surgery';
+        }
+
         const formattedSerial = String(newData.startSerial).padStart(2, '0');
         const newDocId = `${newYYMMDD}-${formattedSerial}`;
 

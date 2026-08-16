@@ -122,36 +122,26 @@ let paymentDocData = null;
 let paymentDocPath = null;
 const subcols = ['payment_new', 'payment_old'];
 
+// 🟢 সঠিক অ্যাপয়েন্টমেন্টের সাথে পেমেন্ট ডাটা ম্যাচ করার লজিক
 if (yymmdd && docId) {
-    // 1. Direct doc ID check in both subcollections
     for (const subcol of subcols) {
         try {
-            const directRef = this.db.collection('paymentHistories').doc(yymmdd).collection(subcol).doc(docId);
-            const directSnap = await directRef.get();
-            if (directSnap.exists) {
-                paymentDocData = directSnap.data();
-                paymentDocPath = directSnap.ref.path;
+            const snap = await this.db.collection('paymentHistories').doc(yymmdd)
+                .collection(subcol)
+                .where('appointmentId', '==', String(docId))
+                .limit(1)
+                .get();
+
+            if (!snap.empty) {
+                paymentDocData = snap.docs[0].data();
+                paymentDocPath = snap.docs[0].ref.path;
                 break;
             }
-        } catch (e) {}
-    }
-
-    // 2. Query by appointmentId in both subcollections
-    if (!paymentDocData) {
-        for (const subcol of subcols) {
-            try {
-                const snap = await this.db.collection('paymentHistories').doc(yymmdd).collection(subcol)
-                    .where('appointmentId', '==', String(docId)).limit(1).get();
-                if (!snap.empty) {
-                    paymentDocData = snap.docs[0].data();
-                    paymentDocPath = snap.docs[0].ref.path;
-                    break;
-                }
-            } catch (e) {}
+        } catch (e) {
+            console.warn("Payment fetch error:", e);
         }
     }
 }
-
             const finalData = { ...mainData, ...(paymentDocData || {}) };
             this.paymentDocPath = paymentDocPath;
             this.currentTokenDoc = { id: docId, ...finalData };
@@ -230,6 +220,10 @@ if (yymmdd && docId) {
                                 <select id="tokenType" style="width: 100%; padding: 9px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
                                     <option value="new" ${patientType === 'new' ? 'selected' : ''}>নতুন রোগী</option>
                                     <option value="old" ${patientType === 'old' ? 'selected' : ''}>পুরাতন রোগী</option>
+                                    <option value="microneedling" ${patientType === 'microneedling' ? 'selected' : ''}>মাইক্রোনিডলিং</option>
+                                    <option value="prp" ${patientType === 'prp' ? 'selected' : ''}>পি আর পি</option>
+                                    <option value="cryosurgery" ${patientType === 'cryosurgery' ? 'selected' : ''}>ক্রায়োসার্জারি</option>
+                                    <option value="electrocautery" ${patientType === 'electrocautery' ? 'selected' : ''}>ইলেক্ট্রোক্যাটারি</option>
                                 </select>
                             </div>
                             <div style="margin-bottom: 12px;">
@@ -294,453 +288,488 @@ if (yymmdd && docId) {
         }
     }
 
-    updateFeeByPatientType(type) {
-        const feeInput = document.getElementById('tokenFee');
-        const paidInput = document.getElementById('tokenPaid');
+updateFeeByPatientType(type) {
+    const feeInput = document.getElementById('tokenFee');
+    const paidInput = document.getElementById('tokenPaid');
+    const surgeryTypes = ['microneedling', 'prp', 'cryosurgery', 'electrocautery', 'surgery'];
 
-        if (feeInput) {
-            const feeValue = (type === 'new') ? 800 : 600;
-            feeInput.value = feeValue;
-            if (paidInput) {
-                paidInput.value = feeValue;
-            }
-            this.updateDueAmount();
+    if (feeInput) {
+        if (surgeryTypes.includes(String(type).toLowerCase())) {
+            feeInput.value = '';
+            if (paidInput) paidInput.value = '';
+        } else if (type === 'new') {
+            feeInput.value = 800;
+            if (paidInput) paidInput.value = 800;
+        } else {
+            feeInput.value = 600;
+            if (paidInput) paidInput.value = 600;
         }
+        this.updateDueAmount();
     }
+}
 
     closeModal() {
         const overlay = document.getElementById('tokenModalOverlay');
         if (overlay) overlay.remove();
     }
 
-    async saveAndPrintToken(shouldPrint = false) {
-        if (this.isTokenSaving) {
-            return this.showAlert('দয়া করে অপেক্ষা করুন, টোকেন সংরক্ষণ করা হচ্ছে...', 'warning');
-        }
+ async saveAndPrintToken(shouldPrint = false) {
+    if (this.isTokenSaving) {
+        return this.showAlert('দয়া করে অপেক্ষা করুন, টোকেন সংরক্ষণ করা হচ্ছে...', 'warning');
+    }
 
-        const saveBtn = document.getElementById('savePrintTokenBtn');
-        const originalBtnHtml = saveBtn ? saveBtn.innerHTML : '';
-        if (saveBtn) {
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> সংরক্ষণ হচ্ছে...';
-        }
+    const saveBtn = document.getElementById('savePrintTokenBtn');
+    const originalBtnHtml = saveBtn ? saveBtn.innerHTML : '';
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> সংরক্ষণ হচ্ছে...';
+    }
 
-        this.isTokenSaving = true;
+    this.isTokenSaving = true;
 
-        try {
-            const name = document.getElementById('tokenName')?.value || '';
-            const age = document.getElementById('tokenAge')?.value || '';
-            const selectedType = document.getElementById('tokenType')?.value || 'new';
-            const targetPatientType = selectedType.toLowerCase() === 'old' ? 'old' : 'new';
-            const fee = parseInt(document.getElementById('tokenFee')?.value) || (targetPatientType === 'new' ? 800 : 600);
-            const paid = parseInt(document.getElementById('tokenPaid')?.value) || 0;
-            const givenBy = document.getElementById('tokenGivenBy')?.value || '';
-
-            // 1. Resolve appointment details
-            let fetchedData = {};
-            let appointmentDoc = null;
-
-            if (this.originalAppointmentPath) {
-                try {
-                    appointmentDoc = await this.db.doc(this.originalAppointmentPath).get();
-                    if (appointmentDoc.exists) {
-                        fetchedData = appointmentDoc.data();
-                    }
-                } catch (e) {
-                    console.warn("Original appointment fetch warning:", e);
-                }
-            }
-
-            const appointmentData = { ...(this.currentTokenDoc || {}), ...fetchedData };
-            const originalSerial = fetchedData.serial || fetchedData.appointmentSerial || appointmentData.serial || 1;
-            const dateStr = appointmentData.date || appointmentData.appointmentDate || new Date().toISOString().split('T')[0];
-            const yymmdd = this.getYYMMDD(dateStr);
-
-            // Ensure currentTokenId matches the appointment doc ID (e.g. 260810-05)
-            if (!this.currentTokenId) {
-                const formattedSerial = String(originalSerial).padStart(2, '0');
-                this.currentTokenId = `${yymmdd}-${formattedSerial}`;
-            }
-
-            const origPatientType = (this.originalPatientType || 'new').toLowerCase() === 'old' ? 'old' : 'new';
-            const origSubcol = origPatientType === 'old' ? 'payment_old' : 'payment_new';
-
-           // 2. Locate existing payment record Specifically for THIS patient
-let existingDoc = null;
-if (this.paymentDocPath) {
     try {
-        const snap = await this.db.doc(this.paymentDocPath).get();
-        if (snap.exists) {
-            existingDoc = snap;
-        }
-    } catch (e) {}
-}
+        const name = document.getElementById('tokenName')?.value || '';
+        const age = document.getElementById('tokenAge')?.value || '';
+        const selectedType = document.getElementById('tokenType')?.value || 'new';
+        
+        // ১. সার্জারি টাইপ ও পে রোগী টাইপ নির্ধারণ
+        const surgeryTypes = ['microneedling', 'prp', 'cryosurgery', 'electrocautery', 'surgery'];
+        const isSurgery = surgeryTypes.includes(selectedType.toLowerCase());
+        const targetPatientType = isSurgery ? selectedType : (selectedType.toLowerCase() === 'old' ? 'old' : 'new');
 
-const subcols = ['payment_new', 'payment_old'];
+        // ২. অটোমেটিক ফি সেট করা
+        const feeStructure = {
+            new: 800,
+            old: 600,
+            microneedling: 3000,
+            prp: 4000,
+            cryosurgery: 2000,
+            electrocautery: 2500
+        };
 
-if (!existingDoc && yymmdd && this.currentTokenId) {
-    for (const subcol of subcols) {
-        try {
-            const snap = await this.db.collection('paymentHistories').doc(yymmdd)
-                .collection(subcol).doc(this.currentTokenId).get();
-            if (snap.exists) {
-                existingDoc = snap;
-                break;
-            }
-        } catch (e) {}
-    }
-}
+        const defaultFee = feeStructure[targetPatientType] !== undefined ? feeStructure[targetPatientType] : 800;
+        const fee = parseInt(document.getElementById('tokenFee')?.value) || defaultFee;
+        const paid = parseInt(document.getElementById('tokenPaid')?.value) || 0;
+        const givenBy = document.getElementById('tokenGivenBy')?.value || '';
 
-if (!existingDoc && yymmdd && this.currentTokenId) {
-    for (const subcol of subcols) {
-        try {
-            const snap = await this.db.collection('paymentHistories').doc(yymmdd)
-                .collection(subcol).where('appointmentId', '==', String(this.currentTokenId)).limit(1).get();
-            if (!snap.empty) {
-                existingDoc = snap.docs[0];
-                break;
-            }
-        } catch (e) {}
-    }
-}
+        // ৩. Appointment details রিকভার করা
+        let fetchedData = {};
+        let appointmentDoc = null;
 
-            let tokenNumber;
-
-            // 3. Update Existing Token OR Issue New Sequential Token
-            if (existingDoc) {
-                const existingData = existingDoc.data();
-                tokenNumber = existingData.tokenNumber;
-                let paymentHistory = existingData.paymentHistory || [];
-                const oldPaid = existingData.tokenPaid || 0;
-
-                if (paid !== oldPaid) {
-                    const difference = paid - oldPaid;
-                    paymentHistory.push({
-                        id: Date.now().toString(),
-                        amount: Math.abs(difference),
-                        type: difference > 0 ? 'payment' : 'refund',
-                        method: 'নগদ',
-                        previousPaid: oldPaid,
-                        newPaid: paid,
-                        note: difference > 0 ? `পেমেন্ট: ${difference} টাকা` : `ফেরত: ${Math.abs(difference)} টাকা`,
-                        timestamp: new Date().toISOString(),
-                        createdBy: sessionStorage.getItem('adminEmail') || 'admin',
-                        source: 'dashboard'
-                    });
+        if (this.originalAppointmentPath) {
+            try {
+                appointmentDoc = await this.db.doc(this.originalAppointmentPath).get();
+                if (appointmentDoc.exists) {
+                    fetchedData = appointmentDoc.data();
                 }
+            } catch (e) {
+                console.warn("Original appointment fetch warning:", e);
+            }
+        }
 
-                const updatedTokenData = {
-                    ...existingData,
+        const appointmentData = { ...(this.currentTokenDoc || {}), ...fetchedData };
+        const originalSerial = fetchedData.serial || fetchedData.appointmentSerial || appointmentData.serial || 1;
+        const dateStr = appointmentData.date || appointmentData.appointmentDate || new Date().toISOString().split('T')[0];
+        const yymmdd = this.getYYMMDD(dateStr);
+
+        if (!this.currentTokenId) {
+            const formattedSerial = String(originalSerial).padStart(2, '0');
+            this.currentTokenId = `${yymmdd}-${formattedSerial}`;
+        }
+
+        // ৪. পেমেন্ট সাব-কালেকশন নির্বাচন
+        const origSubcol = isSurgery ? 'payment_surgery' : (targetPatientType === 'old' ? 'payment_old' : 'payment_new');
+
+        // ৫. বিদ্যমান পেমেন্ট রেকর্ড খুঁজে বের করা
+        let existingDoc = null;
+        if (this.paymentDocPath) {
+            try {
+                const snap = await this.db.doc(this.paymentDocPath).get();
+                if (snap.exists) {
+                    existingDoc = snap;
+                }
+            } catch (e) {}
+        }
+
+        const subcols = ['payment_new', 'payment_old', 'payment_surgery'];
+
+        if (!existingDoc && yymmdd && this.currentTokenId) {
+            for (const subcol of subcols) {
+                try {
+                    const snap = await this.db.collection('paymentHistories').doc(yymmdd)
+                        .collection(subcol).doc(this.currentTokenId).get();
+                    if (snap.exists) {
+                        existingDoc = snap;
+                        break;
+                    }
+                } catch (e) {}
+            }
+        }
+
+        if (!existingDoc && yymmdd && this.currentTokenId) {
+            for (const subcol of subcols) {
+                try {
+                    const snap = await this.db.collection('paymentHistories').doc(yymmdd)
+                        .collection(subcol).where('appointmentId', '==', String(this.currentTokenId)).limit(1).get();
+                    if (!snap.empty) {
+                        existingDoc = snap.docs[0];
+                        break;
+                    }
+                } catch (e) {}
+            }
+        }
+
+        let tokenNumber;
+
+        // ৬. আপডেট বা নতুন টোকেন সেভ করা
+        if (existingDoc) {
+            const existingData = existingDoc.data();
+            tokenNumber = existingData.tokenNumber;
+            let paymentHistory = existingData.paymentHistory || [];
+            const oldPaid = existingData.tokenPaid || 0;
+
+            if (paid !== oldPaid) {
+                const difference = paid - oldPaid;
+                paymentHistory.push({
+                    id: Date.now().toString(),
+                    amount: Math.abs(difference),
+                    type: difference > 0 ? 'payment' : 'refund',
+                    method: 'নগদ',
+                    previousPaid: oldPaid,
+                    newPaid: paid,
+                    note: difference > 0 ? `পেমেন্ট: ${difference} টাকা` : `ফেরত: ${Math.abs(difference)} টাকা`,
+                    timestamp: new Date().toISOString(),
+                    createdBy: sessionStorage.getItem('adminEmail') || 'admin',
+                    source: 'dashboard'
+                });
+            }
+
+            const updatedTokenData = {
+                ...existingData,
+                patientName: name,
+                patientAge: age,
+                patientType: targetPatientType,
+                tokenFee: fee,
+                tokenPaid: paid,
+                tokenDue: fee - paid,
+                status: (fee - paid) === 0 ? 'paid' : 'due',
+                paymentHistory: paymentHistory,
+                givenBy: givenBy,
+                reference: givenBy,
+                serial: originalSerial,
+                appointmentSerial: originalSerial,
+                lastUpdated: this.firebase?.firestore?.FieldValue?.serverTimestamp() || new Date()
+            };
+
+            await existingDoc.ref.update(updatedTokenData);
+            this.paymentDocPath = existingDoc.ref.path;
+
+            this.showAlert(`✅ টোকেন ${tokenNumber} সফলভাবে আপডেট করা হয়েছে!`, 'success');
+
+        } else {
+            // নতুন টোকেন - ট্রানজেকশন
+            const counterDocRef = this.db.collection('paymentHistories').doc(yymmdd);
+            let createdPath = null;
+
+            await this.db.runTransaction(async (transaction) => {
+                const counterDoc = await transaction.get(counterDocRef);
+                let lastCounter = 0;
+                if (counterDoc.exists && counterDoc.data().dailyLastCounter) {
+                    lastCounter = counterDoc.data().dailyLastCounter;
+                }
+                const newTokenSerial = lastCounter + 1;
+                const formattedCounter = String(newTokenSerial).padStart(2, '0');
+
+                tokenNumber = `T-${yymmdd}-${formattedCounter}`;
+
+                const finalDocRef = counterDocRef.collection(origSubcol).doc(this.currentTokenId);
+
+                const initialPaymentHistory = [{
+                    id: Date.now().toString(),
+                    amount: paid,
+                    type: 'payment',
+                    method: 'নগদ',
+                    note: `টোকেন প্রদান - ${tokenNumber}`,
+                    timestamp: new Date().toISOString(),
+                    createdBy: sessionStorage.getItem('adminEmail') || 'admin',
+                    source: 'dashboard'
+                }];
+
+                transaction.set(counterDocRef, { dailyLastCounter: newTokenSerial }, { merge: true });
+                transaction.set(finalDocRef, {
+                    tokenNumber: tokenNumber,
+                    tokenCounter: newTokenSerial,
+                    tokenDatePrefix: yymmdd,
                     patientName: name,
                     patientAge: age,
+                    patientPhone: appointmentData.phone || '',
                     patientType: targetPatientType,
                     tokenFee: fee,
                     tokenPaid: paid,
                     tokenDue: fee - paid,
+                    amount: paid,
+                    method: 'নগদ',
+                    type: 'payment',
+                    note: `টোকেন প্রদান - ${tokenNumber}`,
                     status: (fee - paid) === 0 ? 'paid' : 'due',
-                    paymentHistory: paymentHistory,
+                    paymentHistory: initialPaymentHistory,
+                    source: 'dashboard',
                     givenBy: givenBy,
                     reference: givenBy,
+                    appointmentId: this.currentTokenId,
                     serial: originalSerial,
                     appointmentSerial: originalSerial,
-                    lastUpdated: this.firebase?.firestore?.FieldValue?.serverTimestamp() || new Date()
-                };
-
-                await existingDoc.ref.update(updatedTokenData);
-                this.paymentDocPath = existingDoc.ref.path;
-
-                this.showAlert(`✅ টোকেন ${tokenNumber} সফলভাবে আপডেট করা হয়েছে!`, 'success');
-
-            } else {
-                // Issue New Token via Transaction using dailyLastCounter
-                const counterDocRef = this.db.collection('paymentHistories').doc(yymmdd);
-                let createdPath = null;
-
-                await this.db.runTransaction(async (transaction) => {
-                    const counterDoc = await transaction.get(counterDocRef);
-                    let lastCounter = 0;
-                    if (counterDoc.exists && counterDoc.data().dailyLastCounter) {
-                        lastCounter = counterDoc.data().dailyLastCounter;
-                    }
-                    const newTokenSerial = lastCounter + 1;
-                    const formattedCounter = String(newTokenSerial).padStart(2, '0');
-
-                    // Token number format: T-YYMMDD-Counter
-                    tokenNumber = `T-${yymmdd}-${formattedCounter}`;
-
-                    // Save payment record in origSubcol so it uniquely belongs to this appointment
-                    const finalDocRef = counterDocRef.collection(origSubcol).doc(this.currentTokenId);
-
-                    const initialPaymentHistory = [{
-                        id: Date.now().toString(),
-                        amount: paid,
-                        type: 'payment',
-                        method: 'নগদ',
-                        note: `টোকেন প্রদান - ${tokenNumber}`,
-                        timestamp: new Date().toISOString(),
-                        createdBy: sessionStorage.getItem('adminEmail') || 'admin',
-                        source: 'dashboard'
-                    }];
-
-                    transaction.set(counterDocRef, { dailyLastCounter: newTokenSerial }, { merge: true });
-                    transaction.set(finalDocRef, {
-                        tokenNumber: tokenNumber,
-                        tokenCounter: newTokenSerial,
-                        tokenDatePrefix: yymmdd,
-                        patientName: name,
-                        patientAge: age,
-                        patientPhone: appointmentData.phone || '',
-                        patientType: targetPatientType,
-                        tokenFee: fee,
-                        tokenPaid: paid,
-                        tokenDue: fee - paid,
-                        amount: paid,
-                        method: 'নগদ',
-                        type: 'payment',
-                        note: `টোকেন প্রদান - ${tokenNumber}`,
-                        status: (fee - paid) === 0 ? 'paid' : 'due',
-                        paymentHistory: initialPaymentHistory,
-                        source: 'dashboard',
-                        givenBy: givenBy,
-                        reference: givenBy,
-                        appointmentId: this.currentTokenId,
-                        serial: originalSerial,
-                        appointmentSerial: originalSerial,
-                        tokenTimestamp: this.firebase?.firestore?.FieldValue?.serverTimestamp() || new Date(),
-                        createdAt: this.firebase?.firestore?.FieldValue?.serverTimestamp() || new Date(),
-                        createdBy: sessionStorage.getItem('adminEmail') || 'admin'
-                    });
-
-                    createdPath = finalDocRef.path;
+                    tokenTimestamp: this.firebase?.firestore?.FieldValue?.serverTimestamp() || new Date(),
+                    createdAt: this.firebase?.firestore?.FieldValue?.serverTimestamp() || new Date(),
+                    createdBy: sessionStorage.getItem('adminEmail') || 'admin'
                 });
 
-                this.paymentDocPath = createdPath;
-                this.showAlert(`✅ টোকেন ${tokenNumber} তৈরি করা হয়েছে! (সিরিয়াল: ${originalSerial})`, 'success');
+                createdPath = finalDocRef.path;
+            });
+
+            this.paymentDocPath = createdPath;
+            this.showAlert(`✅ টোকেন ${tokenNumber} তৈরি করা হয়েছে! (সিরিয়াল: ${originalSerial})`, 'success');
+        }
+
+        // ৭. Main Appointment ডাটাবেস আপডেট করা
+        const updatePayload = {
+            tokenGiven: true,
+            tokenNumber: tokenNumber,
+            tokenTimestamp: this.firebase?.firestore?.FieldValue?.serverTimestamp() || new Date(),
+            appointmentId: this.currentTokenId,
+            tokenFee: fee,
+            tokenPaid: paid,
+            givenBy: givenBy,
+            tokenPatientType: targetPatientType,
+            lastTokenUpdate: this.firebase?.firestore?.FieldValue?.serverTimestamp() || new Date()
+        };
+
+        const apptFolder = isSurgery ? 'surgery' : targetPatientType;
+
+        if (this.originalAppointmentPath) {
+            try {
+                await this.db.doc(this.originalAppointmentPath).set(updatePayload, { merge: true });
+            } catch (e) {
+                console.warn("Appointment update warning:", e);
             }
+        } else if (yymmdd && this.currentTokenId) {
+            try {
+                await this.db.collection('appointments')
+                    .doc(yymmdd)
+                    .collection(apptFolder)
+                    .doc(this.currentTokenId)
+                    .set(updatePayload, { merge: true });
+            } catch (e) {
+                console.warn("Appointment update fallback warning:", e);
+            }
+        }
 
-// 4. Update Main Appointment Document safely in place (Keep original patient type in appointment)
-const updatePayload = {
-    tokenGiven: true,
-    tokenNumber: tokenNumber,
-    tokenTimestamp: this.firebase?.firestore?.FieldValue?.serverTimestamp() || new Date(),
-    appointmentId: this.currentTokenId,
-    tokenFee: fee,
-    tokenPaid: paid,
-    givenBy: givenBy,
-    tokenPatientType: targetPatientType, // শুধুমাত্র টোকেনের জন্য টাইপ সংরক্ষণ
-    lastTokenUpdate: this.firebase?.firestore?.FieldValue?.serverTimestamp() || new Date()
-};
+        const savedTokenNum = tokenNumber;
+        this.closeModal();
 
-if (this.originalAppointmentPath) {
-    try {
-        await this.db.doc(this.originalAppointmentPath).set(updatePayload, { merge: true });
-    } catch (e) {
-        console.warn("Appointment update warning:", e);
-    }
-} else if (yymmdd && this.currentTokenId) {
-    try {
-        await this.db.collection('appointments').doc(yymmdd).collection(origPatientType).doc(this.currentTokenId).set(updatePayload, { merge: true });
-    } catch (e) {
-        console.warn("Appointment update fallback warning:", e);
+        if (shouldPrint) {
+            await this.printTokenReceipt(savedTokenNum, name, age, targetPatientType, fee, paid);
+        }
+
+        if (typeof window.refreshTable === 'function') {
+            window.refreshTable();
+        }
+        if (typeof this.onTokenSaved === 'function') {
+            this.onTokenSaved();
+        }
+
+    } catch (error) {
+        console.error("❌ Error saving token:", error);
+        this.showAlert("সংরক্ষণ করতে সমস্যা হয়েছে: " + error.message, "error");
+    } finally {
+        this.isTokenSaving = false;
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalBtnHtml;
+        }
     }
 }
 
-            const savedTokenNum = tokenNumber;
-            this.closeModal();
+async printTokenReceipt(tokenNumber, name, age, patientType, fee, paid) {
+    const adminName = sessionStorage.getItem('adminName') || 'অ্যাডমিন';
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-            if (shouldPrint) {
-                await this.printTokenReceipt(savedTokenNum, name, age, targetPatientType, fee, paid);
-            }
+    // 🟢 রোগীর টাইপ নাম সামঞ্জস্য করার ম্যাপিং
+    const typeMap = {
+        'new': 'নতুন',
+        'old': 'পুরাতন',
+        'microneedling': 'মাইক্রোনিডলিং',
+        'prp': 'পি আর পি',
+        'cryosurgery': 'ক্রায়োসার্জারি',
+        'electrocautery': 'ইলেক্ট্রোক্যাটারি',
+        'surgery': 'সার্জারি'
+    };
+    const formattedType = typeMap[String(patientType).toLowerCase()] || patientType || '—';
 
-            if (typeof window.refreshTable === 'function') {
-                window.refreshTable();
-            }
-            if (typeof this.onTokenSaved === 'function') {
-                this.onTokenSaved();
-            }
-
-        } catch (error) {
-            console.error("❌ Error saving token:", error);
-            this.showAlert("সংরক্ষণ করতে সমস্যা হয়েছে: " + error.message, "error");
-        } finally {
-            this.isTokenSaving = false;
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = originalBtnHtml;
-            }
+    if (!isMobile) {
+        const win = window.open('', '_blank');
+        if (win) {
+            win.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                <title>${tokenNumber}</title>
+                <meta charset="UTF-8">
+                <style>
+                    @page { size: 60mm auto; margin: 0; }
+                    body { font-family: 'Noto Sans Bengali', sans-serif; width: 56mm; padding: 10px; margin: 0 auto; }
+                    .card { border: 1px dashed #2563eb; border-radius: 8px; padding: 12px; text-align: center; }
+                    .header { border-bottom: 1px dashed #e5e7eb; padding-bottom: 8px; margin-bottom: 8px; }
+                    .header h2 { font-size: 12px; font-weight: bold; color: #2563eb; margin: 0 0 3px 0; }
+                    .header p { font-size: 10px; color: #6b7280; margin: 0; }
+                    .token-num { font-size: 22px; font-weight: bold; color: #2563eb; margin: 8px 0; letter-spacing: 1px; }
+                    .info-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #e5e7eb; font-size: 12px; }
+                    .footer { margin-top: 10px; font-size: 9px; color: #9ca3af; text-align: center; }
+                </style>
+                </head>
+                <body>
+                <div class="card">
+                <div class="header"><h2>ডাঃ মোঃ ওয়াহিদুজ্জামান মাসুম</h2><p>টোকেন নাম্বার</p></div>
+                <div class="token-num">${tokenNumber}</div>
+                <div class="info-row"><span>রোগীর নাম:</span><span>${name || '—'}</span></div>
+                <div class="info-row"><span>বয়স:</span><span>${age || '—'}</span></div>
+                <div class="info-row"><span>ধরন:</span><span>${formattedType}</span></div>
+                <div class="info-row"><span>ফি:</span><span>${this.toBengaliNumber(fee)} টাকা</span></div>
+                <div class="footer"><p>Printed by: ${adminName}</p><p>${new Date().toLocaleString('bn-BD')}</p></div>
+                </div>
+                <script>window.onload = function() { setTimeout(() => window.print(), 500); }<\/script>
+                </body>
+                </html>
+            `);
+            win.document.close();
         }
+        return;
     }
 
-    async printTokenReceipt(tokenNumber, name, age, patientType, fee, paid) {
-        const adminName = sessionStorage.getItem('adminName') || 'অ্যাডমিন';
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+        await new Promise((resolve) => {
+            let loaded = 0;
+            const check = () => { loaded++; if (loaded >= 2) resolve(); };
+            
+            if (typeof html2canvas === 'undefined') {
+                const s1 = document.createElement('script');
+                s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                s1.onload = check;
+                s1.onerror = check;
+                document.head.appendChild(s1);
+            } else loaded++;
 
-        if (!isMobile) {
-            const win = window.open('', '_blank');
-            if (win) {
-                win.document.write(`
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                    <title>${tokenNumber}</title>
-                    <meta charset="UTF-8">
-                    <style>
-                        @page { size: 60mm auto; margin: 0; }
-                        body { font-family: 'Noto Sans Bengali', sans-serif; width: 56mm; padding: 10px; margin: 0 auto; }
-                        .card { border: 1px dashed #2563eb; border-radius: 8px; padding: 12px; text-align: center; }
-                        .header { border-bottom: 1px dashed #e5e7eb; padding-bottom: 8px; margin-bottom: 8px; }
-                        .header h2 { font-size: 12px; font-weight: bold; color: #2563eb; margin: 0 0 3px 0; }
-                        .header p { font-size: 10px; color: #6b7280; margin: 0; }
-                        .token-num { font-size: 22px; font-weight: bold; color: #2563eb; margin: 8px 0; letter-spacing: 1px; }
-                        .info-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #e5e7eb; font-size: 12px; }
-                        .footer { margin-top: 10px; font-size: 9px; color: #9ca3af; text-align: center; }
-                    </style>
-                    </head>
-                    <body>
-                    <div class="card">
-                    <div class="header"><h2>ডাঃ মোঃ ওয়াহিদুজ্জামান মাসুম</h2><p>টোকেন নাম্বার</p></div>
-                    <div class="token-num">${tokenNumber}</div>
-                    <div class="info-row"><span>রোগীর নাম:</span><span>${name || '—'}</span></div>
-                    <div class="info-row"><span>বয়স:</span><span>${age || '—'}</span></div>
-                    <div class="info-row"><span>ধরন:</span><span>${patientType === 'new' ? 'নতুন' : 'পুরাতন'}</span></div>
-                    <div class="info-row"><span>ফি:</span><span>${this.toBengaliNumber(fee)} টাকা</span></div>
-                    <div class="info-row"><span>জমা:</span><span>${this.toBengaliNumber(paid)} টাকা</span></div>
-                    <div class="footer"><p>Printed by: ${adminName}</p><p>${new Date().toLocaleString('bn-BD')}</p></div>
-                    </div>
-                    <script>window.onload = function() { setTimeout(() => window.print(), 500); }<\/script>
-                    </body>
-                    </html>
-                `);
-                win.document.close();
-            }
-            return;
-        }
+            if (typeof window.jspdf === 'undefined') {
+                const s2 = document.createElement('script');
+                s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                s2.onload = check;
+                s2.onerror = check;
+                document.head.appendChild(s2);
+            } else loaded++;
+        });
+    }
 
-        if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
-            await new Promise((resolve) => {
-                let loaded = 0;
-                const check = () => { loaded++; if (loaded >= 2) resolve(); };
-                
-                if (typeof html2canvas === 'undefined') {
-                    const s1 = document.createElement('script');
-                    s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-                    s1.onload = check;
-                    s1.onerror = check;
-                    document.head.appendChild(s1);
-                } else loaded++;
-
-                if (typeof window.jspdf === 'undefined') {
-                    const s2 = document.createElement('script');
-                    s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-                    s2.onload = check;
-                    s2.onerror = check;
-                    document.head.appendChild(s2);
-                } else loaded++;
-            });
-        }
-
-        const container = document.createElement('div');
-        container.style.position = 'fixed';
-        container.style.left = '-9999px';
-        container.style.top = '-9999px';
-        container.style.width = '2.2in';
-        container.style.backgroundColor = 'white';
-        container.style.padding = '12px';
-        container.innerHTML = `
-            <div style="font-family: sans-serif; border: 1px dashed #2563eb; padding: 12px; text-align: center; border-radius: 8px; background: #fff;">
-                <div style="border-bottom: 1px dashed #ccc; margin-bottom: 10px; padding-bottom: 5px;">
-                    <h2 style="font-size: 13px; color: #2563eb; margin: 0; font-weight: bold;">ডাঃ মোঃ ওয়াহিদুজ্জামান মাসুম</h2>
-                    <p style="font-size: 10px; margin: 2px 0; color: #555;">টোকেন নাম্বার</p>
-                </div>
-                <div style="font-size: 26px; font-weight: bold; color: #2563eb; margin: 8px 0;">${tokenNumber}</div>
-                <div style="font-size: 12px; text-align: left;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #eee; padding-bottom: 2px;"><span>রোগীর নাম:</span><strong>${name || '—'}</strong></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #eee; padding-bottom: 2px;"><span>বয়স:</span><strong>${age || '—'}</strong></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #eee; padding-bottom: 2px;"><span>ধরন:</span><strong>${patientType === 'new' ? 'নতুন' : 'পুরাতন'}</strong></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #eee; padding-bottom: 2px;"><span>ফি:</span><strong>${this.toBengaliNumber(fee)} টাকা</strong></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>জমা:</span><strong>${this.toBengaliNumber(paid)} টাকা</strong></div>
-                </div>
-                <div style="margin-top: 12px; font-size: 8px; color: #777;">
-                    <p style="margin: 2px 0;">Printed by: ${adminName}</p>
-                    <p style="margin: 0;">${new Date().toLocaleString('bn-BD')}</p>
-                </div>
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.left = '-9999px';
+    container.style.top = '-9999px';
+    container.style.width = '2.2in';
+    container.style.backgroundColor = 'white';
+    container.style.padding = '12px';
+    container.innerHTML = `
+        <div style="font-family: sans-serif; border: 1px dashed #2563eb; padding: 12px; text-align: center; border-radius: 8px; background: #fff;">
+            <div style="border-bottom: 1px dashed #ccc; margin-bottom: 10px; padding-bottom: 5px;">
+                <h2 style="font-size: 13px; color: #2563eb; margin: 0; font-weight: bold;">ডাঃ মোঃ ওয়াহিদুজ্জামান মাসুম</h2>
+                <p style="font-size: 10px; margin: 2px 0; color: #555;">টোকেন নাম্বার</p>
             </div>
-        `;
-        document.body.appendChild(container);
+            <div style="font-size: 26px; font-weight: bold; color: #2563eb; margin: 8px 0;">${tokenNumber}</div>
+            <div style="font-size: 12px; text-align: left;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #eee; padding-bottom: 2px;"><span>রোগীর নাম:</span><strong>${name || '—'}</strong></div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #eee; padding-bottom: 2px;"><span>বয়স:</span><strong>${age || '—'}</strong></div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #eee; padding-bottom: 2px;"><span>ধরন:</span><strong>${formattedType}</strong></div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #eee; padding-bottom: 2px;"><span>ফি:</span><strong>${this.toBengaliNumber(fee)} টাকা</strong></div>
+            </div>
+            <div style="margin-top: 12px; font-size: 8px; color: #777;">
+                <p style="margin: 2px 0;">Printed by: ${adminName}</p>
+                <p style="margin: 0;">${new Date().toLocaleString('bn-BD')}</p>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(container);
 
-        try {
-            const canvas = await html2canvas(container, { scale: 3, useCORS: true, logging: false });
-            const imgData = canvas.toDataURL('image/jpeg', 0.85);
+    try {
+        const canvas = await html2canvas(container, { scale: 3, useCORS: true, logging: false });
+        const imgData = canvas.toDataURL('image/jpeg', 0.85);
 
-            const jspdfModule = window.jspdf || window.jsPDF;
-            const jsPDFClass = jspdfModule?.jsPDF || jspdfModule;
+        const jspdfModule = window.jspdf || window.jsPDF;
+        const jsPDFClass = jspdfModule?.jsPDF || jspdfModule;
 
-            if (jsPDFClass) {
-                const doc = new jsPDFClass({ unit: 'mm', format: [53.34, 76.2], compress: true });
-                doc.addImage(imgData, 'JPEG', 0, 0, 53.34, 76.2, undefined, 'FAST');
+        if (jsPDFClass) {
+            const doc = new jsPDFClass({ unit: 'mm', format: [53.34, 76.2], compress: true });
+            doc.addImage(imgData, 'JPEG', 0, 0, 53.34, 76.2, undefined, 'FAST');
 
-                const pdfBlob = doc.output('blob');
-                const pdfFile = new File([pdfBlob], `${tokenNumber}.pdf`, { type: 'application/pdf' });
+            const pdfBlob = doc.output('blob');
+            const pdfFile = new File([pdfBlob], `${tokenNumber}.pdf`, { type: 'application/pdf' });
 
-                let shared = false;
+            let shared = false;
 
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-                    try {
-                        await navigator.share({
-                            files: [pdfFile],
-                            title: `টোকেন ${tokenNumber}`,
-                            text: `রোগী: ${name || '—'} (টোকেন: ${tokenNumber})`
-                        });
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                try {
+                    await navigator.share({
+                        files: [pdfFile],
+                        title: `টোকেন ${tokenNumber}`,
+                        text: `রোগী: ${name || '—'} (টোকেন: ${tokenNumber})`
+                    });
+                    shared = true;
+                } catch (shareErr) {
+                    if (shareErr.name !== 'AbortError') {
+                        console.warn("PDF file share failed:", shareErr);
+                    } else {
                         shared = true;
-                    } catch (shareErr) {
-                        if (shareErr.name !== 'AbortError') {
-                            console.warn("PDF file share failed:", shareErr);
-                        } else {
-                            shared = true;
-                        }
                     }
                 }
+            }
 
-                if (!shared) {
-                    canvas.toBlob(async (imgBlob) => {
-                        if (imgBlob && navigator.share && navigator.canShare) {
-                            const imgFile = new File([imgBlob], `${tokenNumber}.jpg`, { type: 'image/jpeg' });
-                            if (navigator.canShare({ files: [imgFile] })) {
-                                try {
-                                    await navigator.share({
-                                        files: [imgFile],
-                                        title: `টোকেন ${tokenNumber}`,
-                                        text: `রোগী: ${name || '—'} (টোকেন: ${tokenNumber})`
-                                    });
-                                    shared = true;
-                                } catch (imgShareErr) {
-                                    console.warn("Image share failed:", imgShareErr);
-                                }
+            if (!shared) {
+                canvas.toBlob(async (imgBlob) => {
+                    if (imgBlob && navigator.share && navigator.canShare) {
+                        const imgFile = new File([imgBlob], `${tokenNumber}.jpg`, { type: 'image/jpeg' });
+                        if (navigator.canShare({ files: [imgFile] })) {
+                            try {
+                                await navigator.share({
+                                    files: [imgFile],
+                                    title: `টোকেন ${tokenNumber}`,
+                                    text: `রোগী: ${name || '—'} (টোকেন: ${tokenNumber})`
+                                });
+                                shared = true;
+                            } catch (imgShareErr) {
+                                console.warn("Image share failed:", imgShareErr);
                             }
                         }
-                        if (!shared) {
-                            doc.save(`${tokenNumber}.pdf`);
-                        }
-                    }, 'image/jpeg', 0.85);
-                }
-            } else {
-                canvas.toBlob((blob) => {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${tokenNumber}.jpg`;
-                    a.click();
+                    }
+                    if (!shared) {
+                        doc.save(`${tokenNumber}.pdf`);
+                    }
                 }, 'image/jpeg', 0.85);
             }
-        } catch (e) {
-            console.error("PDF generation/sharing error:", e);
-            this.showAlert("পিডিএফ তৈরিতে সমস্যা হয়েছে: " + e.message, "error");
-        } finally {
-            if (container && container.parentNode) {
-                container.parentNode.removeChild(container);
-            }
+        } else {
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${tokenNumber}.jpg`;
+                a.click();
+            }, 'image/jpeg', 0.85);
+        }
+    } catch (e) {
+        console.error("PDF generation/sharing error:", e);
+        this.showAlert("পিডিএফ তৈরিতে সমস্যা হয়েছে: " + e.message, "error");
+    } finally {
+        if (container && container.parentNode) {
+            container.parentNode.removeChild(container);
         }
     }
+}
 }
 
 // Global window mappings for direct modal actions

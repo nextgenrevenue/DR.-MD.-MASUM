@@ -598,6 +598,7 @@
                   <th>বয়স</th>
                   <th>ফোন</th>
                   <th>ধরন</th>
+                  <th>সেবা</th>
                   <th>ফি</th>
                   <th>পরিশোধ</th>
                   <th>বাকি</th>
@@ -874,7 +875,7 @@
   }
 
   // ==================== টোকেন ডাটা লোড ====================
-  async function loadTokenData() {
+async function loadTokenData() {
     if (!db) return;
     
     const dateFromVal = document.getElementById('dateFrom')?.value;
@@ -883,12 +884,14 @@
     const search = document.getElementById('searchInput')?.value.toLowerCase().trim();
     
     try {
-      let snapNew = null, snapOld = null;
+      let snapNew = null, snapOld = null, snapSurgery = null;
 
+      // ১. collectionGroup-এ payment_surgery যোগ করা হয়েছে
       try {
-        [snapNew, snapOld] = await Promise.all([
+        [snapNew, snapOld, snapSurgery] = await Promise.all([
           db.collectionGroup('payment_new').get(),
-          db.collectionGroup('payment_old').get()
+          db.collectionGroup('payment_old').get(),
+          db.collectionGroup('payment_surgery').get()
         ]);
       } catch (cgErr) {
         console.warn('collectionGroup query warning, attempting folder fallback:', cgErr);
@@ -915,8 +918,9 @@
 
       processDocs(snapNew);
       processDocs(snapOld);
+      processDocs(snapSurgery);
 
-      // Fallback if collectionGroup returned nothing or errored out
+      // ২. Fallback লোডারে payment_surgery যোগ করা হয়েছে
       if (tokens.length === 0 && (dateFromVal || dateToVal)) {
         const targetDates = [];
         if (dateFromVal) targetDates.push(dateFromVal);
@@ -926,12 +930,14 @@
           const yymmdd = getYYMMDD(dStr);
           if (yymmdd) {
             try {
-              const [fNew, fOld] = await Promise.all([
+              const [fNew, fOld, fSurgery] = await Promise.all([
                 db.collection('paymentHistories').doc(yymmdd).collection('payment_new').get(),
-                db.collection('paymentHistories').doc(yymmdd).collection('payment_old').get()
+                db.collection('paymentHistories').doc(yymmdd).collection('payment_old').get(),
+                db.collection('paymentHistories').doc(yymmdd).collection('payment_surgery').get()
               ]);
               processDocs(fNew);
               processDocs(fOld);
+              processDocs(fSurgery);
             } catch (e) { console.error('Folder fetch error:', e); }
           }
         }
@@ -963,15 +969,21 @@
         return tB - tA;
       });
       
-      // Patient type filter
+      // ৩. Patient type filter (সার্জারি এবং নির্দিষ্ট প্রসিডিউর ফিল্টারিং সমর্থিত)
       if (patientType && patientType !== 'all') {
+        const surgeryTypes = ['microneedling', 'prp', 'cryosurgery', 'electrocautery', 'surgery'];
+
         if (patientType === 'due') {
           tokens = tokens.filter(t => {
             const fee = Number(t.tokenFee) || 0;
             const paid = Number(t.tokenPaid) || 0;
             return fee !== paid;
           });
+        } else if (patientType === 'surgery') {
+          // 'surgery' সিলেক্ট করলে সব ধরণের সার্জারি/প্রসিডিউর দেখাবে
+          tokens = tokens.filter(t => surgeryTypes.includes((t.patientType || t.type || '').toLowerCase()));
         } else {
+          // নির্দিষ্ট টাইপ ফিল্টার (যেমন: new, old, microneedling, prp ইত্যাদি)
           tokens = tokens.filter(t => (t.patientType || t.type) === patientType);
         }
       }
@@ -995,56 +1007,83 @@
       console.error('loadTokenData error:', err);
       showAlert('ডাটা লোড করতে সমস্যা হয়েছে', 'error');
     }
-  }
+}
 
   // ==================== টোকেন টেবিল রেন্ডার ====================
-  function renderTokenTable(tokens) {
-    const tbody = document.getElementById('tokenTableBody');
-    if (!tbody) return;
+function renderTokenTable(tokens) {
+  const tbody = document.getElementById('tokenTableBody');
+  if (!tbody) return;
 
-    if (tokens.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:40px;">কোনো টোকেন পাওয়া যায়নি</td></tr>';
-      return;
+  if (tokens.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;padding:40px;">কোনো টোকেন পাওয়া যায়নি</td></tr>';
+    return;
+  }
+  
+  const surgeryMap = {
+    'microneedling': 'মাইক্রোনিডলিং',
+    'prp': 'পি আর পি',
+    'cryosurgery': 'ক্রায়োসার্জারি',
+    'electrocautery': 'ইলেক্ট্রোক্যাটারি',
+    'surgery': 'সার্জারী'
+  };
+
+  tbody.innerHTML = tokens.map(token => {
+    const fee = Number(token.tokenFee) || 0;
+    const paid = Number(token.tokenPaid) || 0;
+    const due = fee - paid;
+    const status = due === 0 ? 'paid' : 'due';
+    const tokenNumber = token.tokenNumber || '—';
+    const serialNumber = token.serial || token.appointmentSerial || '—';
+    const givenBy = token.givenBy || token.reference || '—';
+    const docDate = getDocDate(token);
+
+    // ধরন এবং সেবা নির্ধারণ
+    const rawType = String(token.patientType || token.type || '').toLowerCase();
+    const isSurgery = Object.keys(surgeryMap).includes(rawType);
+
+    let displayType = 'নতুন';
+    let displayService = 'সাধারণ';
+
+    if (isSurgery) {
+      displayType = 'সার্জারী';
+      displayService = surgeryMap[rawType] || 'সার্জারী';
+    } else if (rawType === 'old') {
+      displayType = 'পুরাতন';
+      displayService = 'সাধারণ';
+    } else {
+      displayType = 'নতুন';
+      displayService = 'সাধারণ';
     }
     
-    tbody.innerHTML = tokens.map(token => {
-      const fee = Number(token.tokenFee) || 0;
-      const paid = Number(token.tokenPaid) || 0;
-      const due = fee - paid;
-      const status = due === 0 ? 'paid' : 'due';
-      const tokenNumber = token.tokenNumber || '—';
-      const serialNumber = token.serial || token.appointmentSerial || '—';
-      const givenBy = token.givenBy || token.reference || '—';
-      const docDate = getDocDate(token);
-      
-      return `
-        <tr>
-          <td>${formatDate(docDate)}</td>
-          <td><strong>${tokenNumber}</strong></td>
-          <td>${toBengaliNumber(serialNumber)}</td>
-          <td><strong>${escapeHtml(token.patientName || '—')}</strong></td>
-          <td>${token.patientAge || '—'}</td>
-          <td>${token.patientPhone || '—'}</td>
-          <td>${(token.patientType || token.type) === 'new' ? 'নতুন' : 'পুরাতন'}</td>
-          <td>${toBengaliNumber(fee)} টাকা</td>
-          <td>${toBengaliNumber(paid)} টাকা</td>
-          <td>${toBengaliNumber(due)} টাকা</td>
-          <td><span class="status-badge ${status === 'paid' ? 'status-paid' : 'status-due'}">${status === 'paid' ? 'পরিশোধিত' : 'বাকি'}</span></td>
-          <td>${givenBy}</td>
-          <td>
-            <div class="action-buttons">
-              <button class="btn-view" onclick="viewTokenDetails('${token.id}')">
-                <i class="fas fa-eye"></i> বিস্তারিত
-              </button>
-              <button class="btn-delete" onclick="deleteToken('${token.id}', '${escapeHtml(token.patientName || 'এই টোকেন')}')">
-                <i class="fas fa-trash"></i> ডিলিট
-              </button>
-            </div>
-          </td>
-        </tr>
-      `;
-    }).join('');
-  }
+    return `
+      <tr>
+        <td>${formatDate(docDate)}</td>
+        <td><strong>${tokenNumber}</strong></td>
+        <td>${toBengaliNumber(serialNumber)}</td>
+        <td><strong>${escapeHtml(token.patientName || '—')}</strong></td>
+        <td>${token.patientAge || '—'}</td>
+        <td>${token.patientPhone || '—'}</td>
+        <td><strong style="color: ${isSurgery ? '#8b5cf6' : '#374151'};">${displayType}</strong></td>
+        <td>${displayService}</td>
+        <td>${toBengaliNumber(fee)} টাকা</td>
+        <td>${toBengaliNumber(paid)} টাকা</td>
+        <td>${toBengaliNumber(due)} টাকা</td>
+        <td><span class="status-badge ${status === 'paid' ? 'status-paid' : 'status-due'}">${status === 'paid' ? 'পরিশোধিত' : 'বাকি'}</span></td>
+        <td>${givenBy}</td>
+        <td>
+          <div class="action-buttons">
+            <button class="btn-view" onclick="viewTokenDetails('${token.id}')">
+              <i class="fas fa-eye"></i> বিস্তারিত
+            </button>
+            <button class="btn-delete" onclick="deleteToken('${token.id}', '${escapeHtml(token.patientName || 'এই টোকেন')}')">
+              <i class="fas fa-trash"></i> ডিলিট
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
 
   function getFormattedAge(y, m, d) {
     let years = parseInt(y) || 0;
@@ -1099,6 +1138,10 @@
                 <select id="newTokenPatientType" style="width:100%;">
                   <option value="new">নতুন</option>
                   <option value="old">পুরাতন</option>
+                  <option value="microneedling">মাইক্রোনিডলিং</option>
+                  <option value="prp">পি আর পি</option>
+                  <option value="cryosurgery">ক্রায়োসার্জারি</option>
+                  <option value="electrocautery">ইলেক্ট্রোক্যাটারি</option>
                 </select>
               </span>
             </div>
@@ -1137,17 +1180,21 @@
     const feeInput = document.getElementById('newTokenFee');
     const paidInput = document.getElementById('newTokenPaid');
     
-    if (patientTypeSelect && feeInput && paidInput) {
-      patientTypeSelect.addEventListener('change', function() {
-        if (this.value === 'new') {
-          feeInput.value = '800';
-          paidInput.value = '800';
-        } else {
-          feeInput.value = '600';
-          paidInput.value = '600';
-        }
-      });
+if (patientTypeSelect && feeInput && paidInput) {
+  patientTypeSelect.addEventListener('change', function() {
+    const surgeryTypes = ['microneedling', 'prp', 'cryosurgery', 'electrocautery', 'surgery'];
+    if (surgeryTypes.includes(this.value.toLowerCase())) {
+      feeInput.value = '';
+      paidInput.value = '';
+    } else if (this.value === 'new') {
+      feeInput.value = '800';
+      paidInput.value = '800';
+    } else {
+      feeInput.value = '600';
+      paidInput.value = '600';
     }
+  });
+}
   }
 
   function closeTokenGiveBlankModal() {
@@ -1155,11 +1202,11 @@
     if (modal) modal.remove();
   }
 
-  async function saveAndPrintNewToken() {
+async function saveAndPrintNewToken() {
     const name = document.getElementById('newTokenName')?.value.trim();
     if (!name) {
-      showAlert('রোগীর নাম লিখুন', 'error');
-      return;
+        showAlert('রোগীর নাম লিখুন', 'error');
+        return;
     }
 
     const years = document.getElementById('newTokenAgeYears')?.value.trim();
@@ -1169,296 +1216,360 @@
     const saveBtn = document.querySelector('#tokenGiveBlankModal .btn-save');
     const originalText = saveBtn?.innerHTML;
     if (saveBtn) {
-      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> সংরক্ষণ হচ্ছে...';
-      saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> সংরক্ষণ হচ্ছে...';
+        saveBtn.disabled = true;
     }
     
     try {
-      const now = new Date();
-      const year = String(now.getFullYear()).slice(-2);
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const yymmdd = `${year}${month}${day}`;
-      const patientType = document.getElementById('newTokenPatientType').value;
-      const subCollection = patientType === 'new' ? 'payment_new' : 'payment_old';
+        const now = new Date();
+        const year = String(now.getFullYear()).slice(-2);
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const yymmdd = `${year}${month}${day}`;
+        const patientType = document.getElementById('newTokenPatientType').value;
+        
+        // ১. সাব-কালেকশন নির্ধারণ (নতুন প্রসিডিউরগুলোর জন্য)
+        const surgeryTypes = ['microneedling', 'prp', 'cryosurgery', 'electrocautery', 'surgery'];
+        const isSurgery = surgeryTypes.includes(patientType.toLowerCase());
+        const subCollection = isSurgery 
+            ? 'payment_surgery' 
+            : (patientType === 'old' ? 'payment_old' : 'payment_new');
 
-      const feeInput = parseInt(document.getElementById('newTokenFee').value);
-      const fee = (feeInput && feeInput > 0) ? feeInput : (patientType === 'new' ? 800 : 600);
-      const paidInput = parseInt(document.getElementById('newTokenPaid').value);
-      const paid = (!isNaN(paidInput) && paidInput >= 0) ? paidInput : fee;
-      const age = getFormattedAge(years, months, days);
-      const phone = document.getElementById('newTokenPhone').value || '';
-      const givenBy = document.getElementById('newTokenGivenBy')?.value || '';
-      const due = fee - paid;
-
-      const counterDocRef = db.collection('paymentHistories').doc(yymmdd);
-
-      let tokenDocId = '';
-      let tokenNumber = '';
-      let newTokenSerial = 0;
-
-      await db.runTransaction(async (transaction) => {
-        const counterDoc = await transaction.get(counterDocRef);
-
-        let lastCounter = 0;
-        if (counterDoc.exists && counterDoc.data().dailyLastCounter) {
-          lastCounter = counterDoc.data().dailyLastCounter;
-        }
-
-        newTokenSerial = lastCounter + 1;
-        const serialStr = String(newTokenSerial).padStart(2, '0');
-        tokenDocId = `${yymmdd}-${serialStr}`;
-        tokenNumber = `T-${tokenDocId}`;
-
-        const tokenRef = counterDocRef.collection(subCollection).doc(tokenDocId);
-        const existingTokenDoc = await transaction.get(tokenRef);
-
-        if (existingTokenDoc.exists) {
-          throw new Error(`টোকেন নম্বর ${tokenNumber} ইতিমধ্যে বিদ্যমান!`);
-        }
-
-        const tokenPayload = {
-          tokenNumber: tokenNumber,
-          tokenCounter: newTokenSerial,
-          tokenDatePrefix: yymmdd,
-          tokenTimestamp: firebase.firestore.FieldValue.serverTimestamp(),
-          patientName: name,
-          patientAge: age,
-          patientPhone: phone,
-          patientType: patientType,
-          tokenFee: fee,
-          tokenPaid: paid,
-          tokenDue: due,
-          amount: paid,
-          method: 'নগদ',
-          type: 'payment',
-          note: `টোকেন প্রদান - ${tokenNumber}`,
-          status: due === 0 ? 'paid' : 'due',
-          source: 'tokenmanagement',
-          givenBy: givenBy,
-          reference: givenBy,
-          serial: null,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          createdBy: sessionStorage.getItem('adminEmail') || 'admin'
+        // ২. টাইপ অনুযায়ী ডিফল্ট ফি সেট করা
+        const feeStructure = {
+            new: 800,
+            old: 600,
+            microneedling: 3000,
+            prp: 4000,
+            cryosurgery: 2000,
+            electrocautery: 2500
         };
 
-        transaction.set(counterDocRef, { dailyLastCounter: newTokenSerial }, { merge: true });
-        transaction.set(tokenRef, tokenPayload);
-      });
+        const feeInput = parseInt(document.getElementById('newTokenFee').value);
+        const defaultFee = feeStructure[patientType] !== undefined ? feeStructure[patientType] : 800;
+        const fee = (!isNaN(feeInput) && feeInput > 0) ? feeInput : defaultFee;
 
-      showAlert(`✅ টোকেন ${tokenNumber} তৈরি হয়েছে!`, 'success');
+        const paidInput = parseInt(document.getElementById('newTokenPaid').value);
+        const paid = (!isNaN(paidInput) && paidInput >= 0) ? paidInput : fee;
+        const age = getFormattedAge(years, months, days);
+        const phone = document.getElementById('newTokenPhone').value || '';
+        const givenBy = document.getElementById('newTokenGivenBy')?.value || '';
+        const due = fee - paid;
 
-      printTokenDirect({ 
-        id: tokenDocId, 
-        tokenNumber, 
-        tokenCounter: newTokenSerial, 
-        patientName: name, 
-        patientAge: age, 
-        patientPhone: phone, 
-        patientType, 
-        tokenFee: fee, 
-        tokenPaid: paid, 
-        tokenDue: due, 
-        givenBy 
-      });
+        const counterDocRef = db.collection('paymentHistories').doc(yymmdd);
 
-      closeTokenGiveBlankModal();
+        let tokenDocId = '';
+        let tokenNumber = '';
+        let newTokenSerial = 0;
 
-      if (typeof loadTokenData === 'function') {
-        setTimeout(async () => {
-          await loadTokenData();
-        }, 300);
-      }
+        await db.runTransaction(async (transaction) => {
+            const counterDoc = await transaction.get(counterDocRef);
+
+            let lastCounter = 0;
+            if (counterDoc.exists && counterDoc.data().dailyLastCounter) {
+                lastCounter = counterDoc.data().dailyLastCounter;
+            }
+
+            newTokenSerial = lastCounter + 1;
+            const serialStr = String(newTokenSerial).padStart(2, '0');
+            tokenDocId = `${yymmdd}-${serialStr}`;
+            tokenNumber = `T-${tokenDocId}`;
+
+            const tokenRef = counterDocRef.collection(subCollection).doc(tokenDocId);
+            const existingTokenDoc = await transaction.get(tokenRef);
+
+            if (existingTokenDoc.exists) {
+                throw new Error(`টোকেন নম্বর ${tokenNumber} ইতিমধ্যে বিদ্যমান!`);
+            }
+
+            const tokenPayload = {
+                tokenNumber: tokenNumber,
+                tokenCounter: newTokenSerial,
+                tokenDatePrefix: yymmdd,
+                tokenTimestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                patientName: name,
+                patientAge: age,
+                patientPhone: phone,
+                patientType: patientType,
+                tokenFee: fee,
+                tokenPaid: paid,
+                tokenDue: due,
+                amount: paid,
+                method: 'নগদ',
+                type: 'payment',
+                note: `টোকেন প্রদান - ${tokenNumber}`,
+                status: due === 0 ? 'paid' : 'due',
+                source: 'tokenmanagement',
+                givenBy: givenBy,
+                reference: givenBy,
+                serial: null,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                createdBy: sessionStorage.getItem('adminEmail') || 'admin'
+            };
+
+            transaction.set(counterDocRef, { dailyLastCounter: newTokenSerial }, { merge: true });
+            transaction.set(tokenRef, tokenPayload);
+        });
+
+        showAlert(`✅ টোকেন ${tokenNumber} তৈরি হয়েছে!`, 'success');
+
+        printTokenDirect({ 
+            id: tokenDocId, 
+            tokenNumber, 
+            tokenCounter: newTokenSerial, 
+            patientName: name, 
+            patientAge: age, 
+            patientPhone: phone, 
+            patientType, 
+            tokenFee: fee, 
+            tokenPaid: paid, 
+            tokenDue: due, 
+            givenBy 
+        });
+
+        closeTokenGiveBlankModal();
+
+        if (typeof loadTokenData === 'function') {
+            setTimeout(async () => {
+                await loadTokenData();
+            }, 300);
+        }
 
     } catch (err) {
-      console.error('Save & Print error:', err);
-      showAlert('❌ সমস্যা হয়েছে: ' + err.message, 'error');
+        console.error('Save & Print error:', err);
+        showAlert('❌ সমস্যা হয়েছে: ' + err.message, 'error');
     } finally {
-      if (saveBtn) {
-        saveBtn.innerHTML = originalText;
-        saveBtn.disabled = false;
-      }
+        if (saveBtn) {
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        }
     }
-  }
+}
 
-  async function deleteToken(tokenId, tokenName) {
-    const confirmDelete = confirm(`"${tokenName}" টোকেনটি ডিলিট করতে চান?`);
-    if (!confirmDelete) return;
+
+async function deleteToken(tokenId, tokenName) {
+  const confirmDelete = confirm(`"${tokenName}" টোকেনটি ডিলিট করতে চান?`);
+  if (!confirmDelete) return;
+
+  try {
+    const dateFolder = tokenId.split('-')[0]; 
     
-    try {
-      const dateFolder = tokenId.split('-')[0]; 
-      let tokenRef = db.collection('paymentHistories').doc(dateFolder).collection('payment_new').doc(tokenId);
-      let tokenDoc = await tokenRef.get();
+    // ১. paymentHistories কালেকশন থেকে টোকেন তথ্য খোঁজা
+    let tokenRef = db.collection('paymentHistories').doc(dateFolder).collection('payment_new').doc(tokenId);
+    let tokenDoc = await tokenRef.get();
 
-      if (!tokenDoc.exists) {
-        tokenRef = db.collection('paymentHistories').doc(dateFolder).collection('payment_old').doc(tokenId);
-        tokenDoc = await tokenRef.get();
-      }
-
-      if (!tokenDoc.exists) {
-        showAlert('❌ টোকেনটি খুঁজে পাওয়া যায়নি!', 'error');
-        return;
-      }
-      
-      const tokenData = tokenDoc.data();
-      const appointmentId = tokenData ? tokenData.appointmentId : null;
-      const batch = db.batch();
-      batch.delete(tokenRef);
-
-      if (appointmentId) {
-        const apptDateFolder = appointmentId.split('-')[0]; 
-        let appointmentRef = db.collection('appointments').doc(apptDateFolder).collection('new').doc(appointmentId);
-        let appointmentDoc = await appointmentRef.get();
-        
-        if (!appointmentDoc.exists) {
-          appointmentRef = db.collection('appointments').doc(apptDateFolder).collection('old').doc(appointmentId);
-          appointmentDoc = await appointmentRef.get();
-        }
-       
-        if (appointmentDoc.exists) {
-          batch.update(appointmentRef, {
-            tokenGiven: false,
-            tokenNumber: null,
-            tokenTimestamp: null,
-            tokenFee: null,
-            tokenPaid: null,
-            lastTokenUpdate: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        }
-      }
-
-      await batch.commit();
-      showAlert(`✅ টোকেন ডিলিট করা হয়েছে!`, 'success');
-
-      if (typeof loadTokenData === 'function') {
-        setTimeout(async () => {
-          await loadTokenData();
-        }, 300);
-      }
-      
-    } catch (err) {
-      console.error('Delete error:', err);
-      showAlert('❌ ডিলিট করতে সমস্যা হয়েছে: ' + err.message, 'error');
+    if (!tokenDoc.exists) {
+      tokenRef = db.collection('paymentHistories').doc(dateFolder).collection('payment_old').doc(tokenId);
+      tokenDoc = await tokenRef.get();
     }
+
+    if (!tokenDoc.exists) {
+      tokenRef = db.collection('paymentHistories').doc(dateFolder).collection('payment_surgery').doc(tokenId);
+      tokenDoc = await tokenRef.get();
+    }
+
+    if (!tokenDoc.exists) {
+      showAlert('❌ টোকেনটি খুঁজে পাওয়া যায়নি!', 'error');
+      return;
+    }
+
+    const tokenData = tokenDoc.data();
+    const appointmentId = tokenData ? tokenData.appointmentId : null;
+    const batch = db.batch();
+
+    // টোকেন রিমুভ করা
+    batch.delete(tokenRef);
+
+    // ২. appointments কালেকশনে টোকেন স্ট্যাটাস রিসেট করা
+    if (appointmentId) {
+      const apptDateFolder = appointmentId.split('-')[0]; 
+      
+      let appointmentRef = db.collection('appointments').doc(apptDateFolder).collection('new').doc(appointmentId);
+      let appointmentDoc = await appointmentRef.get();
+
+      if (!appointmentDoc.exists) {
+        appointmentRef = db.collection('appointments').doc(apptDateFolder).collection('old').doc(appointmentId);
+        appointmentDoc = await appointmentRef.get();
+      }
+
+      // 🛑 ফিক্স: surgery কালেকশনও চেক করা হলো
+      if (!appointmentDoc.exists) {
+        appointmentRef = db.collection('appointments').doc(apptDateFolder).collection('surgery').doc(appointmentId);
+        appointmentDoc = await appointmentRef.get();
+      }
+
+      // অ্যাপয়েন্টমেন্ট পাওয়া গেলে টোকেন সংক্রান্ত সব ফ্ল্যাগ রিসেট
+      if (appointmentDoc.exists) {
+        batch.update(appointmentRef, {
+          tokenGiven: false,
+          hasToken: false,
+          tokenNumber: null,
+          tokenTimestamp: null,
+          tokenFee: null,
+          tokenPaid: null,
+          lastTokenUpdate: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    }
+
+    await batch.commit();
+    showAlert(`✅ টোকেন ডিলিট করা হয়েছে!`, 'success');
+
+    if (typeof loadTokenData === 'function') {
+      setTimeout(async () => {
+        await loadTokenData();
+      }, 300);
+    }
+
+  } catch (err) {
+    console.error('Delete error:', err);
+    showAlert('❌ ডিলিট করতে সমস্যা হয়েছে: ' + err.message, 'error');
   }
+}
 
   // ==================== টোকেন বিস্তারিত ====================
-  async function viewTokenDetails(id) {
-    if (!db) return;
-    currentTokenId = id;
+async function viewTokenDetails(id) {
+  if (!db) return;
+  currentTokenId = id;
 
-    try {
-      const dateFolder = id.split('-')[0];
+  try {
+    const dateFolder = id.split('-')[0];
 
-      let docRef = db.collection('paymentHistories').doc(dateFolder).collection('payment_new').doc(id);
-      let doc = await docRef.get();
+    // payment_new, payment_old এবং payment_surgery ক্রমান্বয়ে চেক করা
+    let docRef = db.collection('paymentHistories').doc(dateFolder).collection('payment_new').doc(id);
+    let doc = await docRef.get();
 
-      if (!doc.exists) {
-        docRef = db.collection('paymentHistories').doc(dateFolder).collection('payment_old').doc(id);
-        doc = await docRef.get();
-      }
+    if (!doc.exists) {
+      docRef = db.collection('paymentHistories').doc(dateFolder).collection('payment_old').doc(id);
+      doc = await docRef.get();
+    }
 
-      if (!doc.exists) {
-        showAlert('টোকেন পাওয়া যায়নি', 'error');
-        return;
-      }
+    if (!doc.exists) {
+      docRef = db.collection('paymentHistories').doc(dateFolder).collection('payment_surgery').doc(id);
+      doc = await docRef.get();
+    }
+
+    if (!doc.exists) {
+      showAlert('টোকেন পাওয়া যায়নি', 'error');
+      return;
+    }
+
+    currentTokenDoc = { id: doc.id, ...doc.data() };
+    const token = currentTokenDoc;
+    const fee = token.tokenFee || 0;
+    const paid = token.tokenPaid || 0;
+    const due = fee - paid;
+    const tokenNumber = token.tokenNumber || '—';
     
-      currentTokenDoc = { id: doc.id, ...doc.data() };
-      const token = currentTokenDoc;
-      const fee = token.tokenFee || 0;
-      const paid = token.tokenPaid || 0;
-      const due = fee - paid;
-      const tokenNumber = token.tokenNumber || '—';
+    let paymentHistoryHtml = '';
+    const paymentHistory = token.paymentHistory || [];
+    
+    if (paymentHistory.length > 0) {
+      const sortedHistory = [...paymentHistory].reverse();
       
-      let paymentHistoryHtml = '';
-      const paymentHistory = token.paymentHistory || [];
-      
-      if (paymentHistory.length > 0) {
-        const sortedHistory = [...paymentHistory].reverse();
+      const paymentItems = sortedHistory.map(p => {
+        let dateText = 'তারিখ নেই';
+        if (p.timestamp) {
+          try {
+            const date = new Date(p.timestamp);
+            dateText = date.toLocaleString('bn-BD', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+          } catch(e) { dateText = p.timestamp; }
+        }
         
-        const paymentItems = sortedHistory.map(p => {
-          let dateText = 'তারিখ নেই';
-          if (p.timestamp) {
-            try {
-              const date = new Date(p.timestamp);
-              dateText = date.toLocaleString('bn-BD', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              });
-            } catch(e) { dateText = p.timestamp; }
-          }
-          
-          return `
-            <div class="payment-item" style="background: ${p.type === 'payment' ? '#dbeafe' : '#fed7aa'}; padding: 10px; border-radius: 8px; margin-bottom: 8px;">
-              <div><strong>📅 ${dateText}</strong></div>
-              <div>💰 পরিমাণ: ${toBengaliNumber(p.amount)} টাকা</div>
-              <div>💳 পদ্ধতি: ${p.method || 'নগদ'}</div>
-              <div>📝 ধরন: ${p.type === 'payment' ? 'পেমেন্ট' : 'ফেরত'}</div>
-              ${p.note ? `<div>📝 নোট: ${p.note}</div>` : ''}
-              <div style="font-size: 11px; color: #6b7280; margin-top: 5px;">
-                পূর্বের পরিশোধ: ${toBengaliNumber(p.previousPaid)} → নতুন: ${toBengaliNumber(p.newPaid)}
-              </div>
-            </div>
-          `;
-        }).join('');
-        
-        paymentHistoryHtml = `
-          <div class="payment-history">
-            <h4>💳 পেমেন্ট ইতিহাস (${paymentHistory.length}টি):</h4>
-            <div style="max-height: 300px; overflow-y: auto;">
-              ${paymentItems}
+        return `
+          <div class="payment-item" style="background: ${p.type === 'payment' ? '#dbeafe' : '#fed7aa'}; padding: 10px; border-radius: 8px; margin-bottom: 8px;">
+            <div><strong>📅 ${dateText}</strong></div>
+            <div>💰 পরিমাণ: ${toBengaliNumber(p.amount)} টাকা</div>
+            <div>💳 পদ্ধতি: ${p.method || 'নগদ'}</div>
+            <div>📝 ধরন: ${p.type === 'payment' ? 'পেমেন্ট' : 'ফেরত'}</div>
+            ${p.note ? `<div>📝 নোট: ${p.note}</div>` : ''}
+            <div style="font-size: 11px; color: #6b7280; margin-top: 5px;">
+              পূর্বের পরিশোধ: ${toBengaliNumber(p.previousPaid)} → নতুন: ${toBengaliNumber(p.newPaid)}
             </div>
           </div>
         `;
-      } else {
-        paymentHistoryHtml = '<div class="payment-history"><p style="color:#9ca3af; padding: 20px; text-align: center;">📭 কোনো পেমেন্ট ইতিহাস নেই</p></div>';
-      }
+      }).join('');
       
-      const docDate = getDocDate(token);
-
-      document.getElementById('modalContent').innerHTML = `
-        <div class="token-detail">
-          <div class="token-detail-row"><span class="token-detail-label">টোকেন নাম্বার:</span><span class="token-detail-value"><strong style="color:#2563eb;font-size:16px;">${tokenNumber}</strong></span></div>
-          <div class="token-detail-row"><span class="token-detail-label">সিরিয়াল:</span><span class="token-detail-value">${toBengaliNumber(token.serial || token.appointmentSerial)}</span></div>
-          <div class="token-detail-row"><span class="token-detail-label">তারিখ:</span><span class="token-detail-value">${formatDateTime(docDate)}</span></div>
-          <div class="token-detail-row"><span class="token-detail-label">রোগীর নাম:</span><span class="token-detail-value"><input type="text" id="editName" value="${escapeHtml(token.patientName || '')}"></span></div>
-          <div class="token-detail-row"><span class="token-detail-label">বয়স:</span><span class="token-detail-value"><input type="text" id="editAge" value="${token.patientAge || ''}"></span></div>
-          <div class="token-detail-row"><span class="token-detail-label">ফোন:</span><span class="token-detail-value"><input type="text" id="editPhone" value="${token.patientPhone || ''}"></span></div>
-          <div class="token-detail-row"><span class="token-detail-label">ধরন:</span><span class="token-detail-value"><select id="editPatientType"><option value="new" ${(token.patientType || token.type) === 'new' ? 'selected' : ''}>নতুন</option><option value="old" ${(token.patientType || token.type) === 'old' ? 'selected' : ''}>পুরাতন</option></select></span></div>
-          <div class="token-detail-row"><span class="token-detail-label">রেফারেন্স:</span><span class="token-detail-value"><input type="text" id="editGivenBy" value="${escapeHtml(token.givenBy || token.reference || '')}" placeholder="রেফারেন্স নাম লিখুন"></span></div>
-          <div class="token-detail-row"><span class="token-detail-label">ফি:</span><span class="token-detail-value"><input type="number" id="editFee" value="${fee}" onchange="calculateDue()"></span></div>
-          <div class="token-detail-row"><span class="token-detail-label">পরিশোধিত:</span><span class="token-detail-value"><input type="number" id="editPaid" value="${paid}" onchange="calculateDue()"><br><small id="dueAmount" style="color: ${due > 0 ? '#ef4444' : '#10b981'}">বাকি: ${due > 0 ? toBengaliNumber(due) : '০'} টাকা</small></span></div>
+      paymentHistoryHtml = `
+        <div class="payment-history">
+          <h4>💳 পেমেন্ট ইতিহাস (${paymentHistory.length}টি):</h4>
+          <div style="max-height: 300px; overflow-y: auto;">
+            ${paymentItems}
+          </div>
         </div>
-        ${paymentHistoryHtml}
       `;
-      document.getElementById('tokenModal').style.display = 'flex';
-
-      const editPatientTypeElem = document.getElementById('editPatientType');
-      if (editPatientTypeElem) {
-        editPatientTypeElem.addEventListener('change', function() {
-          const feeInput = document.getElementById('editFee');
-          const paidInput = document.getElementById('editPaid');
-
-          if (this.value === 'new') {
-            if (feeInput) feeInput.value = '800';
-            if (paidInput) paidInput.value = '800';
-          } else {
-            if (feeInput) feeInput.value = '600';
-            if (paidInput) paidInput.value = '600';
-          }
-
-          if (typeof calculateDue === 'function') calculateDue();
-        });
-      }
-
-    } catch (err) {
-      console.error("View token details error:", err);
-      showAlert('❌ ডাটা লোড করতে সমস্যা হয়েছে: ' + err.message, 'error');
+    } else {
+      paymentHistoryHtml = '<div class="payment-history"><p style="color:#9ca3af; padding: 20px; text-align: center;">📭 কোনো পেমেন্ট ইতিহাস নেই</p></div>';
     }
+    
+    const docDate = getDocDate(token);
+
+    document.getElementById('modalContent').innerHTML = `
+      <div class="token-detail">
+        <div class="token-detail-row"><span class="token-detail-label">টোকেন নাম্বার:</span><span class="token-detail-value"><strong style="color:#2563eb;font-size:16px;">${tokenNumber}</strong></span></div>
+        <div class="token-detail-row"><span class="token-detail-label">সিরিয়াল:</span><span class="token-detail-value">${toBengaliNumber(token.serial || token.appointmentSerial)}</span></div>
+        <div class="token-detail-row"><span class="token-detail-label">তারিখ:</span><span class="token-detail-value">${formatDateTime(docDate)}</span></div>
+        <div class="token-detail-row"><span class="token-detail-label">রোগীর নাম:</span><span class="token-detail-value"><input type="text" id="editName" value="${escapeHtml(token.patientName || '')}"></span></div>
+        <div class="token-detail-row"><span class="token-detail-label">বয়স:</span><span class="token-detail-value"><input type="text" id="editAge" value="${token.patientAge || ''}"></span></div>
+        <div class="token-detail-row"><span class="token-detail-label">ফোন:</span><span class="token-detail-value"><input type="text" id="editPhone" value="${token.patientPhone || ''}"></span></div>
+       <div class="token-detail-row">
+  <span class="token-detail-label">ধরন:</span>
+   <span class="token-detail-value">
+     <select id="editPatientType">
+      <option value="new" ${(token.patientType || token.type) === 'new' ? 'selected' : ''}>নতুন রোগী</option>
+      <option value="old" ${(token.patientType || token.type) === 'old' ? 'selected' : ''}>পুরাতন রোগী</option>
+      <option value="microneedling" ${(token.patientType || token.type) === 'microneedling' ? 'selected' : ''}>মাইক্রোনিডলিং</option>
+      <option value="prp" ${(token.patientType || token.type) === 'prp' ? 'selected' : ''}>পি আর পি</option>
+      <option value="cryosurgery" ${(token.patientType || token.type) === 'cryosurgery' ? 'selected' : ''}>ক্রায়োসার্জারি</option>
+      <option value="electrocautery" ${(token.patientType || token.type) === 'electrocautery' ? 'selected' : ''}>ইলেক্ট্রোক্যাটারি</option>
+     </select>
+  </span>
+</div>
+        <div class="token-detail-row"><span class="token-detail-label">রেফারেন্স:</span><span class="token-detail-value"><input type="text" id="editGivenBy" value="${escapeHtml(token.givenBy || token.reference || '')}" placeholder="রেফারেন্স নাম লিখুন"></span></div>
+        <div class="token-detail-row"><span class="token-detail-label">ফি:</span><span class="token-detail-value"><input type="number" id="editFee" value="${fee}" onchange="calculateDue()"></span></div>
+        <div class="token-detail-row"><span class="token-detail-label">পরিশোধিত:</span><span class="token-detail-value"><input type="number" id="editPaid" value="${paid}" onchange="calculateDue()"><br><small id="dueAmount" style="color: ${due > 0 ? '#ef4444' : '#10b981'}">বাকি: ${due > 0 ? toBengaliNumber(due) : '০'} টাকা</small></span></div>
+      </div>
+      ${paymentHistoryHtml}
+    `;
+    document.getElementById('tokenModal').style.display = 'flex';
+
+const editPatientTypeElem = document.getElementById('editPatientType');
+if (editPatientTypeElem) {
+  editPatientTypeElem.addEventListener('change', function() {
+    const feeInput = document.getElementById('editFee');
+    const paidInput = document.getElementById('editPaid');
+    const selectedType = this.value;
+
+    if (selectedType === 'new') {
+      if (feeInput) feeInput.value = '800';
+      if (paidInput) paidInput.value = '800';
+    } else if (selectedType === 'old') {
+      if (feeInput) feeInput.value = '600';
+      if (paidInput) paidInput.value = '600';
+    } else if (['microneedling', 'prp', 'cryosurgery', 'electrocautery'].includes(selectedType)) {
+
+      if (feeInput) {
+        feeInput.value = '';
+        feeInput.focus(); 
+      }
+      if (paidInput) paidInput.value = '';
+    }
+
+    if (typeof calculateDue === 'function') calculateDue();
+  });
+}
+
+  } catch (err) {
+    console.error("View token details error:", err);
+    showAlert('❌ ডাটা লোড করতে সমস্যা হয়েছে: ' + err.message, 'error');
   }
+}
 
   function calculateDue() {
     const fee = parseInt(document.getElementById('editFee')?.value) || 0;
@@ -1677,101 +1788,117 @@
     }
   }
 
-  async function printTokenDirect(tokenData) {
-    const t = tokenData;
-    const tokenNumber = t.tokenNumber || '—';
-    const adminName = sessionStorage.getItem('adminName') || 'অ্যাডমিন';
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+async function printTokenDirect(tokenData) {
+  const t = tokenData;
+  const tokenNumber = t.tokenNumber || '—';
+  const adminName = sessionStorage.getItem('adminName') || 'অ্যাডমিন';
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    if (!isMobile) {
-      const win = window.open('', '_blank');
-      win.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>${tokenNumber}</title>
-          <meta charset="UTF-8">
-          <style>
-            @page { size: 60mm auto; margin: 0; }
-            body { font-family: 'Noto Sans Bengali', sans-serif; width: 56mm; padding: 10px; margin: 0 auto; }
-            .card { border: 1px dashed #2563eb; border-radius: 8px; padding: 12px; text-align: center; }
-            .header { border-bottom: 1px dashed #e5e7eb; padding-bottom: 8px; margin-bottom: 8px; }
-            .header h2 { font-size: 12px; font-weight: bold; color: #2563eb; margin: 0 0 3px 0; }
-            .header p { font-size: 10px; color: #6b7280; margin: 0; }
-            .token-num { font-size: 22px; font-weight: bold; color: #2563eb; margin: 8px 0; letter-spacing: 1px; }
-            .info-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #e5e7eb; font-size: 12px; }
-            .footer { margin-top: 10px; font-size: 9px; color: #9ca3af; text-align: center; }
-          </style>
-        </head>
-        <body>
-          <div class="card">
-            <div class="header">
-              <h2>ডাঃ মোঃ ওয়াহিদুজ্জামান মাসুম</h2>
-              <p>টোকেন নাম্বার</p>
-            </div>
-            <div class="token-num">${tokenNumber}</div>
-            <div class="info-row"><span>রোগীর নাম:</span><span>${escapeHtml(t.patientName || '—')}</span></div>
-            <div class="info-row"><span>বয়স:</span><span>${t.patientAge || '—'}</span></div>
-            <div class="info-row"><span>ধরন:</span><span>${(t.patientType || t.type) === 'new' ? 'নতুন' : 'পুরাতন'}</span></div>
-            <div class="info-row"><span>ফি:</span><span>${toBengaliNumber(t.tokenFee)} টাকা</span></div>
-            <div class="footer">
-              <p>Printed by: ${adminName}</p>
-              <p>${new Date().toLocaleString('bn-BD')}</p>
-            </div>
+  // ১. সার্জারী ও প্রসিডিউরের নাম ম্যাপিং
+  const serviceMap = {
+    'new': 'নতুন',
+    'old': 'পুরাতন',
+    'microneedling': 'মাইক্রোনিডলিং',
+    'prp': 'পি আর পি',
+    'cryosurgery': 'ক্রায়োসার্জারি',
+    'electrocautery': 'ইলেক্ট্রোক্যাটারি',
+    'surgery': 'সার্জারী'
+  };
+
+  const rawType = String(t.patientType || t.type || '').toLowerCase();
+  const displayService = serviceMap[rawType] || 'সাধারণ';
+
+  // Desktop Print Window
+  if (!isMobile) {
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${tokenNumber}</title>
+        <meta charset="UTF-8">
+        <style>
+          @page { size: 60mm auto; margin: 0; }
+          body { font-family: 'Noto Sans Bengali', sans-serif; width: 56mm; padding: 10px; margin: 0 auto; }
+          .card { border: 1px dashed #2563eb; border-radius: 8px; padding: 12px; text-align: center; }
+          .header { border-bottom: 1px dashed #e5e7eb; padding-bottom: 8px; margin-bottom: 8px; }
+          .header h2 { font-size: 12px; font-weight: bold; color: #2563eb; margin: 0 0 3px 0; }
+          .header p { font-size: 10px; color: #6b7280; margin: 0; }
+          .token-num { font-size: 22px; font-weight: bold; color: #2563eb; margin: 8px 0; letter-spacing: 1px; }
+          .info-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #e5e7eb; font-size: 12px; }
+          .footer { margin-top: 10px; font-size: 9px; color: #9ca3af; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="header">
+            <h2>ডাঃ মোঃ ওয়াহিদুজ্জামান মাসুম</h2>
+            <p>টোকেন নাম্বার</p>
           </div>
-          <script>window.onload = function() { setTimeout(() => window.print(), 500); }<\/script>
-        </body>
-        </html>
-      `);
-      win.document.close();
-      return; 
-    }
-
-    const container = document.createElement('div');
-    container.style.width = '2.10in';
-    container.style.backgroundColor = 'white';
-    container.style.padding = '10px';
-    container.innerHTML = `
-      <div style="font-family: sans-serif; border: 1px dashed #2563eb; padding: 10px; text-align: center; border-radius: 8px;">
-        <div style="border-bottom: 1px dashed #ccc; margin-bottom: 10px;">
-          <h2 style="font-size: 12px; color: #2563eb; margin: 0;">ডাঃ মোঃ ওয়াহিদুজ্জামান মাসুম</h2>
-          <p style="font-size: 10px; margin: 2px 0;">টোকেন নাম্বার</p>
-        </div>
-        <div style="font-size: 24px; font-weight: bold; color: #2563eb; margin: 10px 0;">${tokenNumber}</div>
-        <div style="font-size: 12px; text-align: left;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-            <span>রোগীর নাম:</span><span>${escapeHtml(t.patientName || '—')}</span>
+          <div class="token-num">${tokenNumber}</div>
+          <div class="info-row"><span>রোগীর নাম:</span><span>${escapeHtml(t.patientName || '—')}</span></div>
+          <div class="info-row"><span>বয়স:</span><span>${t.patientAge || '—'}</span></div>
+          <div class="info-row"><span>সেবা/ধরন:</span><span>${displayService}</span></div>
+          <div class="info-row"><span>ফি:</span><span>${toBengaliNumber(t.tokenFee)} টাকা</span></div>
+          <div class="footer">
+            <p>Printed by: ${adminName}</p>
+            <p>${new Date().toLocaleString('bn-BD')}</p>
           </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>বয়স:</span><span>${t.patientAge || '—'}</span></div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>ধরন:</span><span>${(t.patientType || t.type) === 'new' ? 'নতুন' : 'পুরাতন'}</span></div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>ফি:</span><span>${toBengaliNumber(t.tokenFee)} টাকা</span></div>
         </div>
-        <div style="margin-top: 15px; font-size: 8px; color: #666;">
-          <p>Printed by: ${adminName}</p>
-          <p>${new Date().toLocaleString('bn-BD')}</p>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(container);
-
-    const canvas = await html2canvas(container, { scale: 3, useCORS: true, logging: false });
-    const imgData = canvas.toDataURL('image/jpeg', 0.75);
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: 'mm', format: [53.34, 76.2], compress: true });
-    doc.addImage(imgData, 'JPEG', 0, 0, 53.34, 76.2, undefined, 'FAST');
-
-    const pdfBlob = doc.output('blob');
-    const file = new File([pdfBlob], `${tokenNumber}.pdf`, { type: 'application/pdf' });
-
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file] });
-    } else {
-      doc.save(`${tokenNumber}.pdf`);
-    }
-
-    document.body.removeChild(container);
+        <script>window.onload = function() { setTimeout(() => window.print(), 500); }<\/script>
+      </body>
+      </html>
+    `);
+    win.document.close();
+    return; 
   }
+
+  // Mobile Canvas & PDF Print
+  const container = document.createElement('div');
+  container.style.width = '2.10in';
+  container.style.backgroundColor = 'white';
+  container.style.padding = '10px';
+  container.innerHTML = `
+    <div style="font-family: sans-serif; border: 1px dashed #2563eb; padding: 10px; text-align: center; border-radius: 8px;">
+      <div style="border-bottom: 1px dashed #ccc; margin-bottom: 10px;">
+        <h2 style="font-size: 12px; color: #2563eb; margin: 0;">ডাঃ মোঃ ওয়াহিদুজ্জামান মাসুম</h2>
+        <p style="font-size: 10px; margin: 2px 0;">টোকেন নাম্বার</p>
+      </div>
+      <div style="font-size: 24px; font-weight: bold; color: #2563eb; margin: 10px 0;">${tokenNumber}</div>
+      <div style="font-size: 12px; text-align: left;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+          <span>রোগীর নাম:</span><span>${escapeHtml(t.patientName || '—')}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>বয়স:</span><span>${t.patientAge || '—'}</span></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>সেবা/ধরন:</span><span>${displayService}</span></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>ফি:</span><span>${toBengaliNumber(t.tokenFee)} টাকা</span></div>
+      </div>
+      <div style="margin-top: 15px; font-size: 8px; color: #666;">
+        <p>Printed by: ${adminName}</p>
+        <p>${new Date().toLocaleString('bn-BD')}</p>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(container);
+
+  const canvas = await html2canvas(container, { scale: 3, useCORS: true, logging: false });
+  const imgData = canvas.toDataURL('image/jpeg', 0.75);
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: [53.34, 76.2], compress: true });
+  doc.addImage(imgData, 'JPEG', 0, 0, 53.34, 76.2, undefined, 'FAST');
+
+  const pdfBlob = doc.output('blob');
+  const file = new File([pdfBlob], `${tokenNumber}.pdf`, { type: 'application/pdf' });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({ files: [file] });
+  } else {
+    doc.save(`${tokenNumber}.pdf`);
+  }
+
+  document.body.removeChild(container);
+}
 
   function closeTokenModal() {
     document.getElementById('tokenModal').style.display = 'none';
@@ -2367,10 +2494,11 @@ win.document.write(`
     loadTokenData();
   });
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  if (document.getElementById('dateFrom')) document.getElementById('dateFrom').value = todayStr;
-  if (document.getElementById('dateTo')) document.getElementById('dateTo').value = todayStr;
-  syncMobileFilters();
+// 🟢 বাংলাদেশ সময় অনুযায়ী YYYY-MM-DD তারিখ
+const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
+if (document.getElementById('dateFrom')) document.getElementById('dateFrom').value = todayStr;
+if (document.getElementById('dateTo')) document.getElementById('dateTo').value = todayStr;
+syncMobileFilters();
 
   document.addEventListener('DOMContentLoaded', function() {
     loadTokenData();
