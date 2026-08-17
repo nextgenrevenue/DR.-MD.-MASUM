@@ -710,59 +710,63 @@
     let currentAppointmentData = null;
 
     // ==================== তারিখ গণনা ফাংশন ====================
-    function getNextDateByDay(targetDay) {
-      const daysMap = {
-        "Sunday": 0,
-        "Monday": 1,
-        "Tuesday": 2,
-        "Wednesday": 3,
-        "Thursday": 4,
-        "Friday": 5,
-        "Saturday": 6
-      };
-      
-      const targetDayIndex = daysMap[targetDay];
-      const today = new Date();
-      
-      const todayIndex = today.getDay();
-      let daysToAdd = targetDayIndex - todayIndex;
-      
-      if (daysToAdd < 0) {
-        daysToAdd += 7;
-      }
-      
-      const nextDate = new Date(today);
-      nextDate.setDate(today.getDate() + daysToAdd);
-      
-      const year = nextDate.getFullYear();
-      const month = String(nextDate.getMonth() + 1).padStart(2, '0');
-      const day = String(nextDate.getDate()).padStart(2, '0');
-      
-      const banglaMonths = [
-        'জানুয়ারী', 'ফেব্রুয়ারী', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
-        'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'
-      ];
-      
-      const banglaDays = [
-        'রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 
-        'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'
-      ];
-      
-      const banglaDate = `${banglaDays[nextDate.getDay()]}, ${nextDate.getDate()} ${banglaMonths[nextDate.getMonth()]} ${year}`;
-      
-      return {
-        date: nextDate,
-        dateString: `${year}-${month}-${day}`,
-        displayDate: nextDate.toLocaleDateString('bn-BD', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        }),
-        banglaDate: banglaDate,
-        isToday: daysToAdd === 0
-      };
-    }
+function getNextDateByDay(targetDay) {
+  const daysMap = {
+    "Sunday": 0, "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6,
+    "রবিবার": 0, "সোমবার": 1, "মঙ্গলবার": 2, "বুধবার": 3, "বৃহস্পতিবার": 4, "শুক্রবার": 5, "শনিবার": 6
+  };
+  
+  const banglaMonths = [
+    'জানুয়ারী', 'ফেব্রুয়ারী', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
+    'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'
+  ];
+  
+  const banglaDays = [
+    'রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 
+    'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'
+  ];
+  
+  const today = new Date();
+  
+  // targetDay না থাকলে বা ম্যাপে না মিললে ডিফোল্ট আজকের দিন দেখাবে
+  let targetDayIndex = daysMap[targetDay];
+  
+  if (targetDayIndex === undefined) {
+    const year = today.getFullYear();
+    const banglaDate = `${banglaDays[today.getDay()]}, ${today.getDate()} ${banglaMonths[today.getMonth()]} ${year}`;
+    return {
+      date: today,
+      dateString: `${year}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`,
+      displayDate: banglaDate,
+      banglaDate: banglaDate,
+      isToday: true
+    };
+  }
+  
+  const todayIndex = today.getDay();
+  let daysToAdd = targetDayIndex - todayIndex;
+  
+  if (daysToAdd < 0) {
+    daysToAdd += 7;
+  }
+  
+  const nextDate = new Date(today);
+  nextDate.setDate(today.getDate() + daysToAdd);
+  
+  const year = nextDate.getFullYear();
+  const month = String(nextDate.getMonth() + 1).padStart(2, '0');
+  const day = String(nextDate.getDate()).padStart(2, '0');
+  
+  const banglaDate = `${banglaDays[nextDate.getDay()]}, ${nextDate.getDate()} ${banglaMonths[nextDate.getMonth()]} ${year}`;
+  
+  return {
+    date: nextDate,
+    dateString: `${year}-${month}-${day}`,
+    displayDate: banglaDate,
+    banglaDate: banglaDate,
+    isToday: daysToAdd === 0
+  };
+}
 
     // ==================== অ্যাপয়েন্টমেন্ট তারিখ ফাংশন ====================
     function getDateForAppointment(appointmentDay, appointmentTimestamp) {
@@ -1262,84 +1266,37 @@ async function searchAppointments() {
 }
 
     // ==================== এক্সপায়ার্ড চেক ফাংশন ====================
-    function checkIfAppointmentExpired(appointmentDay, appointmentTimestamp) {
-      const now = new Date();
-      const today = now.getDay(); 
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-      
-      const dayMap = {
-        "Thursday": 4,
-        "Friday": 5
-      };
-      
-      const appDayIndex = dayMap[appointmentDay];
-      
-      if (appDayIndex === undefined) {
-        return false;
-      }
-      
-      if (appointmentTimestamp) {
-        try {
-          const appointmentDate = appointmentTimestamp.toDate ? appointmentTimestamp.toDate() : new Date(appointmentTimestamp);
-          
-          const daysMap = {
-            "Sunday": 0, "Monday": 1, "Tuesday": 2, "Wednesday": 3,
-            "Thursday": 4, "Friday": 5, "Saturday": 6
-          };
-          
-          const targetDayIndex = daysMap[appointmentDay];
-          const bookingDayIndex = appointmentDate.getDay();
+function checkIfAppointmentExpired(appointmentDay, appointmentTimestamp) {
+  const now = new Date();
+  const dayMap = {
+    "Sunday": 0, "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6,
+    "রবিবার": 0, "সোমবার": 1, "মঙ্গলবার": 2, "বুধবার": 3, "বৃহস্পতিবার": 4, "শুক্রবার": 5, "শনিবার": 6
+  };
+  
+  if (appointmentTimestamp) {
+    try {
+      const appointmentDate = appointmentTimestamp.toDate ? appointmentTimestamp.toDate() : new Date(appointmentTimestamp);
+      const targetDayIndex = dayMap[appointmentDay] !== undefined ? dayMap[appointmentDay] : appointmentDate.getDay();
+      const bookingDayIndex = appointmentDate.getDay();
 
-          let daysToAdd = targetDayIndex - bookingDayIndex;
-          if (daysToAdd < 0) {
-            daysToAdd += 7; 
-          }
-          
-          const actualAppointmentDate = new Date(appointmentDate);
-          actualAppointmentDate.setDate(appointmentDate.getDate() + daysToAdd);
-          
-          const todayDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          
-          const appointmentDateOnly = new Date(
-            actualAppointmentDate.getFullYear(), 
-            actualAppointmentDate.getMonth(), 
-            actualAppointmentDate.getDate()
-          );
-        
-          if (appointmentDateOnly < todayDateOnly) {
-            return true;
-          }
-
-          else if (appointmentDateOnly.getTime() === todayDateOnly.getTime()) {
-            if (currentHour < 23 || (currentHour === 23 && currentMinute < 59)) {
-              return false; 
-            } else {
-              return true; 
-            }
-          }
-          else {
-            return false;
-          }
-          
-        } catch (error) {
-          console.error('Error calculating expired status with timestamp:', error);
-        }
-      }
+      let daysToAdd = targetDayIndex - bookingDayIndex;
+      if (daysToAdd < 0) daysToAdd += 7;
       
-      if (today === appDayIndex) {
-        if (currentHour < 23 || (currentHour === 23 && currentMinute < 59)) {
-          return false; 
-        } else {
-          return true; 
-        }
-      } else if (today > appDayIndex) {
-
-        return true; 
-      } else {
-        return false; 
-      }
+      const actualAppointmentDate = new Date(appointmentDate);
+      actualAppointmentDate.setDate(appointmentDate.getDate() + daysToAdd);
+      
+      const todayDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const appointmentDateOnly = new Date(actualAppointmentDate.getFullYear(), actualAppointmentDate.getMonth(), actualAppointmentDate.getDate());
+    
+      if (appointmentDateOnly < todayDateOnly) return true;
+      return false;
+    } catch (error) {
+      console.error('Expired status calculation error:', error);
     }
+  }
+  
+  return false;
+}
 
     function displaySearchResults(appointments) {
       resultsContainer.innerHTML = '';
