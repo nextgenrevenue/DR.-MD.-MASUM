@@ -297,6 +297,90 @@
       .search-icon { width: 14px; height: 14px; left: 10px; }
     }
 
+    @media (min-width: 769px) {
+      .admin-table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        flex-wrap: wrap; /* ৯৮০px বা ছোট ডেস্কটপ ভিউতে যেন ভেঙে না যায় */
+        gap: 12px;
+      }
+      
+      .admin-table-header h2 {
+        font-size: 18px;
+        color: var(--dark);
+        margin: 0;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap; /* ফিল্টারগুলো দরকার পড়লে ফ্ল্যাক্স হয়ে সুন্দরভাবে বসবে */
+        justify-content: flex-start;
+      }
+      
+      .filter-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      
+      .date-picker, .filter-group select, .header-actions select {
+        padding: 7px 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: 'Noto Sans Bengali', sans-serif;
+        font-size: 13px;
+        background-color: var(--white);
+        color: var(--dark);
+        cursor: pointer;
+        height: 36px;
+        flex-shrink: 0;
+      }
+      
+      .search-box {
+        position: relative;
+        width: 180px;
+        flex-shrink: 0;
+      }
+      
+      .search-box input {
+        width: 100%;
+        padding: 7px 10px 7px 32px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: 'Noto Sans Bengali', sans-serif;
+        font-size: 13px;
+        height: 36px;
+        box-sizing: border-box;
+      }
+      
+      .add-btn, .download-btn {
+        padding: 7px 12px;
+        color: var(--white);
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        white-space: nowrap;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        flex-shrink: 0;
+        height: 36px;
+      }
+
+      .add-btn { background-color: var(--success); }
+      .download-btn { background-color: var(--info); }
+      .download-btn:hover { background-color: #0284c7; }
+      .search-icon { width: 14px; height: 14px; left: 10px; }
+    }
+
     @media (max-width: 768px) {
       .mobile-filter-row-bottom {
         display: grid !important;

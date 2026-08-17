@@ -372,54 +372,48 @@ updateFeeByPatientType(type) {
         const dateStr = appointmentData.date || appointmentData.appointmentDate || new Date().toISOString().split('T')[0];
         const yymmdd = this.getYYMMDD(dateStr);
 
-        if (!this.currentTokenId) {
-            const formattedSerial = String(originalSerial).padStart(2, '0');
-            this.currentTokenId = `${yymmdd}-${formattedSerial}`;
-        }
+    if (!this.currentTokenId) {
+    this.currentTokenId = docId || appointmentData.id || appointmentData.docId || null;
+}
 
         // ৪. পেমেন্ট সাব-কালেকশন নির্বাচন
         const origSubcol = isSurgery ? 'payment_surgery' : (targetPatientType === 'old' ? 'payment_old' : 'payment_new');
 
         // ৫. বিদ্যমান পেমেন্ট রেকর্ড খুঁজে বের করা
-        let existingDoc = null;
-        if (this.paymentDocPath) {
-            try {
-                const snap = await this.db.doc(this.paymentDocPath).get();
-                if (snap.exists) {
-                    existingDoc = snap;
-                }
-            } catch (e) {}
+    // ৫. বিদ্যমান পেমেন্ট রেকর্ড খুঁজে বের করা
+let existingDoc = null;
+
+// ১. যদি সরাসরি paymentDocPath আগে থেকেই জানা থাকে
+if (this.paymentDocPath) {
+    try {
+        const snap = await this.db.doc(this.paymentDocPath).get();
+        if (snap.exists) {
+            existingDoc = snap;
         }
+    } catch (e) {}
+}
 
-        const subcols = ['payment_new', 'payment_old', 'payment_surgery'];
+const subcols = ['payment_new', 'payment_old', 'payment_surgery'];
 
-        if (!existingDoc && yymmdd && this.currentTokenId) {
-            for (const subcol of subcols) {
-                try {
-                    const snap = await this.db.collection('paymentHistories').doc(yymmdd)
-                        .collection(subcol).doc(this.currentTokenId).get();
-                    if (snap.exists) {
-                        existingDoc = snap;
-                        break;
-                    }
-                } catch (e) {}
+// ২. শুধুমাত্র appointmentId ফিল্ড দিয়ে ম্যাচিং (Document ID দিয়ে নয়)
+if (!existingDoc && yymmdd && this.currentTokenId) {
+    for (const subcol of subcols) {
+        try {
+            const snap = await this.db.collection('paymentHistories').doc(yymmdd)
+                .collection(subcol)
+                .where('appointmentId', '==', String(this.currentTokenId))
+                .limit(1)
+                .get();
+
+            if (!snap.empty) {
+                existingDoc = snap.docs[0];
+                break;
             }
-        }
+        } catch (e) {}
+    }
+}
 
-        if (!existingDoc && yymmdd && this.currentTokenId) {
-            for (const subcol of subcols) {
-                try {
-                    const snap = await this.db.collection('paymentHistories').doc(yymmdd)
-                        .collection(subcol).where('appointmentId', '==', String(this.currentTokenId)).limit(1).get();
-                    if (!snap.empty) {
-                        existingDoc = snap.docs[0];
-                        break;
-                    }
-                } catch (e) {}
-            }
-        }
-
-        let tokenNumber;
+let tokenNumber;
 
         // ৬. আপডেট বা নতুন টোকেন সেভ করা
         if (existingDoc) {
@@ -482,7 +476,8 @@ updateFeeByPatientType(type) {
 
                 tokenNumber = `T-${yymmdd}-${formattedCounter}`;
 
-                const finalDocRef = counterDocRef.collection(origSubcol).doc(this.currentTokenId);
+                const tokenDocId = `${yymmdd}-${formattedCounter}`;
+                const finalDocRef = counterDocRef.collection(origSubcol).doc(tokenDocId);
 
                 const initialPaymentHistory = [{
                     id: Date.now().toString(),
