@@ -784,7 +784,7 @@ class QuickModal {
                 date: dateVal,
                 day: this.getDayNameBangla(dateVal),
                 service: serviceVal,
-                type: serviceVal === 'general' ? typeVal : 'সার্জারী',
+                type: serviceVal === 'general' ? typeVal : 'surgery',
                 time: timeVal,
                 startSerial: startSerial,
                 phone: skipPhone ? '-' : phoneVal,

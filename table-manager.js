@@ -236,6 +236,21 @@ class TableManager {
     if (this.onFilterChange) this.onFilterChange(f, result.length);
 }
 
+formatBanglaDateWithDay(dateString) {
+    if (!dateString) return '-';
+    const dateObj = new Date(dateString);
+    if (isNaN(dateObj.getTime())) return dateString;
+
+    const days = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
+    const months = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
+
+    const dayName = days[dateObj.getDay()];
+    const dayNum = dateObj.getDate();
+    const monthName = months[dateObj.getMonth()];
+    const year = dateObj.getFullYear();
+
+    return `${dayName}, ${dayNum} ${monthName} ${year}`;
+}
     renderTable() {
         const tbody = document.getElementById(this.tbodyId);
         const loading = document.getElementById(this.loadingMessageId);
@@ -272,7 +287,8 @@ if (pType === 'old') {
             const tokenGiven = data.tokenGiven === true;
 
             const ageText = this.getAgeDisplay(data);
-            const appointmentDateStr = data.date || data.appointmentDate || '-';
+            const rawDate = data.date || data.appointmentDate;
+            const appointmentDateStr = rawDate ? this.formatBanglaDateWithDay(rawDate) : '-';
             const appointmentTimeStr = data.time || '-';
             const bookingTimeStr = this.formatTimestamp(data.timestamp);
 
