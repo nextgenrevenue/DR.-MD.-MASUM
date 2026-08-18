@@ -659,17 +659,17 @@
         <small class="info-text">প্রয়োজনে আমরা আপনার সাথে এই নম্বরে যোগাযোগ করব</small>
       </div>
 
-      <div class="form-group">
-        <label for="patientType">রোগীর ধরন</label>
-        <div class="input-field">
-          <select id="patientType" name="patientType" required>
-            <option value="">-- ধরন নির্বাচন করুন --</option>
-            <option value="new">নতুন রোগী</option>
-            <option value="old">পুরাতন রোগী</option>
-          </select>
-          <small class="info-text">০-৯০ দিন পর্যন্ত পুরাতন রোগী হিসেবে গণ্য হবে</small>
-        </div>
-      </div>
+<div class="form-group" id="patientTypeGroup">
+  <label for="patientType">রোগীর ধরন</label>
+  <div class="input-field">
+    <select id="patientType" name="patientType" required>
+      <option value="">-- ধরন নির্বাচন করুন --</option>
+      <option value="new">নতুন রোগী</option>
+      <option value="old">পুরাতন রোগী</option>
+    </select>
+    <small class="info-text">০-৯০ দিন পর্যন্ত পুরাতন রোগী হিসেবে গণ্য হবে</small>
+  </div>
+</div>
 
        <div class="form-group">
         <label for="date">অ্যাপয়েন্টমেন্টের তারিখ</label>
@@ -1176,9 +1176,17 @@ function loadAvailableServices(englishDay, banglaDay) {
     for (const service in dayData) {
         const sData = dayData[service];
         if (typeof sData === 'object' && sData !== null) {
-            if ((sData['new'] && Object.keys(sData['new']).length > 0) ||
-                (sData['old'] && Object.keys(sData['old']).length > 0)) {
-                availableServices.add(service);
+            // general সেবার জন্য new/old চেক
+            if (service === 'general') {
+                if ((sData['new'] && Object.keys(sData['new']).length > 0) ||
+                    (sData['old'] && Object.keys(sData['old']).length > 0)) {
+                    availableServices.add(service);
+                }
+            } else {
+                // অন্যান্য সেবার ক্ষেত্রে সরাসরি অবজেক্ট বা সময়ের কি (Keys) আছে কি না চেক
+                if (Object.keys(sData).length > 0) {
+                    availableServices.add(service);
+                }
             }
         }
     }
@@ -1193,55 +1201,97 @@ function loadAvailableServices(englishDay, banglaDay) {
     availableServices.forEach(service => {
         const opt = document.createElement('option');
         opt.value = service;
-        opt.textContent = serviceBanglaNames[service] || service;
+        opt.textContent = serviceBanglaNames?.[service] || service;
         serviceTypeSelect.appendChild(opt);
     });
     serviceTypeSelect.disabled = false;
     dateWarning.style.display = 'none';
 }
 
+// সেবার ধরন পরিবর্তন হলে রোগীর ধরন Show/Hide করার ফাংশন
+function togglePatientTypeVisibility() {
+    const serviceType = serviceTypeSelect.value;
+    const patientTypeGroup = document.getElementById('patientTypeGroup');
+    const patientTypeSelect = document.getElementById('patientType');
+
+    if (serviceType === 'general') {
+        // general হলে দৃশ্যমান থাকবে এবং required থাকবে
+        if (patientTypeGroup) patientTypeGroup.style.display = 'block';
+        if (patientTypeSelect) patientTypeSelect.setAttribute('required', 'required');
+    } else {
+        // general ছাড়া অন্য সেবা হলে হাইড হবে এবং মান 'new' ডিফোল্ট থাকবে
+        if (patientTypeGroup) patientTypeGroup.style.display = 'none';
+        if (patientTypeSelect) {
+            patientTypeSelect.removeAttribute('required');
+            patientTypeSelect.value = 'new'; // ফাঁকা না রেখে ডিফোল্ট 'new' দেওয়া হলো
+        }
+    }
+}
+
 function updateTimeOptions() {
     const selectedDate = new Date(dateInput.value);
     const dayName = getDayNameInEnglish(selectedDate);
-    const type = typeSelect.value;
     const serviceType = serviceTypeSelect.value;
+    const type = (typeSelect && typeSelect.value) ? typeSelect.value : 'new'; 
 
-    timeSelect.innerHTML = '<option value="">-- সময় নির্বাচন করুন --</option>';
+    timeSelect.innerHTML = '<option value="">-- সময় নির্বাচন করুন --</option>';
     timeSelect.disabled = true;
-    serialGrid.innerHTML = '';
-    serialInput.value = '';
-    noSlotsMessage.style.display = 'none';
+    if (serialGrid) serialGrid.innerHTML = '';
+    if (serialInput) serialInput.value = '';
+    if (noSlotsMessage) noSlotsMessage.style.display = 'none';
 
     if (!serviceType) { return; }
-    if (!type) { return; }
+    if (serviceType === 'general' && !type) { return; }
 
     const dayData = serialRanges[dayName];
     if (!dayData) return;
     
-    // Check if dayData is 4-level or 3-level
-    let typeData = null;
-    if (dayData[serviceType] && dayData[serviceType][type]) {
-        typeData = dayData[serviceType][type];
-    } else if (dayData[type]) {
-        typeData = dayData[type];
+    let timeObj = null;
+
+    // সেবা অনুযায়ী সময়ের অবজেক্ট ফিল্টার করা
+    if (serviceType === 'general') {
+        timeObj = dayData[serviceType]?.[type] || dayData[type];
+    } else {
+        // অন্যান্য সেবার ক্ষেত্রে new/old বা সরাসরি অবজেক্ট চেক করা
+        const serviceData = dayData[serviceType];
+        if (serviceData) {
+            timeObj = serviceData['new'] || serviceData['old'] || serviceData;
+        }
     }
 
-    if (!typeData) {
-        const typeText = type === 'new' ? 'নতুন রোগী' : 'পুরাতন রোগী';
-        showPopup('warning', 'সেবা নেই', `"${serviceBanglaNames[serviceType] || serviceType}" সেবার জন্য "${typeText}" ধরনে কোনো টাইম স্লট নেই।`);
+    if (!timeObj || typeof timeObj !== 'object') {
+        if (typeof showPopup === 'function') {
+            showPopup('warning', 'সেবা নেই', `"${serviceBanglaNames?.[serviceType] || serviceType}" সেবার জন্য কোনো সময় সেট করা নেই।`);
+        }
         return;
     }
 
-    const times = Object.keys(typeData);
-    if (times.length === 0) return;
+    // 'new' বা 'old' কী ফিল্টার করে শুধু সময়ের কী বের করা
+    const times = Object.keys(timeObj).filter(t => t !== 'new' && t !== 'old');
+    
+    if (times.length === 0) {
+        if (typeof showPopup === 'function') {
+            showPopup('warning', 'সেবা নেই', `"${serviceBanglaNames?.[serviceType] || serviceType}" সেবার জন্য কোনো সময় পাওয়া যায়নি।`);
+        }
+        return;
+    }
 
-    const sortedTimes = times.sort((a, b) => extractTimeNumber(a) - extractTimeNumber(b));
+    // সময় ক্রমানুসারে সাজানো
+    const sortedTimes = times.sort((a, b) => {
+        if (typeof extractTimeNumber === 'function') {
+            return extractTimeNumber(a) - extractTimeNumber(b);
+        }
+        return a.localeCompare(b);
+    });
+
+    // ড্রপডাউনে অপশন এবং opt.value সঠিকভাবে সেট করা
     sortedTimes.forEach(time => {
         const opt = document.createElement('option');
         opt.value = time;
         opt.textContent = time;
         timeSelect.appendChild(opt);
     });
+
     timeSelect.disabled = false;
 }
 
@@ -1353,29 +1403,66 @@ function validateSerialRangesStructure() {
 
 function loadAppointmentsFromFirebase() {
     if (!db) return;
+
     realtimeListeners.forEach(unsub => unsub());
     realtimeListeners = [];
 
-    const appointmentsListener = db.collectionGroup('new')
-        .onSnapshot(snapshot => {
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                appointments.push({ id: doc.id, ...data });
+    let tempAppointmentsMap = {};
+    const folders = ['new', 'old', 'surgery'];
+
+    folders.forEach(folder => {
+        const listener = db.collectionGroup(folder)
+            .onSnapshot(snapshot => {
+                snapshot.docChanges().forEach(change => {
+                    const data = change.doc.data();
+                    const uniqueId = `${folder}_${change.doc.id}`;
+
+                    if (change.type === "added" || change.type === "modified") {
+                        // যদি সার্জারি ফোল্ডারের ডাটা হয়, তবে patientType বা type কে 'new'/'old' এ মানানসই করা
+                        let appointmentType = data.patientType || data.type || 'new';
+                        if (folder === 'surgery' && !data.patientType) {
+                            appointmentType = 'new'; // সার্জারির ক্ষেত্রে ডিফোল্ট টাইপ
+                        }
+
+                        tempAppointmentsMap[uniqueId] = { 
+                            id: change.doc.id, 
+                            folderType: folder, 
+                            ...data,
+                            type: appointmentType // grid.js যেন সহজেই ম্যাচ করতে পারে
+                        };
+                    }
+                    if (change.type === "removed") {
+                        delete tempAppointmentsMap[uniqueId];
+                    }
+                });
+
+                appointments = Object.values(tempAppointmentsMap);
+
+                console.log(`✅ Loaded ${folder} appointments. Total: ${appointments.length}`);
+
+                if (gridSystem && typeof gridSystem.update === 'function') {
+                    gridSystem.update(appointments);
+                } else if (typeof renderGrid === 'function') {
+                    renderGrid();
+                }
+
+            }, error => {
+                console.error(`❌ ${folder} collectionGroup listener error:`, error);
             });
-        }, error => console.error('❌ Appointments listener error:', error));
-    realtimeListeners.push(appointmentsListener);
+
+        realtimeListeners.push(listener);
+    });
 
     const serialRangesListener = db.collection('settings').doc('serialRanges')
         .onSnapshot(doc => {
             if (doc.exists) {
                 serialRanges = doc.data();
-                validateSerialRangesStructure();
-                if (gridSystem) {
-                    gridSystem.serialRanges = serialRanges;
-                }
-                setupDateInput();
+                if (typeof validateSerialRangesStructure === 'function') validateSerialRangesStructure();
+                if (gridSystem) gridSystem.serialRanges = serialRanges;
+                if (typeof setupDateInput === 'function') setupDateInput();
             }
         }, error => console.error('❌ Serial ranges listener error:', error));
+
     realtimeListeners.push(serialRangesListener);
 }
 
@@ -1390,24 +1477,37 @@ dateInput.addEventListener('change', () => {
 });
 
 typeSelect.addEventListener('change', () => {
-    if (serviceTypeSelect.value) updateTimeOptions();
     serialGrid.innerHTML = '';
     serialInput.value = '';
     timeSelect.value = '';
     noSlotsMessage.style.display = 'none';
-    if (timeSelect.value && gridSystem) {
-        gridSystem.updateGrid();
+    
+    // serviceType থাকলে সময় আপডেট হবে
+    if (serviceTypeSelect.value) {
+        updateTimeOptions();
     }
 });
 
+// সংশোধিত serviceTypeSelect ইভেন্ট লিসেনার
 serviceTypeSelect.addEventListener('change', () => {
-    if (typeSelect.value) updateTimeOptions();
     serialGrid.innerHTML = '';
     serialInput.value = '';
     timeSelect.value = '';
+    timeSelect.innerHTML = '<option value="">-- সময় নির্বাচন করুন --</option>';
+    timeSelect.disabled = true;
     noSlotsMessage.style.display = 'none';
-    if (timeSelect.value && gridSystem) {
-        gridSystem.updateGrid();
+
+    togglePatientTypeVisibility();
+    
+    const service = serviceTypeSelect.value;
+    
+    // general হলে typeSelect লাগবে, অন্য সেবার ক্ষেত্রে সরাসরি updateTimeOptions কল হবে
+    if (service === 'general') {
+        if (typeSelect && typeSelect.value) {
+            updateTimeOptions();
+        }
+    } else if (service !== '') {
+        updateTimeOptions();
     }
 });
 
@@ -1443,7 +1543,7 @@ nameInput.addEventListener('input', () => {
 });
 
 [ageYearsInput, ageMonthsInput, ageDaysInput].forEach(input => {
-    input.addEventListener('input', normalizeAgeInputs);
+    input?.addEventListener('input', normalizeAgeInputs);
 });
 
 phoneInput.addEventListener('input', () => {
@@ -1503,14 +1603,16 @@ document.getElementById('appointmentForm').addEventListener('submit', async func
     const englishDay = getDayNameInEnglish(selectedDate);
     const serviceType = serviceTypeSelect.value;
 
-    if (!serviceType) {
-        showPopup('error', 'সেবা নির্বাচন করুন', 'অনুগ্রহ করে সেবার ধরন নির্বাচন করুন।');
-        return false;
-    }
-    if (!typeSelect.value) {
-        showPopup('error', 'ধরন নির্বাচন করুন', 'অনুগ্রহ করে রোগীর ধরন নির্বাচন করুন।');
-        return false;
-    }
+if (!serviceType) {
+    showPopup('error', 'সেবা নির্বাচন করুন', 'অনুগ্রহ করে সেবার ধরন নির্বাচন করুন।');
+    return false;
+}
+
+// কেবল General সেবার ক্ষেত্রে রোগীর ধরন নির্বাচন করা বাধ্যতামূলক
+if (serviceType === 'general' && !typeSelect.value) {
+    showPopup('error', 'ধরন নির্বাচন করুন', 'অনুগ্রহ করে রোগীর ধরন নির্বাচন করুন।');
+    return false;
+}
 
     const dayData = serialRanges[englishDay];
     if (!dayData) {
@@ -1577,7 +1679,7 @@ const appointmentData = {
     ageDisplay: finalAgeData.ageDisplay,
     originalInput: finalAgeData.ageInputText,
     patientType: typeSelect.value,
-    type: (serviceType === 'general') ? typeSelect.value : 'সার্জারী',
+    type: (serviceType === 'general') ? typeSelect.value : 'surgery',
     serviceType: serviceType,
     service: serviceType,
     date: selectedDateStr,
