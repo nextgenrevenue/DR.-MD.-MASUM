@@ -93,8 +93,7 @@ class TokenModal {
             // Determine patient type and path
             const rawPType = mainData.patientType || mainData.type || 'new';
             const patientType = String(rawPType).toLowerCase() === 'old' ? 'old' : 'new';
-            const dateStr = mainData.date || mainData.appointmentDate || new Date().toISOString().split('T')[0];
-            const yymmdd = this.getYYMMDD(dateStr);
+            const yymmdd = this.getYYMMDD();
 
             if (!docPath && docId && yymmdd) {
                 docPath = `appointments/${yymmdd}/${patientType}/${docId}`;
@@ -369,51 +368,56 @@ updateFeeByPatientType(type) {
 
         const appointmentData = { ...(this.currentTokenDoc || {}), ...fetchedData };
         const originalSerial = fetchedData.serial || fetchedData.appointmentSerial || appointmentData.serial || 1;
-        const dateStr = appointmentData.date || appointmentData.appointmentDate || new Date().toISOString().split('T')[0];
-        const yymmdd = this.getYYMMDD(dateStr);
+        const yymmdd = this.getYYMMDD();
 
-    if (!this.currentTokenId) {
-    this.currentTokenId = docId || appointmentData.id || appointmentData.docId || null;
-}
+        if (!this.currentTokenId) {
+            const formattedSerial = String(originalSerial).padStart(2, '0');
+            this.currentTokenId = `${yymmdd}-${formattedSerial}`;
+        }
 
         // ৪. পেমেন্ট সাব-কালেকশন নির্বাচন
         const origSubcol = isSurgery ? 'payment_surgery' : (targetPatientType === 'old' ? 'payment_old' : 'payment_new');
 
         // ৫. বিদ্যমান পেমেন্ট রেকর্ড খুঁজে বের করা
-    // ৫. বিদ্যমান পেমেন্ট রেকর্ড খুঁজে বের করা
-let existingDoc = null;
-
-// ১. যদি সরাসরি paymentDocPath আগে থেকেই জানা থাকে
-if (this.paymentDocPath) {
-    try {
-        const snap = await this.db.doc(this.paymentDocPath).get();
-        if (snap.exists) {
-            existingDoc = snap;
+        let existingDoc = null;
+        if (this.paymentDocPath) {
+            try {
+                const snap = await this.db.doc(this.paymentDocPath).get();
+                if (snap.exists) {
+                    existingDoc = snap;
+                }
+            } catch (e) {}
         }
-    } catch (e) {}
-}
 
-const subcols = ['payment_new', 'payment_old', 'payment_surgery'];
+        const subcols = ['payment_new', 'payment_old', 'payment_surgery'];
 
-// ২. শুধুমাত্র appointmentId ফিল্ড দিয়ে ম্যাচিং (Document ID দিয়ে নয়)
-if (!existingDoc && yymmdd && this.currentTokenId) {
-    for (const subcol of subcols) {
-        try {
-            const snap = await this.db.collection('paymentHistories').doc(yymmdd)
-                .collection(subcol)
-                .where('appointmentId', '==', String(this.currentTokenId))
-                .limit(1)
-                .get();
-
-            if (!snap.empty) {
-                existingDoc = snap.docs[0];
-                break;
+        if (!existingDoc && yymmdd && this.currentTokenId) {
+            for (const subcol of subcols) {
+                try {
+                    const snap = await this.db.collection('paymentHistories').doc(yymmdd)
+                        .collection(subcol).doc(this.currentTokenId).get();
+                    if (snap.exists) {
+                        existingDoc = snap;
+                        break;
+                    }
+                } catch (e) {}
             }
-        } catch (e) {}
-    }
-}
+        }
 
-let tokenNumber;
+        if (!existingDoc && yymmdd && this.currentTokenId) {
+            for (const subcol of subcols) {
+                try {
+                    const snap = await this.db.collection('paymentHistories').doc(yymmdd)
+                        .collection(subcol).where('appointmentId', '==', String(this.currentTokenId)).limit(1).get();
+                    if (!snap.empty) {
+                        existingDoc = snap.docs[0];
+                        break;
+                    }
+                } catch (e) {}
+            }
+        }
+
+        let tokenNumber;
 
         // ৬. আপডেট বা নতুন টোকেন সেভ করা
         if (existingDoc) {
@@ -476,8 +480,7 @@ let tokenNumber;
 
                 tokenNumber = `T-${yymmdd}-${formattedCounter}`;
 
-                const tokenDocId = `${yymmdd}-${formattedCounter}`;
-                const finalDocRef = counterDocRef.collection(origSubcol).doc(tokenDocId);
+                const finalDocRef = counterDocRef.collection(origSubcol).doc(this.currentTokenId);
 
                 const initialPaymentHistory = [{
                     id: Date.now().toString(),
